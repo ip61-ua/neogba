@@ -63,37 +63,17 @@ private:
   const u8* mapCurrent = mapUser;
 
 public:
-  u32 read(int reg) const {
-    return regs[mapCurrent[reg]];
-  }
-  void write(int reg, u32 val) {
-    regs[mapCurrent[reg]] = val;
-  }
-  u32 read(enum RegistersIndex idx) const {
-    return regs[idx];
-  }
-  void write(enum RegistersIndex idx, u32 val) {
-    regs[idx] = val;
-  }
+  u32 read(int reg) const;
+  void write(int reg, u32 val);
+  u32 read(enum RegistersIndex idx) const;
+  void write(enum RegistersIndex idx, u32 val);
 
-  void setUser() {
-    mapCurrent = mapUser;
-  }
-  void setFiq() {
-    mapCurrent = mapFiq;
-  }
-  void setAbt() {
-    mapCurrent = mapAbt;
-  }
-  void setIrq() {
-    mapCurrent = mapIrq;
-  }
-  void setUnd() {
-    mapCurrent = mapUnd;
-  }
-  void setSvc() {
-    mapCurrent = mapSvc;
-  }
+  void setUser();
+  void setFiq();
+  void setAbt();
+  void setIrq();
+  void setUnd();
+  void setSvc();
 };
 
 } // namespace neogba::arm7tdmi
