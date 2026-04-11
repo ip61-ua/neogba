@@ -1,0 +1,8 @@
+-Iinclude
+-Isrc
+-Wall
+-Wextra
+-std=c++20
+-lgtest
+-lgtest_main
+-pthread
