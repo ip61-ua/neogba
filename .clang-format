@@ -1,2 +1,12 @@
 ---
 BasedOnStyle: LLVM
+
+Standard: c++20
+IndentWidth: 2
+TabWidth: 2
+UseTab: Never
+SortIncludes: true
+ColumnLimit: 100
+AllowShortFunctionsOnASingleLine: Empty
+PointerAlignment: Left
+BreakBeforeBraces: Attach
