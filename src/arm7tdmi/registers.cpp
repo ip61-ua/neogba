@@ -11,11 +11,11 @@ void Registers::clear(u32 mask, u32* dst) {
   *dst = ~mask & *dst;
 }
 
-bool Registers::isSet(u32 mask, u32 dst) {
+bool Registers::isSet(u32 mask, u32 dst) const {
   return mask & dst;
 }
 
-u32 Registers::read(int reg) {
+u32 Registers::read(int reg) const {
   return regs[mapCurrent[reg]];
 }
 
@@ -23,7 +23,7 @@ void Registers::write(int reg, u32 val) {
   regs[mapCurrent[reg]] = val;
 }
 
-u32 Registers::read(enum RegistersIndex idx) {
+u32 Registers::read(enum RegistersIndex idx) const {
   return regs[idx];
 }
 
@@ -62,7 +62,7 @@ void Registers::setSvc() {
   set(OperationModeBits::Svc, &regs[RegistersIndex::cpsr]);
 }
 
-bool Registers::isN() {
+bool Registers::isN() const {
   return isSet(MASK_N, read(RegistersIndex::cpsr));
 }
 void Registers::setN() {
@@ -71,7 +71,7 @@ void Registers::setN() {
 void Registers::clearN() {
   clear(MASK_N, &regs[RegistersIndex::cpsr]);
 }
-bool Registers::isZ() {
+bool Registers::isZ() const {
   return isSet(MASK_Z, read(RegistersIndex::cpsr));
 }
 void Registers::setZ() {
@@ -80,7 +80,7 @@ void Registers::setZ() {
 void Registers::clearZ() {
   clear(MASK_Z, &regs[RegistersIndex::cpsr]);
 }
-bool Registers::isC() {
+bool Registers::isC() const {
   return isSet(MASK_C, read(RegistersIndex::cpsr));
 }
 void Registers::setC() {
@@ -89,7 +89,7 @@ void Registers::setC() {
 void Registers::clearC() {
   clear(MASK_C, &regs[RegistersIndex::cpsr]);
 }
-bool Registers::isV() {
+bool Registers::isV() const {
   return isSet(MASK_V, read(RegistersIndex::cpsr));
 }
 void Registers::setV() {
@@ -98,7 +98,7 @@ void Registers::setV() {
 void Registers::clearV() {
   clear(MASK_V, &regs[RegistersIndex::cpsr]);
 }
-bool Registers::isI() {
+bool Registers::isI() const {
   return isSet(MASK_I, read(RegistersIndex::cpsr));
 }
 void Registers::setI() {
@@ -107,7 +107,7 @@ void Registers::setI() {
 void Registers::clearI() {
   clear(MASK_I, &regs[RegistersIndex::cpsr]);
 }
-bool Registers::isF() {
+bool Registers::isF() const {
   return isSet(MASK_F, read(RegistersIndex::cpsr));
 }
 void Registers::setF() {
@@ -116,7 +116,7 @@ void Registers::setF() {
 void Registers::clearF() {
   clear(MASK_F, &regs[RegistersIndex::cpsr]);
 }
-bool Registers::isT() {
+bool Registers::isT() const {
   return isSet(MASK_T, read(RegistersIndex::cpsr));
 }
 void Registers::setT() {

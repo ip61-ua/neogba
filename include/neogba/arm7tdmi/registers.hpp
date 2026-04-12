@@ -73,16 +73,16 @@ private:
   const u8* mapCurrent = mapUser;
   void set(u32 mask, u32* dst);
   void clear(u32 mask, u32* dst);
-  bool isSet(u32 mask, u32 dst);
+  bool isSet(u32 mask, u32 dst) const;
 
 public:
   static constexpr u32 MASK_N = 0x80000000, MASK_Z = 0x40000000, MASK_C = 0x20000000,
                        MASK_V = 0x10000000, MASK_I = 0x80, MASK_F = 0x40, MASK_T = 0x20,
                        MASK_M = 0x1F;
 
-  u32 read(int reg);
+  u32 read(int reg) const;
   void write(int reg, u32 val);
-  u32 read(enum RegistersIndex idx);
+  u32 read(enum RegistersIndex idx) const;
   void write(enum RegistersIndex idx, u32 val);
 
   void setUser();
@@ -93,31 +93,31 @@ public:
   void setSvc();
 
   /// Negative or less than
-  bool isN();
+  bool isN() const;
   void setN();
   void clearN();
   /// Zero
-  bool isZ();
+  bool isZ() const;
   void setZ();
   void clearZ();
   /// Carry or borrow or extend
-  bool isC();
+  bool isC() const;
   void setC();
   void clearC();
   /// Overflow
-  bool isV();
+  bool isV() const;
   void setV();
   void clearV();
   /// IRQ disable
-  bool isI();
+  bool isI() const;
   void setI();
   void clearI();
   /// FIQ disable
-  bool isF();
+  bool isF() const;
   void setF();
   void clearF();
   /// State bit
-  bool isT();
+  bool isT() const;
   void setT();
   void clearT();
   /// Mode bits
