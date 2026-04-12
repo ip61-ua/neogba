@@ -18,7 +18,7 @@ TEST(RegistersTest, RegisterBasicWriteStore) {
   result1 = r.read(reg1);
   r.setFiq();
   result2 = r.read(reg1);
-  r.write(reg1, b);
+  r.write(reg1, c);
   result3 = r.read(reg1);
   r.setUnd();
   result4 = r.read(reg2);
