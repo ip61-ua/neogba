@@ -44,12 +44,12 @@ enum RegistersIndex : u8 {
 
 enum OperationModeBits : u32 {
   User = 0b10000,
-  FIQ = 0b10001,
-  IRQ = 0b10010,
-  Supervisor = 0b10011,
-  Abort = 0b10111,
-  Undefined = 0b11011,
-  System = 0b11111
+  Fiq = 0b10001,
+  Irq = 0b10010,
+  Svc = 0b10011,
+  Abt = 0b10111,
+  Und = 0b11011,
+  Sys = 0b11111
 };
 
 struct Registers {
@@ -71,15 +71,18 @@ public:
 private:
   u32 regs[37];
   const u8* mapCurrent = mapUser;
+  void set(u32 mask, u32* dst);
+  void clear(u32 mask, u32* dst);
+  constexpr bool isSet(u32 mask, u32 dst) const;
 
 public:
   static constexpr u32 MASK_N = 0x80000000, MASK_Z = 0x40000000, MASK_C = 0x20000000,
                        MASK_V = 0x10000000, MASK_I = 0x80, MASK_F = 0x40, MASK_T = 0x20,
                        MASK_M = 0x1F;
 
-  u32 read(int reg) const;
+  constexpr u32 read(int reg) const;
   void write(int reg, u32 val);
-  u32 read(enum RegistersIndex idx) const;
+  constexpr u32 read(enum RegistersIndex idx) const;
   void write(enum RegistersIndex idx, u32 val);
 
   void setUser();
@@ -90,36 +93,35 @@ public:
   void setSvc();
 
   /// Negative or less than
-  bool isN() const;
+  constexpr bool isN() const;
   void setN();
   void clearN();
   /// Zero
-  bool isZ() const;
+  constexpr bool isZ() const;
   void setZ();
   void clearZ();
   /// Carry or borrow or extend
-  bool isC() const;
+  constexpr bool isC() const;
   void setC();
   void clearC();
   /// Overflow
-  bool isV() const;
+  constexpr bool isV() const;
   void setV();
   void clearV();
   /// IRQ disable
-  bool isI() const;
+  constexpr bool isI() const;
   void setI();
   void clearI();
   /// FIQ disable
-  bool isF() const;
+  constexpr bool isF() const;
   void setF();
   void clearF();
   /// State bit
-  bool isT() const;
+  constexpr bool isT() const;
   void setT();
   void clearT();
-  // Mode bits
-  OperationModeBits getOperationMode() const;
-  void setOperationMode(OperationModeBits mode);
+  /// Mode bits
+  constexpr OperationModeBits getOperationMode() const;
 };
 
 } // namespace neogba::arm7tdmi
