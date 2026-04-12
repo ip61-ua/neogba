@@ -1,4 +1,4 @@
-#include "arm7/registers.hpp"
+#include "neogba/arm7tdmi/registers.hpp"
 
 neogba::u32 neogba::arm7tdmi::Registers::read(int reg) const {
   return regs[mapCurrent[reg]];

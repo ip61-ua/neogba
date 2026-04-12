@@ -1,5 +1,5 @@
 #pragma once
-#include "types.hpp"
+#include "neogba/types.hpp"
 
 namespace neogba::arm7tdmi {
 
