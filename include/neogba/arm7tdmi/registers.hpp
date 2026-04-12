@@ -42,6 +42,16 @@ enum RegistersIndex : u8 {
   spsr_und,
 };
 
+enum OperationModeBits : u32 {
+  User = 0b10000,
+  FIQ = 0b10001,
+  IRQ = 0b10010,
+  Supervisor = 0b10011,
+  Abort = 0b10111,
+  Undefined = 0b11011,
+  System = 0b11111
+};
+
 struct Registers {
 public:
   static constexpr u8 mapUser[17] = {r0, r1,  r2,  r3,  r4,  r5,  r6, r7,  r8,
@@ -63,6 +73,10 @@ private:
   const u8* mapCurrent = mapUser;
 
 public:
+  static constexpr u32 MASK_N = 0x80000000, MASK_Z = 0x40000000, MASK_C = 0x20000000,
+                       MASK_V = 0x10000000, MASK_I = 0x80, MASK_F = 0x40, MASK_T = 0x20,
+                       MASK_M = 0x1F;
+
   u32 read(int reg) const;
   void write(int reg, u32 val);
   u32 read(enum RegistersIndex idx) const;
@@ -74,6 +88,38 @@ public:
   void setIrq();
   void setUnd();
   void setSvc();
+
+  /// Negative or less than
+  bool isN() const;
+  void setN();
+  void clearN();
+  /// Zero
+  bool isZ() const;
+  void setZ();
+  void clearZ();
+  /// Carry or borrow or extend
+  bool isC() const;
+  void setC();
+  void clearC();
+  /// Overflow
+  bool isV() const;
+  void setV();
+  void clearV();
+  /// IRQ disable
+  bool isI() const;
+  void setI();
+  void clearI();
+  /// FIQ disable
+  bool isF() const;
+  void setF();
+  void clearF();
+  /// State bit
+  bool isT() const;
+  void setT();
+  void clearT();
+  // Mode bits
+  OperationModeBits getOperationMode() const;
+  void setOperationMode(OperationModeBits mode);
 };
 
 } // namespace neogba::arm7tdmi
