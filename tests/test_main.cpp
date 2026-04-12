@@ -1,25 +1,35 @@
-#include "arm7/registers.hpp"
+#include "neogba/arm7tdmi/registers.hpp"
 #include <gtest/gtest.h>
 
 TEST(BasicTest, HelloWorld) {
   EXPECT_EQ(1, 1);
 }
 
-TEST(RegisterTest, RegisterBasicWriteStore) {
+TEST(RegistersTest, RegisterBasicWriteStore) {
+  // Arrange
   neogba::arm7tdmi::Registers r;
+  neogba::u8 reg1 = 10;
+  neogba::arm7tdmi::RegistersIndex reg2 = neogba::arm7tdmi::RegistersIndex::r10_fiq;
+  neogba::u32 a{69}, b{0}, c{42};
+  neogba::u32 result1, result2, result3, result4, result5;
 
-  r.write(10, 69);
-  EXPECT_EQ(69, r.read(10));
-
+  // Act
+  r.write(reg1, a);
+  result1 = r.read(reg1);
   r.setFiq();
-  EXPECT_EQ(0, r.read(10));
-
-  r.write(10, 42);
-  EXPECT_EQ(42, r.read(10));
-
+  result2 = r.read(reg1);
+  r.write(reg1, b);
+  result3 = r.read(reg1);
   r.setUnd();
-  EXPECT_EQ(69, r.read(10));
-  EXPECT_EQ(42, r.read(neogba::arm7tdmi::RegistersIndex::r10_fiq));
+  result4 = r.read(reg2);
+  result5 = r.read(reg1);
+
+  // Assert
+  EXPECT_EQ(a, result1);
+  EXPECT_EQ(b, result2);
+  EXPECT_EQ(c, result3);
+  EXPECT_EQ(c, result4);
+  EXPECT_EQ(a, result5);
 }
 
 int main(int argc, char** argv) {
