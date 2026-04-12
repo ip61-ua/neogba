@@ -73,16 +73,16 @@ private:
   const u8* mapCurrent = mapUser;
   void set(u32 mask, u32* dst);
   void clear(u32 mask, u32* dst);
-  constexpr bool isSet(u32 mask, u32 dst) const;
+  bool isSet(u32 mask, u32 dst);
 
 public:
   static constexpr u32 MASK_N = 0x80000000, MASK_Z = 0x40000000, MASK_C = 0x20000000,
                        MASK_V = 0x10000000, MASK_I = 0x80, MASK_F = 0x40, MASK_T = 0x20,
                        MASK_M = 0x1F;
 
-  constexpr u32 read(int reg) const;
+  u32 read(int reg);
   void write(int reg, u32 val);
-  constexpr u32 read(enum RegistersIndex idx) const;
+  u32 read(enum RegistersIndex idx);
   void write(enum RegistersIndex idx, u32 val);
 
   void setUser();
@@ -93,35 +93,35 @@ public:
   void setSvc();
 
   /// Negative or less than
-  constexpr bool isN() const;
+  bool isN();
   void setN();
   void clearN();
   /// Zero
-  constexpr bool isZ() const;
+  bool isZ();
   void setZ();
   void clearZ();
   /// Carry or borrow or extend
-  constexpr bool isC() const;
+  bool isC();
   void setC();
   void clearC();
   /// Overflow
-  constexpr bool isV() const;
+  bool isV();
   void setV();
   void clearV();
   /// IRQ disable
-  constexpr bool isI() const;
+  bool isI();
   void setI();
   void clearI();
   /// FIQ disable
-  constexpr bool isF() const;
+  bool isF();
   void setF();
   void clearF();
   /// State bit
-  constexpr bool isT() const;
+  bool isT();
   void setT();
   void clearT();
   /// Mode bits
-  constexpr OperationModeBits getOperationMode() const;
+  OperationModeBits getOperationMode();
 };
 
 } // namespace neogba::arm7tdmi

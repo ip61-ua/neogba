@@ -11,11 +11,11 @@ void Registers::clear(u32 mask, u32* dst) {
   *dst = ~mask & *dst;
 }
 
-constexpr bool Registers::isSet(u32 mask, u32 dst) const {
+bool Registers::isSet(u32 mask, u32 dst) {
   return mask & dst;
 }
 
-constexpr u32 Registers::read(int reg) const {
+u32 Registers::read(int reg) {
   return regs[mapCurrent[reg]];
 }
 
@@ -23,7 +23,7 @@ void Registers::write(int reg, u32 val) {
   regs[mapCurrent[reg]] = val;
 }
 
-constexpr u32 Registers::read(enum RegistersIndex idx) const {
+u32 Registers::read(enum RegistersIndex idx) {
   return regs[idx];
 }
 
@@ -62,42 +62,70 @@ void Registers::setSvc() {
   set(OperationModeBits::Svc, &regs[RegistersIndex::cpsr]);
 }
 
-constexpr bool Registers::isN() const {
+bool Registers::isN() {
   return isSet(MASK_N, read(RegistersIndex::cpsr));
 }
-void Registers::setN() {}
-void Registers::clearN() {}
-constexpr bool Registers::isZ() const {
+void Registers::setN() {
+  set(MASK_N, &regs[RegistersIndex::cpsr]);
+}
+void Registers::clearN() {
+  clear(MASK_N, &regs[RegistersIndex::cpsr]);
+}
+bool Registers::isZ() {
   return isSet(MASK_Z, read(RegistersIndex::cpsr));
 }
-void Registers::setZ() {}
-void Registers::clearZ() {}
-constexpr bool Registers::isC() const {
+void Registers::setZ() {
+  set(MASK_Z, &regs[RegistersIndex::cpsr]);
+}
+void Registers::clearZ() {
+  clear(MASK_Z, &regs[RegistersIndex::cpsr]);
+}
+bool Registers::isC() {
   return isSet(MASK_C, read(RegistersIndex::cpsr));
 }
-void Registers::setC() {}
-void Registers::clearC() {}
-constexpr bool Registers::isV() const {
+void Registers::setC() {
+  set(MASK_C, &regs[RegistersIndex::cpsr]);
+}
+void Registers::clearC() {
+  clear(MASK_C, &regs[RegistersIndex::cpsr]);
+}
+bool Registers::isV() {
   return isSet(MASK_V, read(RegistersIndex::cpsr));
 }
-void Registers::setV() {}
-void Registers::clearV() {}
-constexpr bool Registers::isI() const {
+void Registers::setV() {
+  set(MASK_V, &regs[RegistersIndex::cpsr]);
+}
+void Registers::clearV() {
+  clear(MASK_V, &regs[RegistersIndex::cpsr]);
+}
+bool Registers::isI() {
   return isSet(MASK_I, read(RegistersIndex::cpsr));
 }
-void Registers::setI() {}
-void Registers::clearI() {}
-constexpr bool Registers::isF() const {
+void Registers::setI() {
+  set(MASK_I, &regs[RegistersIndex::cpsr]);
+}
+void Registers::clearI() {
+  clear(MASK_I, &regs[RegistersIndex::cpsr]);
+}
+bool Registers::isF() {
   return isSet(MASK_F, read(RegistersIndex::cpsr));
 }
-void Registers::setF() {}
-void Registers::clearF() {}
-constexpr bool Registers::isT() const {
+void Registers::setF() {
+  set(MASK_F, &regs[RegistersIndex::cpsr]);
+}
+void Registers::clearF() {
+  clear(MASK_F, &regs[RegistersIndex::cpsr]);
+}
+bool Registers::isT() {
   return isSet(MASK_T, read(RegistersIndex::cpsr));
 }
-void Registers::setT() {}
-void Registers::clearT() {}
+void Registers::setT() {
+  set(MASK_T, &regs[RegistersIndex::cpsr]);
+}
+void Registers::clearT() {
+  clear(MASK_T, &regs[RegistersIndex::cpsr]);
+}
 
-constexpr OperationModeBits Registers::getOperationMode() const {
+OperationModeBits Registers::getOperationMode() {
   return OperationModeBits(regs[cpsr] & MASK_M);
 }
