@@ -5,7 +5,7 @@ TEST(BasicTest, HelloWorld) {
   EXPECT_EQ(1, 1);
 }
 
-TEST(RegistersTest, RegisterBasicWriteStore) {
+TEST(RegistersTest, RegistersBasicWriteStore) {
   // Arrange
   neogba::arm7tdmi::Registers r;
   neogba::u8 reg1 = 10;
@@ -30,6 +30,29 @@ TEST(RegistersTest, RegisterBasicWriteStore) {
   EXPECT_EQ(c, result3);
   EXPECT_EQ(c, result4);
   EXPECT_EQ(a, result5);
+}
+
+TEST(RegistersTest, RegistersBitOperationsAndGetOperationMode) {
+  // Arrange
+  neogba::arm7tdmi::Registers r;
+
+  // Act
+  bool result1 = r.isN();
+  r.setN();
+  bool result2 = r.isN();
+  r.clearN();
+  bool result3 = r.isN();
+  r.setAbt();
+  neogba::arm7tdmi::OperationModeBits result4 = r.getOperationMode();
+  r.setFiq();
+  neogba::arm7tdmi::OperationModeBits result5 = r.getOperationMode();
+
+  // Assert
+  EXPECT_EQ(false, result1);
+  EXPECT_EQ(true, result2);
+  EXPECT_EQ(false, result3);
+  EXPECT_EQ(neogba::arm7tdmi::OperationModeBits::Abt, result4);
+  EXPECT_EQ(neogba::arm7tdmi::OperationModeBits::Fiq, result5);
 }
 
 int main(int argc, char** argv) {
