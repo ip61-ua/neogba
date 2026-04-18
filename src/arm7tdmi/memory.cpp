@@ -39,6 +39,9 @@ bool MemoryBus::write(u32 addr, u32 val, MemoryBlockLength len) {
   if (isFreeIndex(index))
     return false;
 
+  if (memoryMap[index]->isReadOnly())
+    return false;
+
   memoryMap[index]->write(addr, val, len);
   return true;
 }

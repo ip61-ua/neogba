@@ -5,12 +5,28 @@ namespace neogba::arm7tdmi {
 enum MemoryBlockLength : u8 { WORD = 32, HALFWORD = 16, BYTE = 8 };
 
 class IMemory {
+protected:
+  u32 maxSize;
+  bool writeState;
 
 public:
   virtual ~IMemory() = default;
+
+  inline static u32 getAddrOffset(u32 addr, u32 nOffset) {
+    return (nOffset >= 32) ? addr : addr & ((1 << nOffset) - 1);
+  }
+  inline static u32 getAddrIndex(u32 addr, u32 nOffset) {
+    return addr >> nOffset;
+  };
+
   virtual const char* getName() const = 0;
-  virtual std::size_t getSize() const = 0;
-  virtual bool isReadOnly() const = 0;
+  inline std::size_t getSize() const {
+    return maxSize;
+  };
+  inline bool isReadOnly() const {
+    return writeState;
+  };
+
   virtual u32 read(u32 addr, MemoryBlockLength len = WORD) const = 0;
   virtual void write(u32 addr, u32 val, MemoryBlockLength len = WORD) = 0;
   friend class MemoryBus;
