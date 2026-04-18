@@ -2,6 +2,7 @@
 #include "neogba/constants.hpp"
 #include "neogba/types.hpp"
 #include "neogba/utils.hpp"
+#include <memory>
 
 namespace neogba::arm7tdmi {
 
@@ -44,6 +45,12 @@ public:
   inline u32 getAddrIndex(u32 addr) const {
     return addr >> nBitsOffset;
   }
+
+  inline bool operator==(MemoryBusProperties o) const {
+    return nBitsOffset == o.nBitsOffset && nBitsIndex == o.nBitsIndex &&
+           maskOffset == o.maskOffset && maskIndex == o.maskIndex && nMaxOffset == o.nMaxOffset &&
+           nMaxIndex == o.nMaxIndex;
+  };
 };
 
 class IMemory {
@@ -54,34 +61,40 @@ protected:
 
 public:
   virtual ~IMemory() = default;
-  virtual const char* getName() const = 0;
+  inline const char* getName() const {
+    return nullptr;
+  };
   inline std::size_t getSize() const {
     return maxSize;
   };
   inline bool isReadOnly() const {
-    return writeState;
+    return !writeState;
   };
-
+  inline MemoryBusProperties getProperties() const {
+    return busProperties;
+  }
   virtual u32 read(u32 addr, MemoryBlockLength len = WORD) const = 0;
   virtual void write(u32 addr, u32 val, MemoryBlockLength len = WORD) = 0;
+
   friend class MemoryBus;
 };
 
 class MemoryBus {
 protected:
   const MemoryBusProperties properties;
-  IMemory** memoryMap;
+  std::unique_ptr<IMemory*[]> memoryMap;
 
 public:
   MemoryBus(const u32 offsetBitSize = K_gbaBlockOffsetMask)
-      : properties(offsetBitSize), memoryMap(new IMemory*[properties.getNMaxIndex()]()) {};
-  inline ~MemoryBus() {
-    delete[] memoryMap;
-    memoryMap = nullptr;
-  };
+      : properties(offsetBitSize),
+        memoryMap(std::make_unique<IMemory*[]>(properties.getNMaxIndex())) {};
+
   inline bool isFreeIndex(u32 index) const {
-    return index < properties.getNMaxIndex() && memoryMap[index] != nullptr;
+    return index < properties.getNMaxIndex() && memoryMap[index] == nullptr;
   };
+  inline MemoryBusProperties getProperties() const {
+    return properties;
+  }
   bool attachMemory(u32 addr, IMemory* memory);
   bool detachMemory(u32 addr);
   u32 read(u32 addr, MemoryBlockLength len = WORD) const;

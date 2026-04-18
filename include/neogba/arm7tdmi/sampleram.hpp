@@ -1,7 +1,5 @@
 #include "neogba/arm7tdmi/memory.hpp"
 #include "neogba/constants.hpp"
-#include "neogba/utils.hpp"
-#include <memory>
 
 namespace neogba::arm7tdmi::samples {
 
@@ -10,12 +8,11 @@ private:
   std::unique_ptr<u8[]> m;
 
 public:
-  inline SampleRAM(u32 s = M_createRightMask(K_gbaBlockOffsetMask))
-      : m(std::make_unique_for_overwrite<u8[]>(s)) {
+  inline SampleRAM(u32 s = K_gbaBlockOffsetMask) : m(std::make_unique<u8[]>(s >> 2)) {
     maxSize = s;
     writeState = true;
   };
-  inline const char* getName() const override {
+  inline const char* getName() const {
     return "SampleRAM";
   };
   u32 read(u32 addr, MemoryBlockLength len = WORD) const override;
