@@ -1,23 +1,19 @@
 #include "neogba/arm7tdmi/memory.hpp"
 #include "neogba/constants.hpp"
 #include "neogba/utils.hpp"
-#include <vector>
+#include <memory>
 
 namespace neogba::arm7tdmi::samples {
 
 class SampleRAM : public IMemory {
 private:
-  std::vector<u32>* m;
+  std::unique_ptr<u8[]> m;
 
 public:
   inline SampleRAM(u32 s = M_createRightMask(K_gbaBlockOffsetMask))
-      : m(new std::vector<u32>(s, 0)) {
+      : m(std::make_unique_for_overwrite<u8[]>(s)) {
     maxSize = s;
     writeState = true;
-  };
-  inline ~SampleRAM() {
-    delete m;
-    m = nullptr;
   };
   inline const char* getName() const override {
     return "SampleRAM";
