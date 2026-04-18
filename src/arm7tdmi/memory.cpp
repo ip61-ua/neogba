@@ -4,17 +4,18 @@ using namespace neogba;
 using namespace neogba::arm7tdmi;
 
 bool MemoryBus::attachMemory(u32 addr, IMemory* memory) {
-  auto index = getIndexFromAddr(addr);
+  auto index = properties.getAddrIndex(addr);
 
   if (!isFreeIndex(index))
     return false;
 
   memoryMap[index] = memory;
+  memoryMap[index]->busProperties = properties;
   return true;
 }
 
 bool MemoryBus::detachMemory(u32 addr) {
-  auto index = getIndexFromAddr(addr);
+  auto index = properties.getAddrIndex(addr);
 
   if (!isFreeIndex(index))
     return false;
@@ -25,7 +26,7 @@ bool MemoryBus::detachMemory(u32 addr) {
 }
 
 u32 MemoryBus::read(u32 addr, MemoryBlockLength len) const {
-  auto index = getIndexFromAddr(addr);
+  auto index = properties.getAddrIndex(addr);
 
   if (isFreeIndex(index))
     return 0x0;
@@ -34,7 +35,7 @@ u32 MemoryBus::read(u32 addr, MemoryBlockLength len) const {
 }
 
 bool MemoryBus::write(u32 addr, u32 val, MemoryBlockLength len) {
-  auto index = getIndexFromAddr(addr);
+  auto index = properties.getAddrIndex(addr);
 
   if (isFreeIndex(index))
     return false;
