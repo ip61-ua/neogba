@@ -9,8 +9,16 @@ bool MemoryBus::attachMemory(u32 addr, IMemory* memory) {
   if (!isFreeIndex(index))
     return false;
 
-  memoryMap[index] = memory;
-  memoryMap[index]->busProperties = properties;
+  auto& m = memoryMap[index];
+  m = memory;
+  m->busProperties = properties;
+
+  if (!m->attached(addr)) {
+    m->busProperties = MemoryBusProperties();
+    m = nullptr;
+    return false;
+  }
+
   return true;
 }
 
@@ -20,9 +28,15 @@ bool MemoryBus::detachMemory(u32 addr) {
   if (!isFreeIndex(index))
     return false;
 
-  delete memoryMap[index];
-  memoryMap[index] = nullptr;
-  return true;
+  auto& m = memoryMap[index];
+
+  if (m->detached()) {
+    delete m;
+    m = nullptr;
+    return true;
+  }
+
+  return false;
 }
 
 u32 MemoryBus::read(u32 addr, MemoryBlockLength len) const {

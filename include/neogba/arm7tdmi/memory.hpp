@@ -60,6 +60,11 @@ protected:
   MemoryBusProperties busProperties;
   std::unique_ptr<u8[]> memoryBytes;
 
+  virtual bool attached(u32 baseAddr);
+  bool detached() {
+    return false;
+  };
+
 public:
   IMemory() : nBytes(0), writeState(0), busProperties(0), memoryBytes(nullptr) {};
   virtual ~IMemory() = default;

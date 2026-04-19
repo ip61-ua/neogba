@@ -3,6 +3,14 @@
 namespace neogba::arm7tdmi::samples {
 
 class SampleRAM : public IMemory {
+private:
+  u32 base1{0}, base2{0};
+  bool used1{false}, used2{false};
+
+protected:
+  bool attached(u32 baseAddr) override;
+  bool detached();
+
 public:
   inline SampleRAM(u32 nBytes) {
     this->nBytes = nBytes;

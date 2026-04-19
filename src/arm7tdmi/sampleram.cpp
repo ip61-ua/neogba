@@ -5,6 +5,26 @@ using namespace neogba;
 using namespace neogba::arm7tdmi;
 using namespace neogba::arm7tdmi::samples;
 
+bool SampleRAM::attached(u32 baseAddr) {
+  if (!used1) {
+    base1 = baseAddr;
+    return true;
+  }
+
+  if (!used2) {
+    base2 = baseAddr;
+    return true;
+  }
+
+  return false;
+}
+
+bool SampleRAM::detached() {
+  used1 = used2 = false;
+  base1 = base2 = 0;
+  return true;
+}
+
 u32 SampleRAM::read(u32 addr, MemoryBlockLength len) const {
   addr &= (nBytes - 1);
 
