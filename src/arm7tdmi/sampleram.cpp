@@ -6,17 +6,17 @@ using namespace neogba::arm7tdmi;
 using namespace neogba::arm7tdmi::samples;
 
 u32 SampleRAM::read(u32 addr, MemoryBlockLength len) const {
-  addr &= (maxSize - 1);
+  addr &= (nBytes - 1);
 
   if (len == BYTE)
-    return m[addr];
+    return memoryBytes[addr];
 
   return 0;
 }
 
 void SampleRAM::write(u32 addr, u32 val, MemoryBlockLength len) {
-  addr &= (maxSize - 1);
+  addr &= (nBytes - 1);
 
   if (len == BYTE)
-    m[addr] = val;
+    memoryBytes[addr] = val;
 };

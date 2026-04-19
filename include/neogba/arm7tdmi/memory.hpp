@@ -55,23 +55,28 @@ public:
 
 class IMemory {
 protected:
-  u32 maxSize;
+  u32 nBytes;
   bool writeState;
   MemoryBusProperties busProperties;
+  std::unique_ptr<u8[]> memoryBytes;
 
 public:
+  IMemory() : nBytes(0), writeState(0), busProperties(0), memoryBytes(nullptr) {};
   virtual ~IMemory() = default;
   inline const char* getName() const {
     return nullptr;
   };
   inline std::size_t getSize() const {
-    return maxSize;
+    return nBytes;
   };
   inline bool isReadOnly() const {
     return !writeState;
   };
   inline MemoryBusProperties getProperties() const {
     return busProperties;
+  }
+  inline const u8* getMemoryBytes() const {
+    return memoryBytes.get();
   }
   virtual u32 read(u32 addr, MemoryBlockLength len = WORD) const = 0;
   virtual void write(u32 addr, u32 val, MemoryBlockLength len = WORD) = 0;

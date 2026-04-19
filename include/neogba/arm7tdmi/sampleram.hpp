@@ -1,16 +1,13 @@
 #include "neogba/arm7tdmi/memory.hpp"
-#include "neogba/constants.hpp"
 
 namespace neogba::arm7tdmi::samples {
 
 class SampleRAM : public IMemory {
-private:
-  std::unique_ptr<u8[]> m;
-
 public:
-  inline SampleRAM(u32 s = K_gbaBlockOffsetMask) : m(std::make_unique<u8[]>(s >> 2)) {
-    maxSize = s;
+  inline SampleRAM(u32 nBytes) {
+    this->nBytes = nBytes;
     writeState = true;
+    memoryBytes = std::make_unique<u8[]>(nBytes);
   };
   inline const char* getName() const {
     return "SampleRAM";
