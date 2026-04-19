@@ -60,13 +60,11 @@ protected:
   MemoryBusProperties busProperties;
   std::unique_ptr<u8[]> memoryBytes;
 
-  virtual bool attached(u32 baseAddr);
-  bool detached() {
-    return false;
-  };
-
 public:
-  IMemory() : nBytes(0), writeState(0), busProperties(0), memoryBytes(nullptr) {};
+  IMemory(u32 nBytes = 0, bool writeState = false,
+          MemoryBusProperties busProperties = MemoryBusProperties())
+      : nBytes(nBytes), writeState(writeState), busProperties(busProperties),
+        memoryBytes(nullptr) {};
   virtual ~IMemory() = default;
   inline const char* getName() const {
     return nullptr;
@@ -85,6 +83,12 @@ public:
   }
   virtual u32 read(u32 addr, MemoryBlockLength len = WORD) const = 0;
   virtual void write(u32 addr, u32 val, MemoryBlockLength len = WORD) = 0;
+
+protected:
+  virtual bool attached(u32 baseAddr) = 0;
+  bool detached() {
+    return false;
+  };
 
   friend class MemoryBus;
 };

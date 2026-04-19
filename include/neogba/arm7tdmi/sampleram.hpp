@@ -12,10 +12,8 @@ protected:
   bool detached();
 
 public:
-  inline SampleRAM(u32 nBytes) {
-    this->nBytes = nBytes;
-    writeState = true;
-    memoryBytes = std::make_unique<u8[]>(nBytes);
+  inline SampleRAM(u32 nBytes) : IMemory(nBytes, true) {
+    memoryBytes = std::make_unique<u8[]>(0);
   };
   inline const char* getName() const {
     return "SampleRAM";

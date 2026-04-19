@@ -31,7 +31,6 @@ bool MemoryBus::detachMemory(u32 addr) {
   auto& m = memoryMap[index];
 
   if (m->detached()) {
-    delete m;
     m = nullptr;
     return true;
   }
