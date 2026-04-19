@@ -99,6 +99,66 @@ TEST(SampleRAMTest, StoreLoadByteOperations) {
   EXPECT_EQ(w2, r2f);
 }
 
+TEST(SampleRAMTest, StoreLoadMultiByteOperations) {
+  // Arrange
+  const neogba::u32 s{256}, base{0x08000000};
+  const neogba::u32 addrHalf{0x08000002}, addrWord{0x08000004};
+  const neogba::u32 valHalf{0xBEEF}, valWord{0xDEADBEEF};
+  auto bus{neogba::arm7tdmi::MemoryBus()};
+  auto* mem{new neogba::arm7tdmi::samples::SampleRAM(s)};
+  auto modeHalf{neogba::arm7tdmi::MemoryBlockLength::HALFWORD};
+  auto modeWord{neogba::arm7tdmi::MemoryBlockLength::WORD};
+
+  // Act
+  bus.attachMemory(base, mem);
+  auto wHalfSuccess{bus.write(addrHalf, valHalf, modeHalf)};
+  auto rHalf{bus.read(addrHalf, modeHalf)};
+  auto wWordSuccess{bus.write(addrWord, valWord, modeWord)};
+  auto rWord{bus.read(addrWord, modeWord)};
+
+  // Assert
+  EXPECT_EQ(true, wHalfSuccess);
+  EXPECT_EQ(valHalf, rHalf);
+
+  EXPECT_EQ(true, wWordSuccess);
+  EXPECT_EQ(valWord, rWord);
+}
+
+TEST(SampleRAMTest, AlignmentAndLittleEndianValidation) {
+  // Arrange
+  const neogba::u32 s{256}, base{0x08000000};
+  const neogba::u32 addrWordBase{0x08000008};
+  const neogba::u32 addrWordUnaligned{0x0800000B}; // Sin alinear -> 0x08000008
+  const neogba::u32 valWord{0x11223344};           // Sin alinear
+  auto bus{neogba::arm7tdmi::MemoryBus()};
+  auto* mem{new neogba::arm7tdmi::samples::SampleRAM(s)};
+
+  bus.attachMemory(base, mem);
+
+  // Act
+  bus.write(addrWordUnaligned, valWord, neogba::arm7tdmi::MemoryBlockLength::WORD);
+  auto rWordAligned{bus.read(addrWordBase, neogba::arm7tdmi::MemoryBlockLength::WORD)};
+  auto rWordUnaligned{bus.read(addrWordUnaligned, neogba::arm7tdmi::MemoryBlockLength::WORD)};
+
+  // Comprobación de little endian:
+  // [0x08] = 0x44 (Byte menos significativo)
+  // [0x09] = 0x33
+  // [0x0A] = 0x22
+  // [0x0B] = 0x11 (Byte más significativo)
+  auto rByte0{bus.read(addrWordBase + 0, neogba::arm7tdmi::MemoryBlockLength::BYTE)};
+  auto rByte1{bus.read(addrWordBase + 1, neogba::arm7tdmi::MemoryBlockLength::BYTE)};
+  auto rByte2{bus.read(addrWordBase + 2, neogba::arm7tdmi::MemoryBlockLength::BYTE)};
+  auto rByte3{bus.read(addrWordBase + 3, neogba::arm7tdmi::MemoryBlockLength::BYTE)};
+
+  // Assert
+  EXPECT_EQ(valWord, rWordAligned);
+  EXPECT_EQ(valWord, rWordUnaligned);
+  EXPECT_EQ(0x44, rByte0);
+  EXPECT_EQ(0x33, rByte1);
+  EXPECT_EQ(0x22, rByte2);
+  EXPECT_EQ(0x11, rByte3);
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
