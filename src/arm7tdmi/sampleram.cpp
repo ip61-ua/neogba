@@ -8,11 +8,13 @@ using namespace neogba::arm7tdmi::samples;
 bool SampleRAM::attached(u32 baseAddr) {
   if (!used1) {
     base1 = baseAddr;
+    used1 = true;
     return true;
   }
 
   if (!used2) {
     base2 = baseAddr;
+    used2 = true;
     return true;
   }
 
@@ -28,7 +30,7 @@ bool SampleRAM::detached() {
 u32 SampleRAM::read(u32 addr, MemoryBlockLength len) const {
   auto offset = busProperties.getAddrOffset(addr);
 
-  if (offset > nBytes)
+  if (offset + len / 8 > nBytes)
     return 0;
 
   /*
@@ -38,15 +40,21 @@ u32 SampleRAM::read(u32 addr, MemoryBlockLength len) const {
   addr & mask  = 0x 00 12 23 43
  */
 
+  auto& m = memoryBytes;
+
   switch (len) {
   case BYTE: {
-    return memoryBytes[offset];
+    return m[offset];
   }
 
   case HALFWORD: {
+    offset = offset & ~0b01;
+    return (m[offset + 1] << 8) | m[offset];
   }
 
   case WORD: {
+    offset = offset & ~0b11;
+    return (m[offset + 3] << 24) | (m[offset + 2] << 16) | (m[offset + 1] << 8) | m[offset];
   }
   }
 
@@ -54,8 +62,34 @@ u32 SampleRAM::read(u32 addr, MemoryBlockLength len) const {
 }
 
 void SampleRAM::write(u32 addr, u32 val, MemoryBlockLength len) {
-  addr &= (nBytes - 1);
+  auto offset = busProperties.getAddrOffset(addr);
 
-  if (len == BYTE)
-    memoryBytes[addr] = val;
+  if (offset + len / 8 > nBytes)
+    return;
+
+  auto& m = memoryBytes;
+
+  switch (len) {
+
+  case BYTE:
+    m[offset] = val;
+    break;
+
+  case HALFWORD:
+    offset = offset & ~0b01;
+    m[offset] = val;
+    m[offset + 1] = val >> 8;
+    break;
+
+  case WORD:
+    offset = offset & ~0b11;
+    m[offset] = val;
+    m[offset + 1] = val >> 8;
+    m[offset + 2] = val >> 16;
+    m[offset + 3] = val >> 24;
+    break;
+
+  default:
+    break;
+  }
 };

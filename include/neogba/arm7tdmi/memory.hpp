@@ -86,8 +86,8 @@ public:
 
 protected:
   virtual bool attached(u32 baseAddr) = 0;
-  bool detached() {
-    return false;
+  virtual bool detached() {
+    return true;
   };
 
   friend class MemoryBus;

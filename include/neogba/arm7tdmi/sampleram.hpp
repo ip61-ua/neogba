@@ -9,7 +9,7 @@ private:
 
 protected:
   bool attached(u32 baseAddr) override;
-  bool detached();
+  bool detached() override;
 
 public:
   inline SampleRAM(u32 nBytes) : IMemory(nBytes, true) {

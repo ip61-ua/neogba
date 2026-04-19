@@ -25,7 +25,7 @@ bool MemoryBus::attachMemory(u32 addr, IMemory* memory) {
 bool MemoryBus::detachMemory(u32 addr) {
   auto index = properties.getAddrIndex(addr);
 
-  if (!isFreeIndex(index))
+  if (isFreeIndex(index))
     return false;
 
   auto& m = memoryMap[index];
