@@ -52,13 +52,12 @@ En cuanto a la implementación del bus de memoria, la responsabilidad del mismo 
 - Interacción entre CPU y la memoria.
 - Direccionamiento a la memoria deseada a acceder. 
 - Obtención de propiedades del bus de memoria a las memorias agregadas.
-- El acceso a direcciones sin asignar por.
+- El acceso a direcciones sin asignar.
 - Memorias espejas.
 
 Esto lo conseguimos proporcionando las propiedades del bus a las memorias cuando son añadidas. Para el ejemplo hay una memoria RAM de ejemplo que en los test se utiliza como memoria espeja.
 
 # Referencias
 
-
-
-
+https://documentation-service.arm.com/static/5f8dacc8f86e16515cdb865a
+https://documentation-service.arm.com/static/5e8e1323fd977155116a3129
