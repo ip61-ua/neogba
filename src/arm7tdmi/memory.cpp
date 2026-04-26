@@ -3,7 +3,7 @@
 using namespace neogba;
 using namespace neogba::arm7tdmi;
 
-bool MemoryBus::attachMemory(u32 addr, IMemory* memory) {
+bool MemoryBus::attachMemory(u32 addr, std::shared_ptr<IMemory> memory) {
   auto index = properties.getAddrIndex(addr);
 
   if (!isFreeIndex(index))

@@ -2,6 +2,7 @@
 #include "neogba/arm7tdmi/registers.hpp"
 #include "neogba/arm7tdmi/sampleram.hpp"
 #include <gtest/gtest.h>
+#include <memory>
 
 TEST(BasicTest, HelloWorld) {
   EXPECT_EQ(1, 1);
@@ -62,7 +63,7 @@ TEST(SampleRAMTest, StoreLoadByteOperations) {
   const neogba::u32 s{256}, base{0x08000000}, addr1{0x08000001}, addr2{0x08000002}, w1{123}, w2{77};
 
   auto bus{neogba::arm7tdmi::MemoryBus()};
-  auto* mem{new neogba::arm7tdmi::samples::SampleRAM(s)};
+  auto mem{std::make_shared<neogba::arm7tdmi::samples::SampleRAM>(s)};
   auto mode{neogba::arm7tdmi::MemoryBlockLength::BYTE};
 
   // Act
@@ -105,7 +106,7 @@ TEST(SampleRAMTest, StoreLoadMultiByteOperations) {
   const neogba::u32 addrHalf{0x08000002}, addrWord{0x08000004};
   const neogba::u32 valHalf{0xBEEF}, valWord{0xDEADBEEF};
   auto bus{neogba::arm7tdmi::MemoryBus()};
-  auto* mem{new neogba::arm7tdmi::samples::SampleRAM(s)};
+  auto mem{std::make_shared<neogba::arm7tdmi::samples::SampleRAM>(s)};
   auto modeHalf{neogba::arm7tdmi::MemoryBlockLength::HALFWORD};
   auto modeWord{neogba::arm7tdmi::MemoryBlockLength::WORD};
 
@@ -131,7 +132,7 @@ TEST(SampleRAMTest, AlignmentAndLittleEndianValidation) {
   const neogba::u32 addrWordUnaligned{0x0800000B}; // Sin alinear -> 0x08000008
   const neogba::u32 valWord{0x11223344};           // Sin alinear
   auto bus{neogba::arm7tdmi::MemoryBus()};
-  auto* mem{new neogba::arm7tdmi::samples::SampleRAM(s)};
+  auto mem{std::make_shared<neogba::arm7tdmi::samples::SampleRAM>(s)};
 
   bus.attachMemory(base, mem);
 

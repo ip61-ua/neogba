@@ -96,12 +96,12 @@ protected:
 class MemoryBus {
 protected:
   const MemoryBusProperties properties;
-  std::unique_ptr<IMemory*[]> memoryMap;
+  std::unique_ptr<std::shared_ptr<IMemory>[]> memoryMap;
 
 public:
   MemoryBus(const u32 offsetBitSize = K_gbaBlockOffsetMask)
       : properties(offsetBitSize),
-        memoryMap(std::make_unique<IMemory*[]>(properties.getNMaxIndex())) {};
+        memoryMap(std::make_unique<std::shared_ptr<IMemory>[]>(properties.getNMaxIndex())) {};
 
   inline bool isFreeIndex(u32 index) const {
     return index < properties.getNMaxIndex() && memoryMap[index] == nullptr;
@@ -109,7 +109,7 @@ public:
   inline MemoryBusProperties getProperties() const {
     return properties;
   }
-  bool attachMemory(u32 addr, IMemory* memory);
+  bool attachMemory(u32 addr, std::shared_ptr<IMemory> memory);
   bool detachMemory(u32 addr);
   u32 read(u32 addr, MemoryBlockLength len = WORD) const;
   bool write(u32 addr, u32 val, MemoryBlockLength len = WORD);
