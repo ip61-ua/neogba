@@ -140,70 +140,311 @@ struct SingleDataSwap {
   }
 };
 
-struct HalfwordDataTransRegister {
+struct HalfwordDataTransRegisterOffset {
+  bool p;
+  bool u;
+  bool w;
+  bool l;
+  u8 rn;
+  u8 rd;
+  u8 rm;
+
   ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e400ff0) == 0xb0;
   }
+
+  ARM_INSTRUCTION_EXTRACT(instruction, HalfwordDataTransRegisterOffset) {
+    return {.p = BIT_TO_BOOL(instruction, 24),
+            .u = BIT_TO_BOOL(instruction, 23),
+            .w = BIT_TO_BOOL(instruction, 21),
+            .l = BIT_TO_BOOL(instruction, 20),
+            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
+            .rd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
+            .rm = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
+  }
 };
 
-struct HalfwordDataTransImmediate {
+struct HalfwordDataTransImmediateOffset {
+  bool p;
+  bool u;
+  bool w;
+  bool l;
+  u8 rn;
+  u8 rd;
+  u8 offset;
+
   ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e4000f0) == 0x4000b0;
   }
+
+  ARM_INSTRUCTION_EXTRACT(instruction, HalfwordDataTransImmediateOffset) {
+    return {.p = BIT_TO_BOOL(instruction, 24),
+            .u = BIT_TO_BOOL(instruction, 23),
+            .w = BIT_TO_BOOL(instruction, 21),
+            .l = BIT_TO_BOOL(instruction, 20),
+            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
+            .rd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
+            .offset = static_cast<u8>((EXTRACT_BIT_MASK(instruction, u8, 8, 0xf) << 4) |
+                                      EXTRACT_BIT_MASK(instruction, u8, 0, 0xf))};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
+  }
 };
+
 struct SignedDataTrans {
+  bool p;
+  bool u;
+  bool b;
+  bool w;
+  bool l;
+  u8 rn;
+  u8 rd;
+  u8 addr_mode;
+  bool h;
+
   ARM_INSTRUCTION_IS(instruction) {
-    return (instruction & 0x0e0000f0) == 0xb0;
+    return (instruction & 0x0e0000d0) == 0xd0;
+  }
+
+  ARM_INSTRUCTION_EXTRACT(instruction, SignedDataTrans) {
+    return {.p = BIT_TO_BOOL(instruction, 24),
+            .u = BIT_TO_BOOL(instruction, 23),
+            .b = BIT_TO_BOOL(instruction, 22),
+            .w = BIT_TO_BOOL(instruction, 21),
+            .l = BIT_TO_BOOL(instruction, 20),
+            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
+            .rd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
+            .addr_mode = static_cast<u8>((EXTRACT_BIT_MASK(instruction, u8, 8, 0xf) << 4) |
+                                         EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)),
+            .h = BIT_TO_BOOL(instruction, 5)};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
   }
 };
-struct DataProcessing {
+
+struct DataProcessingPSRTrans {
+  u8 opcode;
+  bool s;
+  u8 rn;
+  u8 rd;
+  u16 operand2;
+
   ARM_INSTRUCTION_IS(instruction) {
-    return (instruction & 0x0e000000) == 0x2000000;
+    return (instruction & 0x0c000000) == 0;
+  }
+
+  ARM_INSTRUCTION_EXTRACT(instruction, DataProcessingPSRTrans) {
+    return {
+        .opcode = EXTRACT_BIT_MASK(instruction, u8, 21, 0xf),
+        .s = BIT_TO_BOOL(instruction, 20),
+        .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
+        .rd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
+        .operand2 = EXTRACT_BIT_MASK(instruction, u16, 0, 0xfff),
+    };
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
   }
 };
+
 struct LoadStoreRegisterUnsigned {
+  bool i;
+  bool p;
+  bool u;
+  bool b;
+  bool w;
+  bool l;
+  u8 rn;
+  u8 rd;
+  u16 addr_mode;
+
   ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0c000000) == 0x4000000;
   }
+
+  ARM_INSTRUCTION_EXTRACT(instruction, LoadStoreRegisterUnsigned) {
+    return {.i = BIT_TO_BOOL(instruction, 25),
+            .p = BIT_TO_BOOL(instruction, 24),
+            .u = BIT_TO_BOOL(instruction, 23),
+            .b = BIT_TO_BOOL(instruction, 22),
+            .w = BIT_TO_BOOL(instruction, 21),
+            .l = BIT_TO_BOOL(instruction, 20),
+            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
+            .rd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
+            .addr_mode = EXTRACT_BIT_MASK(instruction, u16, 0, 0xfff)};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
+  }
 };
+
 struct Undefined {
   ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e000010) == 0x6000010;
   }
-};
-struct BlockDataTrans {
-  ARM_INSTRUCTION_IS(instruction) {
-    return (instruction & 0x0e400000) == 0x6000010;
+
+  ARM_INSTRUCTION_EXTRACT(unused, Undefined) {
+    return {};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
   }
 };
+
+struct BlockDataTrans {
+  bool p;
+  bool u;
+  bool w;
+  bool l;
+  u8 rn;
+  u16 register_list;
+
+  ARM_INSTRUCTION_IS(instruction) {
+    return (instruction & 0x0e400000) == 0x8000000;
+  }
+
+  ARM_INSTRUCTION_EXTRACT(instruction, BlockDataTrans) {
+    return {.p = BIT_TO_BOOL(instruction, 24),
+            .u = BIT_TO_BOOL(instruction, 23),
+            .w = BIT_TO_BOOL(instruction, 21),
+            .l = BIT_TO_BOOL(instruction, 20),
+            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
+            .register_list = EXTRACT_BIT_MASK(instruction, u16, 0, 0xffff)};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
+  }
+};
+
 struct Branch {
+  bool l;
+  u32 offset;
+
   ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e000000) == 0xa000000;
   }
-};
-struct BranchAndLink {
-  ARM_INSTRUCTION_IS(instruction) {
-    return (instruction & 0x01000000) != 0;
+
+  ARM_INSTRUCTION_EXTRACT(instruction, Branch) {
+    return {.l = BIT_TO_BOOL(instruction, 24),
+            .offset = EXTRACT_BIT_MASK(instruction, u32, 0, 0xffffff)};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
   }
 };
+
 struct CoprocDataTrans {
+  bool p;
+  bool u;
+  bool n;
+  bool w;
+  bool l;
+  u8 rn;
+  u8 crd;
+  u8 cp_sharp;
+  u8 offset;
+
   ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e000000) == 0xc000000;
   }
+
+  ARM_INSTRUCTION_EXTRACT(instruction, CoprocDataTrans) {
+    return {.p = BIT_TO_BOOL(instruction, 24),
+            .u = BIT_TO_BOOL(instruction, 23),
+            .n = BIT_TO_BOOL(instruction, 22),
+            .w = BIT_TO_BOOL(instruction, 21),
+            .l = BIT_TO_BOOL(instruction, 20),
+            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
+            .crd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
+            .cp_sharp = EXTRACT_BIT_MASK(instruction, u8, 8, 0xf),
+            .offset = EXTRACT_BIT_MASK(instruction, u8, 0, 0xff)};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
+  }
 };
-struct CoprocDataOp {
+
+struct CoprocDataOperation {
+  u8 cp_opc;
+  u8 crn;
+  u8 crd;
+  u8 cp_sharp;
+  u8 cp;
+  u8 crm;
+
   ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0f000010) == 0xe000000;
   }
+
+  ARM_INSTRUCTION_EXTRACT(instruction, CoprocDataOperation) {
+    return {.cp_opc = EXTRACT_BIT_MASK(instruction, u8, 20, 0xf),
+            .crn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
+            .crd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
+            .cp_sharp = EXTRACT_BIT_MASK(instruction, u8, 8, 0xf),
+            .cp = EXTRACT_BIT_MASK(instruction, u8, 5, 0x7),
+            .crm = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
+  }
 };
+
 struct CoprocRegisterTrans {
+  u8 cp_opc;
+  bool l;
+  u8 crn;
+  u8 crd;
+  u8 cp_sharp;
+  u8 cp;
+  u8 crm;
+
   ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0f000010) == 0xe000010;
   }
+
+  ARM_INSTRUCTION_EXTRACT(instruction, CoprocRegisterTrans) {
+    return {.cp_opc = EXTRACT_BIT_MASK(instruction, u8, 21, 0x7),
+            .l = BIT_TO_BOOL(instruction, 20),
+            .crn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
+            .crd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
+            .cp_sharp = EXTRACT_BIT_MASK(instruction, u8, 8, 0xf),
+            .cp = EXTRACT_BIT_MASK(instruction, u8, 5, 0x7),
+            .crm = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
+  }
 };
+
 struct SoftwareInterrupt {
+  u32 swi;
+
   ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0f000000) == 0xf000000;
+  }
+
+  ARM_INSTRUCTION_EXTRACT(instruction, SoftwareInterrupt) {
+    return {.swi = EXTRACT_BIT_MASK(instruction, u32, 0, 0xffffff)};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
   }
 };
 

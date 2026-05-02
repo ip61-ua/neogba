@@ -57,6 +57,8 @@ En cuanto a la implementación del bus de memoria, la responsabilidad del mismo 
 
 Esto lo conseguimos proporcionando las propiedades del bus a las memorias cuando son añadidas. Para el ejemplo hay una memoria RAM de ejemplo que en los test se utiliza como memoria espeja.
 
+
+
 # Referencias
 
 https://documentation-service.arm.com/static/5f8dacc8f86e16515cdb865a
