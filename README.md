@@ -44,7 +44,7 @@ El siguiente paso fue el diseño del bus de datos. Y esta fue una cuestión algo
 [ Índice ][  Desplazamiento  ]
 ```
 
-Bajo esta asunción, y del mismo modo como sucede con las máscaras de red para el direccionamiento IP, la parte izquierda de la dirección indica a que chip memoria nos referimos y el resto de la dirección es utilizada para direccionar a los contenidos alojados internamente de dicho chip. Podríamos haber previsto mayor flexibilidad al procesador con otras configuraciones más personalizables como ubicar el índice a la derecha, o repartido a lo largo de toda la dirección. Sin embargo, he creído no necesario manejar tal complejidad por las convenciones utilizadas en la GBA. De otro modo, tendríamos mayor throughtput (cuello de botella) evidente por añadir mayor personalización a nivel de estructura hardware en una GBA que no merece la pena considerar.
+Bajo esta asunción, y del mismo modo como sucede con las máscaras de red para el direccionamiento IP, la parte izquierda de la dirección indica a que chip memoria nos referimos y el resto de la dirección es utilizada para direccionar a los contenidos alojados internamente de dicho chip. Podríamos haber previsto mayor flexibilidad al procesador con otras configuraciones más personalizables como ubicar el índice a la derecha, o repartido a lo largo de toda la dirección. Sin embargo, he creído no necesario manejar tal complejidad por las convenciones utilizadas en la GBA. De otro modo, tendríamos mayor overhead (cuello de botella) evidente por añadir mayor personalización a nivel de estructura hardware en una GBA que no merece la pena considerar.
 
 En cuanto a la implementación del bus de memoria, la responsabilidad del mismo es permitir: 
 
@@ -57,7 +57,7 @@ En cuanto a la implementación del bus de memoria, la responsabilidad del mismo 
 
 Esto lo conseguimos proporcionando las propiedades del bus a las memorias cuando son añadidas. Para el ejemplo hay una memoria RAM de ejemplo que en los test se utiliza como memoria espeja.
 
-
+El próximo paso tomado en el desarrollo del emulador es la implementación de las instrucciones. Esta es una parte compleja siendo fieles a la documentación encontrada. La primera solución escogida consiste en escribir directamente todas las operaciones y máscaras necesarias tal cual en el código de la función encargada de ejecución de la CPU. Este es un acercamiento naive e ingenuo puesto que supone en la memorización de números mágicos y una documentación bien sincronizada. Si bien este contratos pueden adaptarse, resulta frágil. Es a raíz de este motivo donde surge la idea de segmentar esta implementación según el tipo de instrucción. Esto nos proporcionaría mayor especificación y delegación de tareas. Ahora podríamos preguntar si la ejecución es de tal tipo u otro directamente a una macro que nos dijera esto. No obstante, mi pereza de escribir código demasiado repetitivo hizo reutilizar las macros de c con los espacios de nombres (no instanciables) y structs (instanciables con métodos estáticos y constructores).
 
 # Referencias
 
