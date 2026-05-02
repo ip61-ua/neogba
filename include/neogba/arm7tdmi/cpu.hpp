@@ -2,7 +2,9 @@
 #include "neogba/arm7tdmi/memory.hpp"
 #include "neogba/arm7tdmi/registers.hpp"
 #include "neogba/types.hpp"
+#include <format>
 #include <memory>
+#include <string>
 
 namespace neogba::arm7tdmi {
 
@@ -44,6 +46,112 @@ enum DataProcessingOpcode : u8 {
   MVN = 0b1111, // MVN Move Not Rd := NOT shifter_operand (no first operand)
 };
 
+namespace ArmInstruction {
+
+struct MultiplyAccumulate {
+  bool a;
+  bool s;
+  u8 rd;
+  u8 rn;
+  u8 rs;
+  u8 rm;
+
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0fc00090) == 0x90;
+  }
+
+  [[nodiscard]] constexpr static MultiplyAccumulate extract(u32 instruction) {
+    return {.a = (instruction & 0x00200000) != 0,
+            .s = (instruction & 0x00100000) != 0,
+            .rd = static_cast<u8>((instruction >> 16) & 0xF),
+            .rn = static_cast<u8>((instruction >> 12) & 0xF),
+            .rs = static_cast<u8>((instruction >> 8) & 0xF),
+            .rm = static_cast<u8>(instruction & 0xf)};
+  }
+
+  [[nodiscard]] std::string toAsm() const {
+    return "Not implemented yet";
+  }
+};
+
+struct MultiplyAccumulateLong {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0f800090) == 0x800090;
+  }
+};
+struct BranchAndExchange {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0ffffff0) == 0x012fff10;
+  }
+};
+struct HalfwordDataTransRegister {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0e400ff0) == 0xb0;
+  }
+};
+struct HalfwordDataTransImmediate {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0e4000f0) == 0x4000b0;
+  }
+};
+struct SignedDataTrans {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0e0000f0) == 0xd0;
+  }
+};
+struct DataProcessing {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0e000000) == 0x2000000;
+  }
+};
+struct LoadStoreRegisterUnsigned {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0c000000) == 0x4000000;
+  }
+};
+struct Undefined {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0e000010) == 0x6000010;
+  }
+};
+struct BlockDataTrans {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0e400000) == 0x6000010;
+  }
+};
+struct Branch {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0e000000) == 0xa000000;
+  }
+};
+struct BranchAndLink {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x01000000) != 0;
+  }
+};
+struct CoprocDataTrans {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0e000000) == 0xc000000;
+  }
+};
+struct CoprocDataOp {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0f000010) == 0xe000000;
+  }
+};
+struct CoprocRegisterTrans {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0f000010) == 0xe000010;
+  }
+};
+struct SoftwareInterrupt {
+  [[nodiscard]] constexpr static bool is(u32 instruction) {
+    return (instruction & 0x0f000000) == 0xf000000;
+  }
+};
+
+}; // namespace ArmInstruction
+
 class CPU {
   Registers registers;
   std::shared_ptr<MemoryBus> bus;
@@ -52,7 +160,7 @@ class CPU {
 public:
   CPU() : bus(nullptr) {};
 
-  inline bool isMemoryBusDefined() const {
+  [[nodiscard]] inline bool isMemoryBusDefined() const {
     return bus != nullptr;
   }
   inline void useMemoryBus(std::shared_ptr<MemoryBus> bus) {

@@ -1,5 +1,4 @@
 #include "neogba/arm7tdmi/cpu.hpp"
-#include "neogba/arm7tdmi/registers.hpp"
 
 using namespace neogba;
 using namespace neogba::arm7tdmi;
@@ -9,8 +8,8 @@ u32 CPU::fetch() {
 }
 
 void CPU::execute() {
-  if (currentInstruction & 0x0E000000) { // isBranchInstruction
-    if (currentInstruction & 0x01000000) // isBranchAndLink
+  if (isBranchIns(currentInstruction)) {
+    if (isBranchAndLinkIns(currentInstruction))
       registers.write(14, registers.read(RegistersIndex::pc) - 4);
 
     registers.write(RegistersIndex::pc,
@@ -18,10 +17,12 @@ void CPU::execute() {
     return;
   }
 
-  if ((currentInstruction & 0x0C000000) == 0) { // isDataProcessingInstruction
-    bool i = currentInstruction & 0x02000000, s = currentInstruction & 0x100000;
-    u32 opcode = (currentInstruction & 0x01E00000) >> 24, Rn = currentInstruction & 0xF0000 >> 16,
-        Rd = currentInstruction & 0xF000 >> 12;
+  if (isDataProcessingIns(currentInstruction)) {
+    bool i = currentInstruction & 0x02000000;
+    bool s = currentInstruction & 0x100000;
+    u32 opcode = (currentInstruction & 0x01E00000) >> 24;
+    u32 Rn = currentInstruction & 0xF0000 >> 16;
+    u32 Rd = currentInstruction & 0xF000 >> 12;
 
     /*
       <opcode1>{<cond>}{S} <Rd>, <shifter_operand>

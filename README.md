@@ -61,3 +61,4 @@ Esto lo conseguimos proporcionando las propiedades del bus a las memorias cuando
 
 https://documentation-service.arm.com/static/5f8dacc8f86e16515cdb865a
 https://documentation-service.arm.com/static/5e8e1323fd977155116a3129
+https://users.ece.utexas.edu/~mcdermot/arch/articles/ARM/arm7tdmi_instruction_set_reference.pdf
