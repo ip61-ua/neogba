@@ -56,96 +56,153 @@ struct MultiplyAccumulate {
   u8 rs;
   u8 rm;
 
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0fc00090) == 0x90;
   }
 
-  [[nodiscard]] constexpr static MultiplyAccumulate extract(u32 instruction) {
-    return {.a = (instruction & 0x00200000) != 0,
-            .s = (instruction & 0x00100000) != 0,
-            .rd = static_cast<u8>((instruction >> 16) & 0xF),
-            .rn = static_cast<u8>((instruction >> 12) & 0xF),
-            .rs = static_cast<u8>((instruction >> 8) & 0xF),
-            .rm = static_cast<u8>(instruction & 0xf)};
+  ARM_INSTRUCTION_EXTRACT(instruction, MultiplyAccumulate) {
+    return {.a = BIT_TO_BOOL(instruction, 21),
+            .s = BIT_TO_BOOL(instruction, 20),
+            .rd = EXTRACT_BIT_MASK(instruction, u8, 16, 0xF),
+            .rn = EXTRACT_BIT_MASK(instruction, u8, 12, 0xF),
+            .rs = EXTRACT_BIT_MASK(instruction, u8, 8, 0xF),
+            .rm = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
   }
 
-  [[nodiscard]] std::string toAsm() const {
+  ARM_INSTRUCTION_TOASM {
     return "Not implemented yet";
   }
 };
 
 struct MultiplyAccumulateLong {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  bool u;
+  bool a;
+  bool s;
+  u8 rd_msw;
+  u8 rd_lsw;
+  u8 rn;
+  u8 rm;
+
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0f800090) == 0x800090;
   }
-};
-struct BranchAndExchange {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
-    return (instruction & 0x0ffffff0) == 0x012fff10;
+
+  ARM_INSTRUCTION_EXTRACT(instruction, MultiplyAccumulateLong) {
+    return {.u = BIT_TO_BOOL(instruction, 22),
+            .a = BIT_TO_BOOL(instruction, 21),
+            .s = BIT_TO_BOOL(instruction, 20),
+            .rd_msw = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
+            .rd_lsw = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
+            .rn = EXTRACT_BIT_MASK(instruction, u8, 8, 0xf),
+            .rm = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
   }
 };
+
+struct BranchAndExchange {
+  u8 rn;
+
+  ARM_INSTRUCTION_IS(instruction) {
+    return (instruction & 0x0ffffff0) == 0x012fff10;
+  }
+
+  ARM_INSTRUCTION_EXTRACT(instruction, BranchAndExchange) {
+    return {.rn = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
+  }
+};
+
+struct SingleDataSwap {
+  bool b;
+  u8 rn;
+  u8 rd;
+  u8 rm;
+
+  ARM_INSTRUCTION_IS(instruction) {
+    return (instruction & 0x0fb00ff0) == 0x1000090;
+  }
+
+  ARM_INSTRUCTION_EXTRACT(instruction, SingleDataSwap) {
+    return {.b = BIT_TO_BOOL(instruction, 22),
+            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
+            .rd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
+            .rm = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+  }
+
+  ARM_INSTRUCTION_TOASM {
+    return "Not implemented yet";
+  }
+};
+
 struct HalfwordDataTransRegister {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e400ff0) == 0xb0;
   }
 };
+
 struct HalfwordDataTransImmediate {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e4000f0) == 0x4000b0;
   }
 };
 struct SignedDataTrans {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
-    return (instruction & 0x0e0000f0) == 0xd0;
+  ARM_INSTRUCTION_IS(instruction) {
+    return (instruction & 0x0e0000f0) == 0xb0;
   }
 };
 struct DataProcessing {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e000000) == 0x2000000;
   }
 };
 struct LoadStoreRegisterUnsigned {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0c000000) == 0x4000000;
   }
 };
 struct Undefined {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e000010) == 0x6000010;
   }
 };
 struct BlockDataTrans {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e400000) == 0x6000010;
   }
 };
 struct Branch {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e000000) == 0xa000000;
   }
 };
 struct BranchAndLink {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x01000000) != 0;
   }
 };
 struct CoprocDataTrans {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e000000) == 0xc000000;
   }
 };
 struct CoprocDataOp {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0f000010) == 0xe000000;
   }
 };
 struct CoprocRegisterTrans {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0f000010) == 0xe000010;
   }
 };
 struct SoftwareInterrupt {
-  [[nodiscard]] constexpr static bool is(u32 instruction) {
+  ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0f000000) == 0xf000000;
   }
 };
