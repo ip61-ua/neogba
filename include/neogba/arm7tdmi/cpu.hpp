@@ -8,7 +8,11 @@
 
 namespace neogba::arm7tdmi {
 
-enum Cond : u8 {
+namespace ArmInstruction {
+
+namespace Condition {
+
+enum ConditionCode : u8 {
   EQ = 0b0000, // 0000 = EQ - Z set (equal)
   NE = 0b0001, // 0001 = NE - Z clear (not equal)
   HS = 0b0010, // 0010 = HS / CS - C set (unsigned higher or same)
@@ -27,7 +31,48 @@ enum Cond : u8 {
   NV = 0b1111, // 1111 = NV - reserved.
 };
 
-namespace ArmInstruction {
+[[nodiscard]] constexpr ConditionCode getCode(u32 instruction) {
+  return ConditionCode((instruction & 0xf0000000) >> (4 * 7));
+}
+
+[[nodiscard]] constexpr bool checkCode(Registers const& registers, ConditionCode code) {
+  switch (code) {
+  case EQ:
+    return registers.isZ();
+  case NE:
+    return !registers.isZ();
+  case HS:
+    return registers.isC();
+  case LO:
+    return !registers.isC();
+  case MI:
+    return registers.isN();
+  case PL:
+    return !registers.isN();
+  case VS:
+    return registers.isV();
+  case VC:
+    return !registers.isV();
+  case HI:
+    return registers.isC() && !registers.isZ();
+  case LS:
+    return !registers.isC() || registers.isZ();
+  case GE:
+    return registers.isN() == registers.isV();
+  case LT:
+    return registers.isN() != registers.isV();
+  case GT:
+    return !registers.isZ() && (registers.isN() == registers.isV());
+  case LE:
+    return registers.isZ() || (registers.isN() != registers.isV());
+  case AL:
+    return true;
+  case NV:
+    return true;
+  }
+}
+
+}; // namespace Condition
 
 struct MultiplyAccumulate {
   bool a;

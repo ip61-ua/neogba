@@ -86,11 +86,11 @@ private:
   }
 
 public:
-  inline u32 read(int reg) const {
+  inline u32 read(u8 reg) const {
     return regs[mapCurrent[reg]];
   }
 
-  inline void write(int reg, u32 val) {
+  inline void write(u8 reg, u32 val) {
     regs[mapCurrent[reg]] = val;
   }
 
