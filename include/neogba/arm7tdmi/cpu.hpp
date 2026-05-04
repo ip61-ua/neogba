@@ -334,16 +334,10 @@ struct LoadStoreRegisterUnsigned {
 };
 
 struct Undefined {
+  std::string reason;
+
   ARM_INSTRUCTION_IS(instruction) {
     return (instruction & 0x0e000010) == 0x6000010;
-  }
-
-  ARM_INSTRUCTION_EXTRACT(unused, Undefined) {
-    return {};
-  }
-
-  ARM_INSTRUCTION_TOASM {
-    return "Not implemented yet";
   }
 };
 
@@ -498,10 +492,10 @@ struct SoftwareInterrupt {
 class CPU {
   Registers registers;
   std::shared_ptr<MemoryBus> bus;
-  u32 currentInstruction;
+  u32 fetchedInstruction;
 
 public:
-  CPU() : bus(nullptr) {};
+  CPU(Registers inyectableRegisters = {}) : registers{inyectableRegisters}, bus{nullptr} {};
 
   [[nodiscard]] inline bool isMemoryBusDefined() const {
     return bus != nullptr;
@@ -511,6 +505,8 @@ public:
   }
 
   u32 fetch();
+  void executeArm(u32 instruction);
+  void executeThumb(u32 instruction);
   void execute();
   void step();
 };

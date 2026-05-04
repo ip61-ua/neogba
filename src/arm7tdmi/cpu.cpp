@@ -8,11 +8,11 @@ u32 CPU::fetch() {
   return 0;
 }
 
-void CPU::execute() {
+void CPU::executeArm(u32 instruction) {
   using namespace ArmInstruction;
 
-  if (Branch::is(currentInstruction)) {
-    Branch info = Branch::extract(currentInstruction);
+  if (Branch::is(instruction)) {
+    Branch info = Branch::extract(instruction);
 
     if (info.l)
       registers.write(14, registers.read(RegistersIndex::pc) - 4);
@@ -21,8 +21,8 @@ void CPU::execute() {
     return;
   }
 
-  if (DataProcessingPSRTrans::is(currentInstruction)) {
-    DataProcessingPSRTrans info = DataProcessingPSRTrans::extract(currentInstruction);
+  if (DataProcessingPSRTrans::is(instruction)) {
+    DataProcessingPSRTrans info = DataProcessingPSRTrans::extract(instruction);
 
     switch (info.opcode) {
     case DataProcessingPSRTrans::AND:
@@ -31,11 +31,10 @@ void CPU::execute() {
     case DataProcessingPSRTrans::RSB:
     case DataProcessingPSRTrans::ADD:
     case DataProcessingPSRTrans::ADC: {
-      u32 op1 = registers.read(info.rn);
-      u32 op2 = info.operand2;
-      u32 c = registers.isC() ? 1 : 0;
+      // Addition with carry
 
-      u64 result64 = static_cast<uint64_t>(op1) + static_cast<uint64_t>(op2) + c;
+      u32 op1{registers.read(info.rn)}, op2{info.operand2};
+      u64 result64 = static_cast<u64>(op1) + static_cast<u64>(op2) + (registers.isC() ? 1 : 0);
 
       u32 result = static_cast<u32>(result64);
       registers.write(info.rd, result);
@@ -45,11 +44,11 @@ void CPU::execute() {
         (BIT_TO_BOOL(result, 31)) ? registers.setN() : registers.clearN();
         (result64 > 0xffffffff) ? registers.setC() : registers.clearC();
 
-        bool op1sign = BIT_TO_BOOL(op1, 31);
-        bool op2sign = BIT_TO_BOOL(op2, 31);
-        bool ressign = BIT_TO_BOOL(result, 31);
+        bool signOp1 = BIT_TO_BOOL(op1, 31);
+        bool signOp2 = BIT_TO_BOOL(op2, 31);
+        bool signRes = BIT_TO_BOOL(result, 31);
 
-        ((op1sign == op2sign) && (op1sign != ressign)) ? registers.setV() : registers.clearV();
+        ((signOp1 == signOp2) && (signOp1 != signRes)) ? registers.setV() : registers.clearV();
       }
 
       break;
