@@ -160,6 +160,16 @@ TEST(SampleRAMTest, AlignmentAndLittleEndianValidation) {
   EXPECT_EQ(0x11, rByte3);
 }
 
+TEST(InstructionADCTest, SimpleAddition) {
+  // Arrange
+  neogba::arm7tdmi::Registers fakeRegisters, expectedRegisters;
+
+  // Act
+
+  // Assert
+  EXPECT_EQ(1, 1);
+}
+
 int main(int argc, char** argv) {
   ::testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();

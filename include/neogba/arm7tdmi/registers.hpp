@@ -55,6 +55,7 @@ enum OperationModeBits : u32 {
 
 struct Registers {
 public:
+  static constexpr const auto totalRegisters{37};
   static constexpr u32 mapUser[17]{r0, r1,  r2,  r3,  r4,  r5,  r6, r7,  r8,
                                    r9, r10, r11, r12, r13, r14, pc, cpsr},
       mapFiq[18]{r0,     r1,      r2,      r3,      r4,      r5,      r6, r7,   r8_fiq,
@@ -72,7 +73,7 @@ public:
       MASK_V{0x10000000}, MASK_I{0x80}, MASK_F{0x40}, MASK_T{0x20}, MASK_M{0x1F};
 
 private:
-  u32 regs[37];
+  u32 regs[totalRegisters];
   const u32* mapCurrent = mapUser;
 
   inline void set(u32 mask, u32* dst) {
@@ -81,12 +82,15 @@ private:
   inline void clear(u32 mask, u32* dst) {
     *dst = ~mask & *dst;
   }
-  inline bool isSet(u32 mask, u32 dst) const {
+  [[nodiscard]] inline bool isSet(u32 mask, u32 dst) const {
     return mask & dst;
   }
 
 public:
-  inline u32 read(u8 reg) const {
+  inline Registers() {};
+  Registers(Registers const& registers);
+
+  [[nodiscard]] inline u32 read(u8 reg) const {
     return regs[mapCurrent[reg]];
   }
 
@@ -94,7 +98,7 @@ public:
     regs[mapCurrent[reg]] = val;
   }
 
-  inline u32 read(enum RegistersIndex idx) const {
+  [[nodiscard]] inline u32 read(enum RegistersIndex idx) const {
     return regs[idx];
   }
 
@@ -109,7 +113,7 @@ public:
   void setUnd();
   void setSvc();
 
-  inline bool isN() const {
+  [[nodiscard]] inline bool isN() const {
     return isSet(MASK_N, read(RegistersIndex::cpsr));
   }
   inline void setN() {
@@ -118,7 +122,7 @@ public:
   inline void clearN() {
     clear(MASK_N, &regs[RegistersIndex::cpsr]);
   }
-  inline bool isZ() const {
+  [[nodiscard]] inline bool isZ() const {
     return isSet(MASK_Z, read(RegistersIndex::cpsr));
   }
   inline void setZ() {
@@ -127,7 +131,7 @@ public:
   inline void clearZ() {
     clear(MASK_Z, &regs[RegistersIndex::cpsr]);
   }
-  inline bool isC() const {
+  [[nodiscard]] inline bool isC() const {
     return isSet(MASK_C, read(RegistersIndex::cpsr));
   }
   inline void setC() {
@@ -136,7 +140,7 @@ public:
   inline void clearC() {
     clear(MASK_C, &regs[RegistersIndex::cpsr]);
   }
-  inline bool isV() const {
+  [[nodiscard]] inline bool isV() const {
     return isSet(MASK_V, read(RegistersIndex::cpsr));
   }
   inline void setV() {
@@ -145,7 +149,7 @@ public:
   inline void clearV() {
     clear(MASK_V, &regs[RegistersIndex::cpsr]);
   }
-  inline bool isI() const {
+  [[nodiscard]] inline bool isI() const {
     return isSet(MASK_I, read(RegistersIndex::cpsr));
   }
   inline void setI() {
@@ -154,7 +158,7 @@ public:
   inline void clearI() {
     clear(MASK_I, &regs[RegistersIndex::cpsr]);
   }
-  inline bool isF() const {
+  [[nodiscard]] inline bool isF() const {
     return isSet(MASK_F, read(RegistersIndex::cpsr));
   }
   inline void setF() {
@@ -163,7 +167,7 @@ public:
   inline void clearF() {
     clear(MASK_F, &regs[RegistersIndex::cpsr]);
   }
-  inline bool isT() const {
+  [[nodiscard]] inline bool isT() const {
     return isSet(MASK_T, read(RegistersIndex::cpsr));
   }
   inline void setT() {
@@ -173,9 +177,13 @@ public:
     clear(MASK_T, &regs[RegistersIndex::cpsr]);
   }
 
-  inline OperationModeBits getOperationMode() {
+  [[nodiscard]] inline OperationModeBits getOperationMode() const {
     return OperationModeBits(regs[cpsr] & MASK_M);
   }
-};
 
+  [[nodiscard]] bool equals(Registers const& other) const;
+  [[nodiscard]] inline bool operator==(Registers const& other) const {
+    return equals(other);
+  }
+};
 } // namespace neogba::arm7tdmi

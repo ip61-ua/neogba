@@ -3,6 +3,12 @@
 using namespace neogba;
 using namespace neogba::arm7tdmi;
 
+Registers::Registers(Registers const& registers) {
+  for (u8 i = 0; i < totalRegisters; ++i) {
+    regs[i] = registers.regs[i];
+  }
+}
+
 void Registers::setUser() {
   mapCurrent = mapUser;
   clear(MASK_M, &regs[RegistersIndex::cpsr]);
@@ -32,4 +38,13 @@ void Registers::setSvc() {
   mapCurrent = mapSvc;
   clear(MASK_M, &regs[RegistersIndex::cpsr]);
   set(OperationModeBits::Svc, &regs[RegistersIndex::cpsr]);
+}
+
+bool Registers::equals(Registers const& other) const {
+  for (u8 i = 0; i < totalRegisters; ++i) {
+    if (other.regs[i] != regs[i])
+      return false;
+  }
+
+  return true;
 }
