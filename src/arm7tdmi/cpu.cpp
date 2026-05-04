@@ -4,11 +4,11 @@
 using namespace neogba;
 using namespace neogba::arm7tdmi;
 
-u32 CPU::fetch() {
+u32 Arm7tdmiCPU::fetch() {
   return 0;
 }
 
-void CPU::executeArm(u32 instruction) {
+void Arm7tdmiCPU::executeArm(u32 instruction) {
   using namespace ArmInstruction;
 
   if (Branch::is(instruction)) {
@@ -33,7 +33,7 @@ void CPU::executeArm(u32 instruction) {
     case DataProcessingPSRTrans::ADC: {
       // Addition with carry
 
-      u32 op1{registers.read(info.rn)}, op2{info.operand2};
+      u32 op1{registers.read(info.rn)}, op2{registers.read(info.operand2)};
       u64 result64 = static_cast<u64>(op1) + static_cast<u64>(op2) + (registers.isC() ? 1 : 0);
 
       u32 result = static_cast<u32>(result64);
@@ -77,4 +77,4 @@ void CPU::executeArm(u32 instruction) {
   */
 }
 
-void CPU::step() {}
+void Arm7tdmiCPU::step() {}

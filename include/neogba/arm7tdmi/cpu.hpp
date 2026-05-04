@@ -489,13 +489,13 @@ struct SoftwareInterrupt {
 
 }; // namespace ArmInstruction
 
-class CPU {
+class Arm7tdmiCPU {
   Registers registers;
   std::shared_ptr<MemoryBus> bus;
   u32 fetchedInstruction;
 
 public:
-  CPU(Registers inyectableRegisters = {}) : registers{inyectableRegisters}, bus{nullptr} {};
+  Arm7tdmiCPU(Registers inyectableRegisters = {}) : registers{inyectableRegisters}, bus{nullptr} {};
 
   [[nodiscard]] inline bool isMemoryBusDefined() const {
     return bus != nullptr;
@@ -504,6 +504,9 @@ public:
     this->bus = bus;
   }
 
+  const Registers getRegisters() const {
+    return registers;
+  };
   u32 fetch();
   void executeArm(u32 instruction);
   void executeThumb(u32 instruction);

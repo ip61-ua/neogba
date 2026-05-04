@@ -69,8 +69,8 @@ public:
       mapUnd[18]{r0, r1,  r2,  r3,  r4,      r5,      r6, r7,   r8,
                  r9, r10, r11, r12, r13_und, r14_und, pc, cpsr, spsr_und};
 
-  static constexpr u32 MASK_N{0x80000000}, MASK_Z{0x40000000}, MASK_C{0x20000000},
-      MASK_V{0x10000000}, MASK_I{0x80}, MASK_F{0x40}, MASK_T{0x20}, MASK_M{0x1F};
+  static constexpr u32 MASK_N{1U << 31}, MASK_Z{1U << 30}, MASK_C{1U << 29}, MASK_V{1U << 28},
+      MASK_I{1U << 7}, MASK_F{1U << 6}, MASK_T{1U << 5}, MASK_M{0x1F};
 
 private:
   u32 regs[totalRegisters];
@@ -82,12 +82,12 @@ private:
   inline void clear(u32 mask, u32* dst) {
     *dst = ~mask & *dst;
   }
-  [[nodiscard]] inline bool isSet(u32 mask, u32 dst) const {
-    return mask & dst;
+  inline bool isSet(u32 mask, u32 val) const {
+    return (mask & val) != 0;
   }
 
 public:
-  inline Registers() {};
+  Registers();
   Registers(Registers const& registers);
 
   [[nodiscard]] inline u32 read(u8 reg) const {

@@ -1,3 +1,4 @@
+#include "neogba/arm7tdmi/cpu.hpp"
 #include "neogba/arm7tdmi/memory.hpp"
 #include "neogba/arm7tdmi/registers.hpp"
 #include "neogba/arm7tdmi/sampleram.hpp"
@@ -44,7 +45,7 @@ TEST(RegistersTest, RegistersBitOperationsAndGetOperationMode) {
   using namespace neogba::arm7tdmi;
   using namespace neogba::arm7tdmi::samples;
 
-  neogba::arm7tdmi::Registers r;
+  Registers r;
 
   // Act
   bool result1{r.isN()};
@@ -181,14 +182,27 @@ TEST(SampleRAMTest, AlignmentAndLittleEndianValidation) {
 
 TEST(InstructionADCTest, SimpleAddition) {
   // Arrange
+  using namespace neogba;
   using namespace neogba::arm7tdmi;
 
   Registers fakeRegisters;
+  fakeRegisters.write(RegistersIndex::r4, 0x1);
+  fakeRegisters.write(RegistersIndex::r2, 0x2);
+  fakeRegisters.write(RegistersIndex::r1, 0x69);
+
+  Registers expectedRegisters(fakeRegisters);
+  expectedRegisters.write(RegistersIndex::r1, 0x3);
+
+  u32 instruction = 0xe0b21004; // adcs r1, r2, r4 // r1 <- r2 + r4 + c
+
+  auto cpu = Arm7tdmiCPU(fakeRegisters);
 
   // Act
+  cpu.executeArm(instruction);
 
   // Assert
-  EXPECT_EQ(1, 1);
+  Registers finalRegisters = cpu.getRegisters();
+  EXPECT_TRUE(expectedRegisters.equals(finalRegisters));
 }
 
 int main(int argc, char** argv) {

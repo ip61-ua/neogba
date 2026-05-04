@@ -3,10 +3,14 @@
 using namespace neogba;
 using namespace neogba::arm7tdmi;
 
+Registers::Registers() {
+  for (u8 i = 0; i < totalRegisters; ++i)
+    regs[i] = 0;
+}
+
 Registers::Registers(Registers const& registers) {
-  for (u8 i = 0; i < totalRegisters; ++i) {
+  for (u8 i = 0; i < totalRegisters; ++i)
     regs[i] = registers.regs[i];
-  }
 }
 
 void Registers::setUser() {
@@ -41,10 +45,9 @@ void Registers::setSvc() {
 }
 
 bool Registers::equals(Registers const& other) const {
-  for (u8 i = 0; i < totalRegisters; ++i) {
+  for (u8 i = 0; i < totalRegisters; ++i)
     if (other.regs[i] != regs[i])
       return false;
-  }
 
   return true;
 }
