@@ -1,4 +1,5 @@
 #include "neogba/arm7tdmi/cpu.hpp"
+#include "neogba/arm7tdmi/isa-arm.hpp"
 #include "neogba/types.hpp"
 
 using namespace neogba;
@@ -9,7 +10,7 @@ u32 Arm7tdmiCPU::fetch() {
 }
 
 void Arm7tdmiCPU::executeArm(u32 instruction) {
-  using namespace ArmInstruction;
+  using namespace neogba::arm7tdmi::isaArm;
 
   if (Branch::is(instruction)) {
     Branch info = Branch::extract(instruction);
