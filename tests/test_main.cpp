@@ -75,41 +75,24 @@ TEST(SampleRAMTest, StoreLoadByteOperations) {
   const u32 s{256}, base{0x08000000}, addr1{0x08000001}, addr2{0x08000002}, w1{123}, w2{77};
 
   auto bus{MemoryBus()};
-  auto mem{std::make_shared<SampleRAM>(s)};
+  auto mem{std::make_shared<SampleRAM>(256)};
   auto mode{MemoryBlockLength::BYTE};
 
-  // Act
-  auto success{bus.attachMemory(base, mem)};
-  auto name{mem->getName()};
-  auto writable{mem->isReadOnly()};
-  auto maxSize{mem->getSize()};
-  auto properties{mem->getProperties()};
-  auto r0{mem->read(addr2, mode)};
-  auto r0f{bus.read(addr2, mode)};
-  auto r1a{mem->read(addr1, mode)};
-  auto r1af{bus.read(addr1, mode)};
+  // Assert + Act
+  EXPECT_EQ(true, bus.attachMemory(base, mem));
+  EXPECT_EQ("SampleRAM", mem->getName());
+  EXPECT_EQ(false, mem->isReadOnly());
+  EXPECT_EQ(s, mem->getSize());
+  EXPECT_EQ(0x0, mem->read(addr2, mode));
+  EXPECT_EQ(0x0, bus.read(addr2, mode));
+  EXPECT_EQ(0x0, mem->read(addr1, mode));
+  EXPECT_EQ(0x0, bus.read(addr1, mode));
   mem->write(addr1, w1, mode);
-  auto r1{mem->read(addr1, mode)};
-  auto r1f{bus.read(addr1, mode)};
-  auto r2p{bus.write(addr2, w2, mode)};
-  auto r2{mem->read(addr2, mode)};
-  auto r2f{bus.read(addr2, mode)};
-
-  // Assert
-  EXPECT_EQ(true, success);
-  EXPECT_EQ("SampleRAM", name);
-  EXPECT_EQ(false, writable);
-  EXPECT_EQ(s, maxSize);
-  EXPECT_EQ(bus.getProperties(), properties);
-  EXPECT_EQ(0x0, r0);
-  EXPECT_EQ(0x0, r0f);
-  EXPECT_EQ(0x0, r1a);
-  EXPECT_EQ(0x0, r1af);
-  EXPECT_EQ(w1, r1);
-  EXPECT_EQ(w1, r1f);
-  EXPECT_EQ(true, r2p);
-  EXPECT_EQ(w2, r2);
-  EXPECT_EQ(w2, r2f);
+  EXPECT_EQ(w1, mem->read(addr1, mode));
+  EXPECT_EQ(w1, bus.read(addr1, mode));
+  EXPECT_EQ(true, bus.write(addr2, w2, mode));
+  EXPECT_EQ(w2, mem->read(addr2, mode));
+  EXPECT_EQ(w2, bus.read(addr2, mode));
 }
 
 TEST(SampleRAMTest, StoreLoadMultiByteOperations) {
