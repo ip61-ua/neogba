@@ -1,189 +1,120 @@
 #pragma once
 #include "neogba/types.hpp"
 
-namespace neogba::arm7tdmi {
-
-enum RegistersIndex : u8 {
-  r0,
-  r1,
-  r2,
-  r3,
-  r4,
-  r5,
-  r6,
-  r7,
-  pc,
-  cpsr,
-  r8,
-  r9,
-  r10,
-  r11,
-  r12,
-  r13,
-  r14,
-  r8_fiq,
-  r9_fiq,
-  r10_fiq,
-  r11_fiq,
-  r12_fiq,
-  r13_fiq,
-  r14_fiq,
-  spsr_fiq,
-  r13_svc,
-  r14_svc,
-  spsr_svc,
-  r13_abt,
-  r14_abt,
-  spsr_abt,
-  r13_irq,
-  r14_irq,
-  spsr_irq,
-  r13_und,
-  r14_und,
-  spsr_und,
-};
-
-enum OperationModeBits : u32 {
-  User = 0b10000,
-  Fiq = 0b10001,
-  Irq = 0b10010,
-  Svc = 0b10011,
-  Abt = 0b10111,
-  Und = 0b11011,
-  Sys = 0b11111
-};
+namespace neogba::arm7 {
 
 struct Registers {
-public:
-  static constexpr const auto totalRegisters{37};
-  static constexpr u32 mapUser[17]{r0, r1,  r2,  r3,  r4,  r5,  r6, r7,  r8,
-                                   r9, r10, r11, r12, r13, r14, pc, cpsr},
-      mapFiq[18]{r0,     r1,      r2,      r3,      r4,      r5,      r6, r7,   r8_fiq,
-                 r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, pc, cpsr, spsr_fiq},
-      mapSvc[18]{r0, r1,  r2,  r3,  r4,      r5,      r6, r7,   r8,
-                 r9, r10, r11, r12, r13_svc, r14_svc, pc, cpsr, spsr_svc},
-      mapAbt[18]{r0, r1,  r2,  r3,  r4,      r5,      r6, r7,   r8,
-                 r9, r10, r11, r12, r13_abt, r14_abt, pc, cpsr, spsr_abt},
-      mapIrq[18]{r0, r1,  r2,  r3,  r4,      r5,      r6, r7,   r8,
-                 r9, r10, r11, r12, r13_irq, r14_irq, pc, cpsr, spsr_irq},
-      mapUnd[18]{r0, r1,  r2,  r3,  r4,      r5,      r6, r7,   r8,
-                 r9, r10, r11, r12, r13_und, r14_und, pc, cpsr, spsr_und};
+  enum IndexAlias : u8 {
+    r0,
+    r1,
+    r2,
+    r3,
+    r4,
+    r5,
+    r6,
+    r7,
 
-  static constexpr u32 MASK_N{1U << 31}, MASK_Z{1U << 30}, MASK_C{1U << 29}, MASK_V{1U << 28},
-      MASK_I{1U << 7}, MASK_F{1U << 6}, MASK_T{1U << 5}, MASK_M{0x1F};
+    pc,
+    cpsr,
+    r8,
+    r9,
+    r10,
+    r11,
+    r12,
+    r13,
+    r14,
+
+    r8_fiq,
+    r9_fiq,
+    r10_fiq,
+    r11_fiq,
+    r12_fiq,
+    r13_fiq,
+    r14_fiq,
+    spsr_fiq,
+
+    r13_svc,
+    r14_svc,
+    spsr_svc,
+
+    r13_abt,
+    r14_abt,
+    spsr_abt,
+
+    r13_irq,
+    r14_irq,
+    spsr_irq,
+
+    r13_und,
+    r14_und,
+    spsr_und,
+  };
+
+  enum OperationMode : u32 {
+    user = 0b10000,
+    fiq = 0b10001,
+    irq = 0b10010,
+    svc = 0b10011,
+    abt = 0b10111,
+    und = 0b11011,
+    sys = 0b11111
+  };
+
+  enum FlagMask : u32 {
+    N = 1U << 31,
+    C = 1U << 29,
+    V = 1U << 28,
+    Z = 1U << 30,
+    F = 1U << 6,
+    T = 1U << 5,
+    I = 1U << 7
+  };
+
+  static constexpr u32 TOTAL_REGISTERS{37}, MASK_MODE{0x1F},
+      MAP_USER[17]{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr},
+      MAP_FIQ[18]{r0,     r1,      r2,      r3,      r4,      r5,      r6, r7,   r8_fiq,
+                  r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, pc, cpsr, spsr_fiq},
+      MAP_SVC[18]{r0, r1,  r2,  r3,  r4,      r5,      r6, r7,   r8,
+                  r9, r10, r11, r12, r13_svc, r14_svc, pc, cpsr, spsr_svc},
+      MAP_ABT[18]{r0, r1,  r2,  r3,  r4,      r5,      r6, r7,   r8,
+                  r9, r10, r11, r12, r13_abt, r14_abt, pc, cpsr, spsr_abt},
+      MAP_IRQ[18]{r0, r1,  r2,  r3,  r4,      r5,      r6, r7,   r8,
+                  r9, r10, r11, r12, r13_irq, r14_irq, pc, cpsr, spsr_irq},
+      MAP_UND[18]{r0, r1,  r2,  r3,  r4,      r5,      r6, r7,   r8,
+                  r9, r10, r11, r12, r13_und, r14_und, pc, cpsr, spsr_und};
 
 private:
-  u32 regs[totalRegisters];
-  const u32* mapCurrent = mapUser;
-
-  inline void set(u32 mask, u32* dst) {
-    *dst = mask | *dst;
-  }
-  inline void clear(u32 mask, u32* dst) {
-    *dst = ~mask & *dst;
-  }
-  inline bool isSet(u32 mask, u32 val) const {
-    return (mask & val) != 0;
-  }
+  u32 regs_[TOTAL_REGISTERS]{};
+  const u32* map_current_ = MAP_USER;
 
 public:
   Registers();
   Registers(Registers const& registers);
 
   [[nodiscard]] inline u32 read(u8 reg) const {
-    return regs[mapCurrent[reg]];
+    return regs_[map_current_[reg]];
   }
-
   inline void write(u8 reg, u32 val) {
-    regs[mapCurrent[reg]] = val;
+    regs_[map_current_[reg]] = val;
   }
 
-  [[nodiscard]] inline u32 read(enum RegistersIndex idx) const {
-    return regs[idx];
+  [[nodiscard]] inline u32 read(IndexAlias idx) const {
+    return regs_[idx];
+  }
+  inline void write(IndexAlias idx, u32 val) {
+    regs_[idx] = val;
   }
 
-  inline void write(enum RegistersIndex idx, u32 val) {
-    regs[idx] = val;
-  }
+  void setOperationMode(OperationMode mode);
+  [[nodiscard]] inline OperationMode getOperationMode() const;
 
-  void setUser();
-  void setFiq();
-  void setAbt();
-  void setIrq();
-  void setUnd();
-  void setSvc();
-
-  [[nodiscard]] inline bool isN() const {
-    return isSet(MASK_N, read(RegistersIndex::cpsr));
-  }
-  inline void setN() {
-    set(MASK_N, &regs[RegistersIndex::cpsr]);
-  }
-  inline void clearN() {
-    clear(MASK_N, &regs[RegistersIndex::cpsr]);
-  }
-  [[nodiscard]] inline bool isZ() const {
-    return isSet(MASK_Z, read(RegistersIndex::cpsr));
-  }
-  inline void setZ() {
-    set(MASK_Z, &regs[RegistersIndex::cpsr]);
-  }
-  inline void clearZ() {
-    clear(MASK_Z, &regs[RegistersIndex::cpsr]);
-  }
-  [[nodiscard]] inline bool isC() const {
-    return isSet(MASK_C, read(RegistersIndex::cpsr));
-  }
-  inline void setC() {
-    set(MASK_C, &regs[RegistersIndex::cpsr]);
-  }
-  inline void clearC() {
-    clear(MASK_C, &regs[RegistersIndex::cpsr]);
-  }
-  [[nodiscard]] inline bool isV() const {
-    return isSet(MASK_V, read(RegistersIndex::cpsr));
-  }
-  inline void setV() {
-    set(MASK_V, &regs[RegistersIndex::cpsr]);
-  }
-  inline void clearV() {
-    clear(MASK_V, &regs[RegistersIndex::cpsr]);
-  }
-  [[nodiscard]] inline bool isI() const {
-    return isSet(MASK_I, read(RegistersIndex::cpsr));
-  }
-  inline void setI() {
-    set(MASK_I, &regs[RegistersIndex::cpsr]);
-  }
-  inline void clearI() {
-    clear(MASK_I, &regs[RegistersIndex::cpsr]);
-  }
-  [[nodiscard]] inline bool isF() const {
-    return isSet(MASK_F, read(RegistersIndex::cpsr));
-  }
-  inline void setF() {
-    set(MASK_F, &regs[RegistersIndex::cpsr]);
-  }
-  inline void clearF() {
-    clear(MASK_F, &regs[RegistersIndex::cpsr]);
-  }
-  [[nodiscard]] inline bool isT() const {
-    return isSet(MASK_T, read(RegistersIndex::cpsr));
-  }
-  inline void setT() {
-    set(MASK_T, &regs[RegistersIndex::cpsr]);
-  }
-  inline void clearT() {
-    clear(MASK_T, &regs[RegistersIndex::cpsr]);
-  }
-
-  [[nodiscard]] inline OperationModeBits getOperationMode() const {
-    return OperationModeBits(regs[cpsr] & MASK_M);
-  }
+  [[nodiscard]] inline bool isFlag(FlagMask flag) const;
+  inline void setFlag(FlagMask flag);
+  inline void clearFlag(FlagMask flag);
 
   [[nodiscard]] bool equals(Registers const& other) const;
   [[nodiscard]] inline bool operator==(Registers const& other) const {
     return equals(other);
   }
 };
-} // namespace neogba::arm7tdmi
+} // namespace neogba::arm7

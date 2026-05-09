@@ -2,7 +2,11 @@
 #include "neogba/types.hpp"
 #include <string>
 
-namespace neogba::arm7tdmi::isaArm {
+#define ARM_INSTRUCTION_IS(alias) [[nodiscard]] constexpr static bool is(u32 alias)
+#define ARM_INSTRUCTION_EXTRACT(alias, type) [[nodiscard]] constexpr static type extract(u32 alias)
+#define ARM_INSTRUCTION_TOASM [[nodiscard]] std::string toAsm() const
+
+namespace neogba::arm7 {
 
 enum ConditionCode : u8 {
   EQ = 0b0000, // 0000 = EQ - Z set (equal)
@@ -476,4 +480,4 @@ struct SoftwareInterrupt {
     return "Not implemented yet";
   }
 };
-}; // namespace neogba::arm7tdmi::isaArm
+}; // namespace neogba::arm7
