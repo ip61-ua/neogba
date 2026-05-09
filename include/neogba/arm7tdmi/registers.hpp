@@ -88,8 +88,8 @@ private:
   const u32* map_current_ = MAP_USER;
 
 public:
-  Registers();
-  Registers(Registers const& registers);
+  Registers() = default;
+  Registers(Registers const& registers) = default;
 
   [[nodiscard]] inline u32 read(u8 reg) const {
     return regs_[map_current_[reg]];
@@ -106,11 +106,11 @@ public:
   }
 
   void setOperationMode(OperationMode mode);
-  [[nodiscard]] inline OperationMode getOperationMode() const;
+  [[nodiscard]] OperationMode getOperationMode() const;
 
-  [[nodiscard]] inline bool isFlag(FlagMask flag) const;
-  inline void setFlag(FlagMask flag);
-  inline void clearFlag(FlagMask flag);
+  [[nodiscard]] bool isFlag(FlagMask flag) const;
+  void setFlag(FlagMask flag);
+  void clearFlag(FlagMask flag);
 
   [[nodiscard]] bool equals(Registers const& other) const;
   [[nodiscard]] inline bool operator==(Registers const& other) const {

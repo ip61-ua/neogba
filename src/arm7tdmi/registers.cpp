@@ -1,18 +1,9 @@
 #include "neogba/arm7tdmi/registers.hpp"
 #include "neogba/utils.hpp"
+#include <algorithm>
 
 using namespace neogba;
 using namespace neogba::arm7;
-
-Registers::Registers() {
-  for (u8 i = 0; i < TOTAL_REGISTERS; ++i)
-    regs_[i] = 0;
-}
-
-Registers::Registers(Registers const& registers) {
-  for (u8 i = 0; i < TOTAL_REGISTERS; ++i)
-    regs_[i] = registers.regs_[i];
-}
 
 void Registers::setOperationMode(OperationMode mode) {
   if (mode != sys) {
@@ -21,7 +12,7 @@ void Registers::setOperationMode(OperationMode mode) {
       map_current_ = MAP_USER;
       break;
     case fiq:
-      map_current_ = MAP_IRQ;
+      map_current_ = MAP_FIQ;
       break;
     case irq:
       map_current_ = MAP_IRQ;
@@ -44,26 +35,22 @@ void Registers::setOperationMode(OperationMode mode) {
   setBitMask(regs_[cpsr], mode);
 }
 
-[[nodiscard]] inline Registers::OperationMode Registers::getOperationMode() const {
+[[nodiscard]] Registers::OperationMode Registers::getOperationMode() const {
   return static_cast<OperationMode>(regs_[cpsr] & MASK_MODE);
 }
 
-[[nodiscard]] inline bool Registers::isFlag(FlagMask flag) const {
+[[nodiscard]] bool Registers::isFlag(FlagMask flag) const {
   return isSetMask(flag, read(cpsr));
 }
 
-inline void Registers::setFlag(FlagMask flag) {
+void Registers::setFlag(FlagMask flag) {
   setBitMask(regs_[cpsr], flag);
 }
 
-inline void Registers::clearFlag(FlagMask flag) {
+void Registers::clearFlag(FlagMask flag) {
   clearBitMask(regs_[cpsr], flag);
 }
 
 bool Registers::equals(Registers const& other) const {
-  for (u8 i = 0; i < TOTAL_REGISTERS; ++i)
-    if (other.regs_[i] != regs_[i])
-      return false;
-
-  return true;
+  return std::equal(regs_, regs_ + TOTAL_REGISTERS, other.regs_);
 }
