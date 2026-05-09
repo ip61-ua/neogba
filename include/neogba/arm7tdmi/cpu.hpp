@@ -29,6 +29,7 @@ public:
   void executeThumb(u32 instruction);
   void execute();
   void step();
-};
 
+  friend struct IArmInstruction;
+};
 } // namespace neogba::arm7

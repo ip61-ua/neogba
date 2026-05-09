@@ -19,6 +19,8 @@ struct IArmInstruction {
   virtual ~IArmInstruction() = default;
   virtual ARM_INSTRUCTION_TOASM = 0;
   virtual ARM_INSTRUCTION_EXECUTE(cpu) = 0;
+
+  friend class ARM7TDMI;
 };
 
 struct Condition {
