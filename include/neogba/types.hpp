@@ -14,4 +14,6 @@ typedef int8_t i8;
 typedef float f32;
 typedef double f64;
 
+enum BlockLength : u8 { word = 32, halfword = 16, byte = 8 };
+
 } // namespace neogba

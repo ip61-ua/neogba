@@ -1,5 +1,6 @@
 #pragma once
 #include "neogba/types.hpp"
+#include <span>
 
 namespace neogba::arm7 {
 
@@ -85,7 +86,7 @@ struct Registers {
 
 private:
   u32 regs_[TOTAL_REGISTERS]{};
-  const u32* map_current_ = MAP_USER;
+  std::span<const u32> map_current_{MAP_USER};
 
 public:
   Registers() = default;

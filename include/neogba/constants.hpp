@@ -2,8 +2,7 @@
 
 namespace neogba {
 
-#define K_blockBitSize 32
-#define K_gbaBlockIndexMask 8
-#define K_gbaBlockOffsetMask (K_blockBitSize - K_gbaBlockIndexMask)
+const auto K_BLOCK_BIT_SIZE{32}, K_BLOCK_INDEX_MASK{8},
+    K_GBABLOCKOFFSETMASK{K_BLOCK_BIT_SIZE - K_BLOCK_INDEX_MASK};
 
 } // namespace neogba

@@ -13,8 +13,8 @@ protected:
 
 public:
   inline SampleRAM(u32 nBytes) : IMemory(nBytes, true) {
-    memoryBytes = std::make_unique<u8[]>(nBytes);
-    std::fill(memoryBytes.get(), memoryBytes.get() + nBytes, 0);
+    memory_bytes = std::make_unique<u8[]>(nBytes);
+    std::fill(memory_bytes.get(), memory_bytes.get() + nBytes, 0);
   };
   inline const char* getName() const {
     return "SampleRAM";

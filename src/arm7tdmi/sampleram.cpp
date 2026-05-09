@@ -28,9 +28,9 @@ bool SampleRAM::detached() {
 }
 
 u32 SampleRAM::read(u32 addr, MemoryBlockLength len) const {
-  auto offset = busProperties.getAddrOffset(addr);
+  auto offset = bus_properties_.getAddrOffset(addr);
 
-  if (offset + len / 8 > nBytes)
+  if (offset + len / 8 > n_bytes_)
     return 0;
 
   /*
@@ -40,7 +40,7 @@ u32 SampleRAM::read(u32 addr, MemoryBlockLength len) const {
   addr & mask  = 0x 00 12 23 43
  */
 
-  auto& m = memoryBytes;
+  auto& m = memory_bytes;
 
   switch (len) {
   case BYTE: {
@@ -62,12 +62,12 @@ u32 SampleRAM::read(u32 addr, MemoryBlockLength len) const {
 }
 
 void SampleRAM::write(u32 addr, u32 val, MemoryBlockLength len) {
-  auto offset = busProperties.getAddrOffset(addr);
+  auto offset = bus_properties_.getAddrOffset(addr);
 
-  if (offset + len / 8 > nBytes)
+  if (offset + len / 8 > n_bytes_)
     return;
 
-  auto& m = memoryBytes;
+  auto& m = memory_bytes;
 
   switch (len) {
 
