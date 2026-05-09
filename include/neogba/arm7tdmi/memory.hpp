@@ -66,7 +66,7 @@ public:
   virtual void write(u32 addr, u32 val, BlockLength len = word) = 0;
 
 protected:
-  virtual bool attached(u32 baseAddr) = 0;
+  virtual bool attached(u32 base_addr) = 0;
   virtual bool detached() {
     return true;
   }

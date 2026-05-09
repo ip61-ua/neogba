@@ -2,18 +2,18 @@
 #include "neogba/arm7tdmi/memory.hpp"
 
 using namespace neogba;
-using namespace neogba::arm7tdmi;
-using namespace neogba::arm7tdmi::samples;
+using namespace neogba::arm7;
+using namespace neogba::arm7::samples;
 
-bool SampleRAM::attached(u32 baseAddr) {
+bool SampleRAM::attached(u32 base_addr) {
   if (!used1) {
-    base1 = baseAddr;
+    base1 = base_addr;
     used1 = true;
     return true;
   }
 
   if (!used2) {
-    base2 = baseAddr;
+    base2 = base_addr;
     used2 = true;
     return true;
   }
@@ -27,7 +27,7 @@ bool SampleRAM::detached() {
   return true;
 }
 
-u32 SampleRAM::read(u32 addr, MemoryBlockLength len) const {
+u32 SampleRAM::read(u32 addr, BlockLength len) const {
   auto offset = bus_properties_.getAddrOffset(addr);
 
   if (offset + len / 8 > n_bytes_)
@@ -40,19 +40,19 @@ u32 SampleRAM::read(u32 addr, MemoryBlockLength len) const {
   addr & mask  = 0x 00 12 23 43
  */
 
-  auto& m = memory_bytes;
+  auto& m = memory_bytes_;
 
   switch (len) {
-  case BYTE: {
+  case byte: {
     return m[offset];
   }
 
-  case HALFWORD: {
+  case halfword: {
     offset = offset & ~0b01;
     return (m[offset + 1] << 8) | m[offset];
   }
 
-  case WORD: {
+  case word: {
     offset = offset & ~0b11;
     return (m[offset + 3] << 24) | (m[offset + 2] << 16) | (m[offset + 1] << 8) | m[offset];
   }
@@ -61,27 +61,27 @@ u32 SampleRAM::read(u32 addr, MemoryBlockLength len) const {
   return 0;
 }
 
-void SampleRAM::write(u32 addr, u32 val, MemoryBlockLength len) {
+void SampleRAM::write(u32 addr, u32 val, BlockLength len) {
   auto offset = bus_properties_.getAddrOffset(addr);
 
   if (offset + len / 8 > n_bytes_)
     return;
 
-  auto& m = memory_bytes;
+  auto& m = memory_bytes_;
 
   switch (len) {
 
-  case BYTE:
+  case byte:
     m[offset] = val;
     break;
 
-  case HALFWORD:
+  case halfword:
     offset = offset & ~0b01;
     m[offset] = val;
     m[offset + 1] = val >> 8;
     break;
 
-  case WORD:
+  case word:
     offset = offset & ~0b11;
     m[offset] = val;
     m[offset + 1] = val >> 8;

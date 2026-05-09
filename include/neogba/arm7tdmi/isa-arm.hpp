@@ -1,5 +1,6 @@
 #include "neogba/arm7tdmi/registers.hpp"
 #include "neogba/types.hpp"
+#include "neogba/utils.hpp"
 #include <string>
 
 #define ARM_INSTRUCTION_IS(alias) [[nodiscard]] constexpr static bool is(u32 alias)
@@ -34,33 +35,35 @@ enum ConditionCode : u8 {
 [[nodiscard]] constexpr bool checkCode(Registers const& registers, ConditionCode code) {
   switch (code) {
   case EQ:
-    return registers.isZ();
+    return registers.isFlag(Registers::Z);
   case NE:
-    return !registers.isZ();
+    return !registers.isFlag(Registers::Z);
   case HS:
-    return registers.isC();
+    return registers.isFlag(Registers::C);
   case LO:
-    return !registers.isC();
+    return !registers.isFlag(Registers::C);
   case MI:
-    return registers.isN();
+    return registers.isFlag(Registers::N);
   case PL:
-    return !registers.isN();
+    return !registers.isFlag(Registers::N);
   case VS:
-    return registers.isV();
+    return registers.isFlag(Registers::V);
   case VC:
-    return !registers.isV();
+    return !registers.isFlag(Registers::V);
   case HI:
-    return registers.isC() && !registers.isZ();
+    return registers.isFlag(Registers::C) && !registers.isFlag(Registers::Z);
   case LS:
-    return !registers.isC() || registers.isZ();
+    return !registers.isFlag(Registers::C) || registers.isFlag(Registers::Z);
   case GE:
-    return registers.isN() == registers.isV();
+    return registers.isFlag(Registers::N) == registers.isFlag(Registers::V);
   case LT:
-    return registers.isN() != registers.isV();
+    return registers.isFlag(Registers::N) != registers.isFlag(Registers::V);
   case GT:
-    return !registers.isZ() && (registers.isN() == registers.isV());
+    return !registers.isFlag(Registers::Z) &&
+           (registers.isFlag(Registers::N) == registers.isFlag(Registers::V));
   case LE:
-    return registers.isZ() || (registers.isN() != registers.isV());
+    return registers.isFlag(Registers::Z) ||
+           (registers.isFlag(Registers::N) != registers.isFlag(Registers::V));
   case AL:
     return true;
   case NV:
@@ -81,12 +84,12 @@ struct MultiplyAccumulate {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, MultiplyAccumulate) {
-    return {.a = BIT_TO_BOOL(instruction, 21),
-            .s = BIT_TO_BOOL(instruction, 20),
-            .rd = EXTRACT_BIT_MASK(instruction, u8, 16, 0xF),
-            .rn = EXTRACT_BIT_MASK(instruction, u8, 12, 0xF),
-            .rs = EXTRACT_BIT_MASK(instruction, u8, 8, 0xF),
-            .rm = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+    return {.a = bitToBool(instruction, 21),
+            .s = bitToBool(instruction, 20),
+            .rd = extractLShiftMask<u8>(instruction, 16, 0xF),
+            .rn = extractLShiftMask<u8>(instruction, 12, 0xF),
+            .rs = extractLShiftMask<u8>(instruction, 8, 0xF),
+            .rm = extractLShiftMask<u8>(instruction, 0, 0xf)};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -108,13 +111,13 @@ struct MultiplyAccumulateLong {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, MultiplyAccumulateLong) {
-    return {.u = BIT_TO_BOOL(instruction, 22),
-            .a = BIT_TO_BOOL(instruction, 21),
-            .s = BIT_TO_BOOL(instruction, 20),
-            .rd_msw = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
-            .rd_lsw = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
-            .rn = EXTRACT_BIT_MASK(instruction, u8, 8, 0xf),
-            .rm = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+    return {.u = bitToBool(instruction, 22),
+            .a = bitToBool(instruction, 21),
+            .s = bitToBool(instruction, 20),
+            .rd_msw = extractLShiftMask<u8>(instruction, 16, 0xf),
+            .rd_lsw = extractLShiftMask<u8>(instruction, 12, 0xf),
+            .rn = extractLShiftMask<u8>(instruction, 8, 0xf),
+            .rm = extractLShiftMask<u8>(instruction, 0, 0xf)};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -130,7 +133,7 @@ struct BranchAndExchange {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, BranchAndExchange) {
-    return {.rn = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+    return {.rn = extractLShiftMask<u8>(instruction, 0, 0xf)};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -149,10 +152,10 @@ struct SingleDataSwap {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, SingleDataSwap) {
-    return {.b = BIT_TO_BOOL(instruction, 22),
-            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
-            .rd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
-            .rm = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+    return {.b = bitToBool(instruction, 22),
+            .rn = extractLShiftMask<u8>(instruction, 16, 0xf),
+            .rd = extractLShiftMask<u8>(instruction, 12, 0xf),
+            .rm = extractLShiftMask<u8>(instruction, 0, 0xf)};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -174,13 +177,13 @@ struct HalfwordDataTransRegisterOffset {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, HalfwordDataTransRegisterOffset) {
-    return {.p = BIT_TO_BOOL(instruction, 24),
-            .u = BIT_TO_BOOL(instruction, 23),
-            .w = BIT_TO_BOOL(instruction, 21),
-            .l = BIT_TO_BOOL(instruction, 20),
-            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
-            .rd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
-            .rm = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+    return {.p = bitToBool(instruction, 24),
+            .u = bitToBool(instruction, 23),
+            .w = bitToBool(instruction, 21),
+            .l = bitToBool(instruction, 20),
+            .rn = extractLShiftMask<u8>(instruction, 16, 0xf),
+            .rd = extractLShiftMask<u8>(instruction, 12, 0xf),
+            .rm = extractLShiftMask<u8>(instruction, 0, 0xf)};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -202,14 +205,14 @@ struct HalfwordDataTransImmediateOffset {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, HalfwordDataTransImmediateOffset) {
-    return {.p = BIT_TO_BOOL(instruction, 24),
-            .u = BIT_TO_BOOL(instruction, 23),
-            .w = BIT_TO_BOOL(instruction, 21),
-            .l = BIT_TO_BOOL(instruction, 20),
-            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
-            .rd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
-            .offset = static_cast<u8>((EXTRACT_BIT_MASK(instruction, u8, 8, 0xf) << 4) |
-                                      EXTRACT_BIT_MASK(instruction, u8, 0, 0xf))};
+    return {.p = bitToBool(instruction, 24),
+            .u = bitToBool(instruction, 23),
+            .w = bitToBool(instruction, 21),
+            .l = bitToBool(instruction, 20),
+            .rn = extractLShiftMask<u8>(instruction, 16, 0xf),
+            .rd = extractLShiftMask<u8>(instruction, 12, 0xf),
+            .offset = static_cast<u8>((extractLShiftMask<u8>(instruction, 8, 0xf) << 4) |
+                                      extractLShiftMask<u8>(instruction, 0, 0xf))};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -233,16 +236,16 @@ struct SignedDataTrans {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, SignedDataTrans) {
-    return {.p = BIT_TO_BOOL(instruction, 24),
-            .u = BIT_TO_BOOL(instruction, 23),
-            .b = BIT_TO_BOOL(instruction, 22),
-            .w = BIT_TO_BOOL(instruction, 21),
-            .l = BIT_TO_BOOL(instruction, 20),
-            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
-            .rd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
-            .addr_mode = static_cast<u8>((EXTRACT_BIT_MASK(instruction, u8, 8, 0xf) << 4) |
-                                         EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)),
-            .h = BIT_TO_BOOL(instruction, 5)};
+    return {.p = bitToBool(instruction, 24),
+            .u = bitToBool(instruction, 23),
+            .b = bitToBool(instruction, 22),
+            .w = bitToBool(instruction, 21),
+            .l = bitToBool(instruction, 20),
+            .rn = extractLShiftMask<u8>(instruction, 16, 0xf),
+            .rd = extractLShiftMask<u8>(instruction, 12, 0xf),
+            .addr_mode = static_cast<u8>((extractLShiftMask<u8>(instruction, 8, 0xf) << 4) |
+                                         extractLShiftMask<u8>(instruction, 0, 0xf)),
+            .h = bitToBool(instruction, 5)};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -282,11 +285,11 @@ struct DataProcessingPSRTrans {
 
   ARM_INSTRUCTION_EXTRACT(instruction, DataProcessingPSRTrans) {
     return {
-        .opcode = EXTRACT_BIT_MASK(instruction, opcodeT, 21, 0xf),
-        .s = BIT_TO_BOOL(instruction, 20),
-        .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
-        .rd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
-        .operand2 = EXTRACT_BIT_MASK(instruction, u16, 0, 0xfff),
+        .opcode = extractLShiftMask<opcodeT>(instruction, 21, 0xf),
+        .s = bitToBool(instruction, 20),
+        .rn = extractLShiftMask<u8>(instruction, 16, 0xf),
+        .rd = extractLShiftMask<u8>(instruction, 12, 0xf),
+        .operand2 = extractLShiftMask<u16>(instruction, 0, 0xfff),
     };
   }
 
@@ -311,15 +314,15 @@ struct LoadStoreRegisterUnsigned {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, LoadStoreRegisterUnsigned) {
-    return {.i = BIT_TO_BOOL(instruction, 25),
-            .p = BIT_TO_BOOL(instruction, 24),
-            .u = BIT_TO_BOOL(instruction, 23),
-            .b = BIT_TO_BOOL(instruction, 22),
-            .w = BIT_TO_BOOL(instruction, 21),
-            .l = BIT_TO_BOOL(instruction, 20),
-            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
-            .rd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
-            .addr_mode = EXTRACT_BIT_MASK(instruction, u16, 0, 0xfff)};
+    return {.i = bitToBool(instruction, 25),
+            .p = bitToBool(instruction, 24),
+            .u = bitToBool(instruction, 23),
+            .b = bitToBool(instruction, 22),
+            .w = bitToBool(instruction, 21),
+            .l = bitToBool(instruction, 20),
+            .rn = extractLShiftMask<u8>(instruction, 16, 0xf),
+            .rd = extractLShiftMask<u8>(instruction, 12, 0xf),
+            .addr_mode = extractLShiftMask<u16>(instruction, 0, 0xfff)};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -348,12 +351,12 @@ struct BlockDataTrans {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, BlockDataTrans) {
-    return {.p = BIT_TO_BOOL(instruction, 24),
-            .u = BIT_TO_BOOL(instruction, 23),
-            .w = BIT_TO_BOOL(instruction, 21),
-            .l = BIT_TO_BOOL(instruction, 20),
-            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
-            .register_list = EXTRACT_BIT_MASK(instruction, u16, 0, 0xffff)};
+    return {.p = bitToBool(instruction, 24),
+            .u = bitToBool(instruction, 23),
+            .w = bitToBool(instruction, 21),
+            .l = bitToBool(instruction, 20),
+            .rn = extractLShiftMask<u8>(instruction, 16, 0xf),
+            .register_list = extractLShiftMask<u16>(instruction, 0, 0xffff)};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -370,8 +373,8 @@ struct Branch {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, Branch) {
-    return {.l = BIT_TO_BOOL(instruction, 24),
-            .offset = EXTRACT_BIT_MASK(instruction, u32, 0, 0xffffff)};
+    return {.l = bitToBool(instruction, 24),
+            .offset = extractLShiftMask<u32>(instruction, 0, 0xffffff)};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -395,15 +398,15 @@ struct CoprocDataTrans {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, CoprocDataTrans) {
-    return {.p = BIT_TO_BOOL(instruction, 24),
-            .u = BIT_TO_BOOL(instruction, 23),
-            .n = BIT_TO_BOOL(instruction, 22),
-            .w = BIT_TO_BOOL(instruction, 21),
-            .l = BIT_TO_BOOL(instruction, 20),
-            .rn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
-            .crd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
-            .cp_sharp = EXTRACT_BIT_MASK(instruction, u8, 8, 0xf),
-            .offset = EXTRACT_BIT_MASK(instruction, u8, 0, 0xff)};
+    return {.p = bitToBool(instruction, 24),
+            .u = bitToBool(instruction, 23),
+            .n = bitToBool(instruction, 22),
+            .w = bitToBool(instruction, 21),
+            .l = bitToBool(instruction, 20),
+            .rn = extractLShiftMask<u8>(instruction, 16, 0xf),
+            .crd = extractLShiftMask<u8>(instruction, 12, 0xf),
+            .cp_sharp = extractLShiftMask<u8>(instruction, 8, 0xf),
+            .offset = extractLShiftMask<u8>(instruction, 0, 0xff)};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -424,12 +427,12 @@ struct CoprocDataOperation {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, CoprocDataOperation) {
-    return {.cp_opc = EXTRACT_BIT_MASK(instruction, u8, 20, 0xf),
-            .crn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
-            .crd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
-            .cp_sharp = EXTRACT_BIT_MASK(instruction, u8, 8, 0xf),
-            .cp = EXTRACT_BIT_MASK(instruction, u8, 5, 0x7),
-            .crm = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+    return {.cp_opc = extractLShiftMask<u8>(instruction, 20, 0xf),
+            .crn = extractLShiftMask<u8>(instruction, 16, 0xf),
+            .crd = extractLShiftMask<u8>(instruction, 12, 0xf),
+            .cp_sharp = extractLShiftMask<u8>(instruction, 8, 0xf),
+            .cp = extractLShiftMask<u8>(instruction, 5, 0x7),
+            .crm = extractLShiftMask<u8>(instruction, 0, 0xf)};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -451,13 +454,13 @@ struct CoprocRegisterTrans {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, CoprocRegisterTrans) {
-    return {.cp_opc = EXTRACT_BIT_MASK(instruction, u8, 21, 0x7),
-            .l = BIT_TO_BOOL(instruction, 20),
-            .crn = EXTRACT_BIT_MASK(instruction, u8, 16, 0xf),
-            .crd = EXTRACT_BIT_MASK(instruction, u8, 12, 0xf),
-            .cp_sharp = EXTRACT_BIT_MASK(instruction, u8, 8, 0xf),
-            .cp = EXTRACT_BIT_MASK(instruction, u8, 5, 0x7),
-            .crm = EXTRACT_BIT_MASK(instruction, u8, 0, 0xf)};
+    return {.cp_opc = extractLShiftMask<u8>(instruction, 21, 0x7),
+            .l = bitToBool(instruction, 20),
+            .crn = extractLShiftMask<u8>(instruction, 16, 0xf),
+            .crd = extractLShiftMask<u8>(instruction, 12, 0xf),
+            .cp_sharp = extractLShiftMask<u8>(instruction, 8, 0xf),
+            .cp = extractLShiftMask<u8>(instruction, 5, 0x7),
+            .crm = extractLShiftMask<u8>(instruction, 0, 0xf)};
   }
 
   ARM_INSTRUCTION_TOASM {
@@ -473,7 +476,7 @@ struct SoftwareInterrupt {
   }
 
   ARM_INSTRUCTION_EXTRACT(instruction, SoftwareInterrupt) {
-    return {.swi = EXTRACT_BIT_MASK(instruction, u32, 0, 0xffffff)};
+    return {.swi = extractLShiftMask<u32>(instruction, 0, 0xffffff)};
   }
 
   ARM_INSTRUCTION_TOASM {
