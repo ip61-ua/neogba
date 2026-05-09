@@ -4,15 +4,15 @@
 #include "neogba/types.hpp"
 #include <memory>
 
-namespace neogba::arm7tdmi {
+namespace neogba::arm7 {
 
-class Arm7tdmiCPU {
+class ARM7TDMI {
   Registers registers;
   std::shared_ptr<MemoryBus> bus;
   u32 fetchedInstruction;
 
 public:
-  Arm7tdmiCPU(Registers inyectableRegisters = {}) : registers{inyectableRegisters}, bus{nullptr} {};
+  ARM7TDMI(Registers inyectableRegisters = {}) : registers{inyectableRegisters}, bus{nullptr} {};
 
   [[nodiscard]] inline bool isMemoryBusDefined() const {
     return bus != nullptr;
@@ -31,4 +31,4 @@ public:
   void step();
 };
 
-} // namespace neogba::arm7tdmi
+} // namespace neogba::arm7
