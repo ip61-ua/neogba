@@ -12,22 +12,22 @@ TEST(BasicTest, HelloWorld) {
 TEST(RegistersTest, RegistersBasicWriteStore) {
   // Arrange
   using namespace neogba;
-  using namespace neogba::arm7tdmi;
+  using namespace neogba::arm7;
 
   Registers r;
   u8 reg1{10};
-  auto reg2{RegistersIndex::r10_fiq};
+  auto reg2{Registers::IndexAlias::r10_fiq};
   u32 a{69}, b{0}, c{42};
   u32 result1, result2, result3, result4, result5;
 
   // Act
   r.write(reg1, a);
   result1 = r.read(reg1);
-  r.setFiq();
+  r.setOperationMode(Registers::OperationMode::fiq);
   result2 = r.read(reg1);
   r.write(reg1, c);
   result3 = r.read(reg1);
-  r.setUnd();
+  r.setOperationMode(Registers::OperationMode::und);
   result4 = r.read(reg2);
   result5 = r.read(reg1);
 
@@ -42,41 +42,41 @@ TEST(RegistersTest, RegistersBasicWriteStore) {
 TEST(RegistersTest, RegistersBitOperationsAndGetOperationMode) {
   // Arrange
   using namespace neogba;
-  using namespace neogba::arm7tdmi;
-  using namespace neogba::arm7tdmi::samples;
+  using namespace neogba::arm7;
+  using namespace neogba::arm7::samples;
 
   Registers r;
 
   // Act
-  bool result1{r.isN()};
-  r.setN();
-  bool result2{r.isN()};
-  r.clearN();
-  bool result3{r.isN()};
-  r.setAbt();
-  OperationModeBits result4{r.getOperationMode()};
-  r.setFiq();
-  OperationModeBits result5{r.getOperationMode()};
+  bool result1{r.isFlag(Registers::N)};
+  r.setFlag(Registers::N);
+  bool result2{r.isFlag(Registers::N)};
+  r.clearFlag(Registers::N);
+  bool result3{r.isFlag(Registers::N)};
+  r.setOperationMode(Registers::OperationMode::abt);
+  Registers::OperationMode result4{r.getOperationMode()};
+  r.setOperationMode(Registers::OperationMode::fiq);
+  Registers::OperationMode result5{r.getOperationMode()};
 
   // Assert
   EXPECT_EQ(false, result1);
   EXPECT_EQ(true, result2);
   EXPECT_EQ(false, result3);
-  EXPECT_EQ(OperationModeBits::Abt, result4);
-  EXPECT_EQ(OperationModeBits::Fiq, result5);
+  EXPECT_EQ(Registers::OperationMode::abt, result4);
+  EXPECT_EQ(Registers::OperationMode::fiq, result5);
 }
 
 TEST(SampleRAMTest, StoreLoadByteOperations) {
   // Arrange
   using namespace neogba;
-  using namespace neogba::arm7tdmi;
-  using namespace neogba::arm7tdmi::samples;
+  using namespace neogba::arm7;
+  using namespace neogba::arm7::samples;
 
   const u32 s{256}, base{0x08000000}, addr1{0x08000001}, addr2{0x08000002}, w1{123}, w2{77};
 
   auto bus{MemoryBus()};
   auto mem{std::make_shared<SampleRAM>(256)};
-  auto mode{MemoryBlockLength::BYTE};
+  auto mode{BlockLength::byte};
 
   // Assert + Act
   EXPECT_EQ(true, bus.attachMemory(base, mem));
@@ -98,16 +98,16 @@ TEST(SampleRAMTest, StoreLoadByteOperations) {
 TEST(SampleRAMTest, StoreLoadMultiByteOperations) {
   // Arrange
   using namespace neogba;
-  using namespace neogba::arm7tdmi;
-  using namespace neogba::arm7tdmi::samples;
+  using namespace neogba::arm7;
+  using namespace neogba::arm7::samples;
 
   const u32 s{256}, base{0x08000000};
   const u32 addrHalf{0x08000002}, addrWord{0x08000004};
   const u32 valHalf{0xBEEF}, valWord{0xDEADBEEF};
   auto bus{MemoryBus()};
   auto mem{std::make_shared<SampleRAM>(s)};
-  auto modeHalf{MemoryBlockLength::HALFWORD};
-  auto modeWord{MemoryBlockLength::WORD};
+  auto modeHalf{BlockLength::halfword};
+  auto modeWord{BlockLength::word};
 
   // Act
   bus.attachMemory(base, mem);
@@ -127,8 +127,8 @@ TEST(SampleRAMTest, StoreLoadMultiByteOperations) {
 TEST(SampleRAMTest, AlignmentAndLittleEndianValidation) {
   // Arrange
   using namespace neogba;
-  using namespace neogba::arm7tdmi;
-  using namespace neogba::arm7tdmi::samples;
+  using namespace neogba::arm7;
+  using namespace neogba::arm7::samples;
 
   const u32 s{256}, base{0x08000000};
   const u32 addrWordBase{0x08000008};
@@ -140,19 +140,19 @@ TEST(SampleRAMTest, AlignmentAndLittleEndianValidation) {
   bus.attachMemory(base, mem);
 
   // Act
-  bus.write(addrWordUnaligned, valWord, MemoryBlockLength::WORD);
-  auto rWordAligned{bus.read(addrWordBase, MemoryBlockLength::WORD)};
-  auto rWordUnaligned{bus.read(addrWordUnaligned, MemoryBlockLength::WORD)};
+  bus.write(addrWordUnaligned, valWord, BlockLength::word);
+  auto rWordAligned{bus.read(addrWordBase, BlockLength::word)};
+  auto rWordUnaligned{bus.read(addrWordUnaligned, BlockLength::word)};
 
   // Comprobación de little endian:
   // [0x08] = 0x44 (Byte menos significativo)
   // [0x09] = 0x33
   // [0x0A] = 0x22
   // [0x0B] = 0x11 (Byte más significativo)
-  auto rByte0{bus.read(addrWordBase + 0, MemoryBlockLength::BYTE)};
-  auto rByte1{bus.read(addrWordBase + 1, MemoryBlockLength::BYTE)};
-  auto rByte2{bus.read(addrWordBase + 2, MemoryBlockLength::BYTE)};
-  auto rByte3{bus.read(addrWordBase + 3, MemoryBlockLength::BYTE)};
+  auto rByte0{bus.read(addrWordBase + 0, BlockLength::byte)};
+  auto rByte1{bus.read(addrWordBase + 1, BlockLength::byte)};
+  auto rByte2{bus.read(addrWordBase + 2, BlockLength::byte)};
+  auto rByte3{bus.read(addrWordBase + 3, BlockLength::byte)};
 
   // Assert
   EXPECT_EQ(valWord, rWordAligned);
@@ -166,19 +166,19 @@ TEST(SampleRAMTest, AlignmentAndLittleEndianValidation) {
 TEST(InstructionADCTest, SimpleAddition) {
   // Arrange
   using namespace neogba;
-  using namespace neogba::arm7tdmi;
+  using namespace neogba::arm7;
 
   Registers fakeRegisters;
-  fakeRegisters.write(RegistersIndex::r4, 0x1);
-  fakeRegisters.write(RegistersIndex::r2, 0x2);
-  fakeRegisters.write(RegistersIndex::r1, 0x69);
+  fakeRegisters.write(Registers::IndexAlias::r4, 0x1);
+  fakeRegisters.write(Registers::IndexAlias::r2, 0x2);
+  fakeRegisters.write(Registers::IndexAlias::r1, 0x69);
 
   Registers expectedRegisters(fakeRegisters);
-  expectedRegisters.write(RegistersIndex::r1, 0x3);
+  expectedRegisters.write(Registers::IndexAlias::r1, 0x3);
 
   u32 instruction = 0xe0b21004; // adcs r1, r2, r4 // r1 <- r2 + r4 + c
 
-  auto cpu = Arm7tdmiCPU(fakeRegisters);
+  auto cpu = ARM7TDMI(fakeRegisters);
 
   // Act
   cpu.executeArm(instruction);

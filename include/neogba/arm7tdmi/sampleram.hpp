@@ -12,7 +12,7 @@ protected:
   bool detached() override;
 
 public:
-  inline SampleRAM(u32 n_bytes) : IMemory(n_bytes, true) {
+  inline SampleRAM(u32 n_bytes) : IMemory(n_bytes, false) {
     memory_bytes_ = std::make_unique<u8[]>(n_bytes);
     std::fill(memory_bytes_.get(), memory_bytes_.get() + n_bytes, 0);
   };

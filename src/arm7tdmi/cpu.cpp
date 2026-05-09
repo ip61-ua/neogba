@@ -83,4 +83,4 @@ void ARM7TDMI::executeArm(u32 instruction) {
   */
 }
 
-void Arm7tdmiCPU::step() {}
+void ARM7TDMI::step() {}
