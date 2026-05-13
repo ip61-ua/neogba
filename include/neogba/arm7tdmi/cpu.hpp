@@ -7,9 +7,12 @@
 namespace neogba::arm7 {
 
 class ARM7TDMI {
+private:
   Registers registers;
   std::shared_ptr<MemoryBus> bus;
   u32 fetchedInstruction;
+
+  friend struct IArmInstruction;
 
 public:
   ARM7TDMI(Registers inyectableRegisters = {}) : registers{inyectableRegisters}, bus{nullptr} {};
@@ -29,7 +32,5 @@ public:
   void executeThumb(u32 instruction);
   void execute();
   void step();
-
-  friend struct IArmInstruction;
 };
 } // namespace neogba::arm7

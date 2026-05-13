@@ -1,5 +1,5 @@
 #include "neogba/arm7tdmi/cpu.hpp"
-#include "neogba/arm7tdmi/isa-arm.hpp"
+#include "neogba/arm7tdmi/isa_arm.hpp"
 #include "neogba/arm7tdmi/registers.hpp"
 #include "neogba/types.hpp"
 

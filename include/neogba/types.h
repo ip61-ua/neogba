@@ -1,7 +1,6 @@
 #pragma once
-#include <cstdint>
-
-namespace neogba {
+#include <stdbool.h>
+#include <stdint.h>
 
 typedef uint64_t u64;
 typedef uint32_t u32;
@@ -14,6 +13,4 @@ typedef int8_t i8;
 typedef float f32;
 typedef double f64;
 
-enum BlockLength : u8 { word = 32, halfword = 16, byte = 8 };
-
-} // namespace neogba
+enum BlockLength { WORD = 32, HALFWORD = 16, BYTE = 8 };
