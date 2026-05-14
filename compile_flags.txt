@@ -4,3 +4,4 @@
 -Wall
 -Wextra
 -pthread
+-std=c23

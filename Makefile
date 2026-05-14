@@ -1,5 +1,5 @@
 CC = gcc
-CCFLAGS = -Wall -Wextra -Iinclude -Isrc -Iexternal/unity -DTEST
+CCFLAGS = -Wall -Wextra -Iinclude -Isrc -Iexternal/unity -DTEST -std=c2x
 TEST_LDFLAGS = 
 
 TARGET = build/neogba
