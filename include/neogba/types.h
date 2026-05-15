@@ -12,4 +12,4 @@ typedef int8_t i8;
 typedef float f32;
 typedef double f64;
 
-enum BlockLength { WORD = 32, HALFWORD = 16, BYTE = 8 };
+enum neogba_BlockLength { WORD = 32, HALFWORD = 16, BYTE = 8 };

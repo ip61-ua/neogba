@@ -28,49 +28,37 @@ inline bool neogba_MemoryBusProperties_equals(struct neogba_MemoryBusProperties*
 
 struct neogba_IMemory {
   struct neogba_MemoryBusProperties bus_properties;
+  u8* memory_bytes;
+  void* device;
   u32 n_bytes;
   bool is_read_only;
-  u8* memory_bytes;
   const char* name;
+
+  bool (*attached)(struct neogba_IMemory* self, u32 base_addr);
+  bool (*detached)(struct neogba_IMemory* self);
+  bool (*read)(struct neogba_IMemory* self, u32 addr, u32* dst, enum neogba_BlockLength len);
+  bool (*write)(struct neogba_IMemory* self, u32 addr, u32 val, enum neogba_BlockLength len);
 };
 
-void neogba_IMemory_init_default(struct neogba_IMemory* self);
+void neogba_IMemory_init(struct neogba_IMemory* self);
+bool neogba_IMemory_std_read(struct neogba_IMemory* self, u32 addr, u32* dst,
+                             enum neogba_BlockLength len);
+bool neogba_IMemory_std_write(struct neogba_IMemory* self, u32 addr, u32 val,
+                              enum neogba_BlockLength len);
 
-class IMemory {
-
-  virtual u32 read(u32 addr, BlockLength len = word) const = 0;
-  virtual void write(u32 addr, u32 val, BlockLength len = word) = 0;
-
-protected:
-  virtual bool attached(u32 base_addr) = 0;
-  virtual bool detached() {
-    return true;
-  }
-
-  friend class MemoryBus;
+struct neogba_MemoryBus {
+  struct neogba_MemoryBusProperties properties;
+  struct neogba_IMemory** memory_map;
 };
 
-class MemoryBus {
-protected:
-  MemoryBusProperties properties_;
-  std::vector<std::shared_ptr<IMemory>> memory_map_;
-
-public:
-  MemoryBus(u32 offsetBitSize = K_BLOCK_INDEX_MASK)
-      : properties_(offsetBitSize), memory_map_(properties_.n_max_index_) {}
-
-  inline bool isFreeIndex(u32 index) const {
-    return index < properties_.n_max_index_ && memory_map_[index] == nullptr;
-  }
-
-  inline MemoryBusProperties getProperties() const {
-    return properties_;
-  }
-
-  bool attachMemory(u32 addr, std::shared_ptr<IMemory> memory);
-  bool detachMemory(u32 addr);
-  u32 read(u32 addr, BlockLength len = word) const;
-  bool write(u32 addr, u32 val, BlockLength len = word);
-};
-
-} // namespace neogba::arm7
+void neogba_MemoryBus_init(struct neogba_MemoryBus* self, u32 offset_bit_size);
+inline bool neogba_MemoryBus_is_free_index(struct neogba_MemoryBus* self, u32 index) {
+  return index < self->properties.n_max_index && self->memory_map[index] == nullptr;
+}
+bool neogba_MemoryBus_attach(struct neogba_MemoryBus* self, u32 addr,
+                             struct neogba_IMemory* memory);
+bool neogba_MemoryBus_detach(struct neogba_MemoryBus* self, u32 addr);
+bool neogba_MemoryBus_read(struct neogba_MemoryBus* self, u32 addr, u32* dst,
+                           enum neogba_BlockLength len);
+bool neogba_MemoryBus_write(struct neogba_MemoryBus* self, u32 addr, u32 val,
+                            enum neogba_BlockLength len);

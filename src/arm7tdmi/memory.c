@@ -1,6 +1,8 @@
 #include "neogba/arm7tdmi/memory.h"
 #include "neogba/constants.h"
+#include "neogba/types.h"
 #include "neogba/utils.h"
+#include <stdlib.h>
 
 void neogba_MemoryBusProperties_init(struct neogba_MemoryBusProperties* self, u32 n_bits_offset) {
   self->n_bits_offset = n_bits_offset;
@@ -13,29 +15,123 @@ void neogba_MemoryBusProperties_init(struct neogba_MemoryBusProperties* self, u3
   self->n_max_index = (self->mask_index >> n_bits_offset);
 }
 
-void neogba_IMemory_init_default(struct neogba_IMemory* self) {
-  struct neogba_MemoryBusProperties* properties;
-  neogba_MemoryBusProperties_init(properties, 0);
-
+void neogba_IMemory_init(struct neogba_IMemory* self) {
+  neogba_MemoryBusProperties_init(&self->bus_properties, 0);
+  self->memory_bytes = nullptr;
   self->n_bytes = 0;
   self->is_read_only = true;
-  self->bus_properties = *properties;
-  self->memory_bytes = nullptr;
   self->name = nullptr;
+
+  self->attached = nullptr;
+  self->detached = nullptr;
+  self->read = nullptr;
+  self->write = nullptr;
 }
 
-bool MemoryBus::attachMemory(u32 addr, std::shared_ptr<IMemory> memory) {
-  auto index = properties_.getAddrIndex(addr);
-
-  if (!isFreeIndex(index))
+bool neogba_IMemory_std_read(struct neogba_IMemory* self, u32 addr, u32* dst,
+                             enum neogba_BlockLength len) {
+  if (self == nullptr)
     return false;
 
-  auto& m = memory_map_[index];
-  m = memory;
-  m->bus_properties_ = properties_;
+  auto offset = neogba_MemoryBusProperties_get_addr_offset(&self->bus_properties, addr);
 
-  if (!m->attached(addr)) {
-    m->bus_properties_ = MemoryBusProperties();
+  if (offset + len / BYTE > self->n_bytes)
+    return false;
+
+  /*
+    addr         = 0x FF 12 23 43
+    nBytes       = 0x 01 00 00 00
+    nBytes - 1   = 0x 00 FF FF FF
+    addr & mask  = 0x 00 12 23 43
+  */
+
+  auto m = self->memory_bytes;
+
+  switch (len) {
+  case BYTE: {
+    if (dst != nullptr)
+      *dst = m[offset];
+    break;
+  }
+
+  case HALFWORD: {
+    offset = offset & ~0b01;
+    if (dst != nullptr)
+      *dst = (m[offset + 1] << BYTE) | m[offset];
+    break;
+  }
+
+  case WORD: {
+    offset = offset & ~0b11;
+    if (dst != nullptr)
+      *dst = (m[offset + 3] << (HALFWORD + BYTE) | (m[offset + 2] << HALFWORD) |
+              (m[offset + 1] << BYTE) | m[offset]);
+    break;
+  }
+
+  default:
+    return false;
+  }
+
+  return true;
+}
+
+bool neogba_IMemory_std_write(struct neogba_IMemory* self, u32 addr, u32 val,
+                              enum neogba_BlockLength len) {
+  if (self == nullptr)
+    return false;
+
+  auto offset = neogba_MemoryBusProperties_get_addr_offset(&self->bus_properties, addr);
+
+  if (offset + len / BYTE > self->n_bytes)
+    return false;
+
+  auto m = self->memory_bytes;
+
+  switch (len) {
+  case BYTE:
+    m[offset] = val;
+    break;
+
+  case HALFWORD:
+    offset = offset & ~0b01;
+    m[offset] = val;
+    m[offset + 1] = val >> BYTE;
+    break;
+
+  case WORD:
+    offset = offset & ~0b11;
+    m[offset] = val;
+    m[offset + 1] = val >> BYTE;
+    m[offset + 2] = val >> HALFWORD;
+    m[offset + 3] = val >> (BYTE + HALFWORD);
+    break;
+
+  default:
+    return false;
+  }
+
+  return true;
+}
+
+void neogba_MemoryBus_init(struct neogba_MemoryBus* self, u32 offset_bit_size) {
+  neogba_MemoryBusProperties_init(&self->properties, offset_bit_size);
+  *self->memory_map = malloc(self->properties.n_max_index * sizeof(struct neogba_IMemory*));
+}
+
+bool neogba_MemoryBus_attach(struct neogba_MemoryBus* self, u32 addr,
+                             struct neogba_IMemory* memory) {
+  auto index = neogba_MemoryBusProperties_get_addr_index(&self->properties, addr);
+
+  if (!neogba_MemoryBus_is_free_index(self, index))
+    return false;
+
+  auto m = self->memory_map;
+
+  m[index] = memory;
+  m[index]->bus_properties = self->properties;
+
+  if (m[index]->attached != nullptr && !m[index]->attached(m[index], addr)) {
     m = nullptr;
     return false;
   }
@@ -43,40 +139,39 @@ bool MemoryBus::attachMemory(u32 addr, std::shared_ptr<IMemory> memory) {
   return true;
 }
 
-bool MemoryBus::detachMemory(u32 addr) {
-  auto index = properties_.getAddrIndex(addr);
+bool neogba_MemoryBus_detach(struct neogba_MemoryBus* self, u32 addr) {
+  auto index = neogba_MemoryBusProperties_get_addr_index(&self->properties, addr);
 
-  if (isFreeIndex(index))
+  if (neogba_MemoryBus_is_free_index(self, index))
     return false;
 
-  auto& m = memory_map_[index];
+  auto m = self->memory_map;
 
-  if (m->detached()) {
-    m = nullptr;
+  if (m[index]->detached(m[index])) {
+    m[index] = nullptr;
     return true;
   }
 
   return false;
 }
 
-u32 MemoryBus::read(u32 addr, BlockLength len) const {
-  auto index = properties_.getAddrIndex(addr);
+bool neogba_MemoryBus_read(struct neogba_MemoryBus* self, u32 addr, u32* dst,
+                           enum neogba_BlockLength len) {
+  auto index = neogba_MemoryBusProperties_get_addr_index(&self->properties, addr);
+  if (neogba_MemoryBus_is_free_index(self, index))
+    return false;
 
-  if (isFreeIndex(index))
-    return 0x0;
-
-  return memory_map_[index]->read(addr, len);
+  auto m = self->memory_map;
+  return m[index]->read(m[index], addr, dst, len);
 }
 
-bool MemoryBus::write(u32 addr, u32 val, BlockLength len) {
-  auto index = properties_.getAddrIndex(addr);
+bool neogba_MemoryBus_write(struct neogba_MemoryBus* self, u32 addr, u32 val,
+                            enum neogba_BlockLength len) {
+  auto index = neogba_MemoryBusProperties_get_addr_index(&self->properties, addr);
 
-  if (isFreeIndex(index))
+  if (neogba_MemoryBus_is_free_index(self, index))
     return false;
 
-  if (memory_map_[index]->isReadOnly())
-    return false;
-
-  memory_map_[index]->write(addr, val, len);
-  return true;
+  auto m = self->memory_map;
+  return (m[index]->is_read_only) ? false : m[index]->write(m[index], addr, val, len);
 }
