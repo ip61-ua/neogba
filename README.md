@@ -59,6 +59,14 @@ Esto lo conseguimos proporcionando las propiedades del bus a las memorias cuando
 
 El próximo paso tomado en el desarrollo del emulador es la implementación de las instrucciones. Esta es una parte compleja siendo fieles a la documentación encontrada. La primera solución escogida consiste en escribir directamente todas las operaciones y máscaras necesarias tal cual en el código de la función encargada de ejecución de la CPU. Este es un acercamiento naive e ingenuo puesto que supone en la memorización de números mágicos y una documentación bien sincronizada. Si bien este contratos pueden adaptarse, resulta frágil. Es a raíz de este motivo donde surge la idea de segmentar esta implementación según el tipo de instrucción. Esto nos proporcionaría mayor especificación y delegación de tareas. Ahora podríamos preguntar si la ejecución es de tal tipo u otro directamente a una macro que nos dijera esto. No obstante, mi pereza de escribir código demasiado repetitivo hizo reutilizar las macros de c con los espacios de nombres (no instanciables) y structs (instanciables con métodos estáticos y constructores).
 
+COSAS A REDACTAR:
+
+- ¿Por qué rescribí todo el código de C++ a C? ¿Qué ventajas trae? (lenguaje más simple, y sin una curva de aprendizaje tan abrupta ni idioms tan extravagantes, más compromiso pactado que delegar el trabajo a la biblioteca estándar, al clangd, e interfaces, y listas estrictas de inicialización).
+- ¿Qué retos supuso? (adaptar interfaces, cambio de paradigma, y todo es mutable y público a conveniencia, punteros, decisión del estándar C23).
+- El reto de optimizar instrucciones. Principio, un array bien ordenado de la codificación más restrictiva a la que menos O(n). Pero luego mirando códigos como el mgba, lo que hacen es imitar al decodificador, más hardware y la idea es hacer un O(1). La idea es burda pero eficaz que cualquier estructura de datos. Y es que un mutliplexor es O(1) y siempre lo será. Extraer ciertos bits, para formar un número y ese número sirve como índica de una tabla de búsqueda. Una tabla enorme que sirve para albergar directamente nmemotécnicos en lugar de clases de instrucciones.
+- Con este ejercicio, aprende uno a valorar el producto que tiene entre manos. mgba es un emulador del que se puede inspirar por su trayectoria en el este ámbito y de código abierto.
+ 
+
 # Referencias
 
 https://documentation-service.arm.com/static/5f8dacc8f86e16515cdb865a
