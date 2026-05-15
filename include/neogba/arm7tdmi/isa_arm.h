@@ -1,24 +1,18 @@
 #pragma once
-#include "neogba/arm7tdmi/cpu.hpp"
-#include "neogba/arm7tdmi/registers.hpp"
-#include "neogba/types.hpp"
-#include "neogba/utils.hpp"
-#include <format>
-#include <memory>
-#include <string>
+#include "neogba/arm7tdmi/cpu.h"
 
 #define ARM_INSTRUCTION_IS(alias) [[nodiscard]] constexpr static bool is(u32 alias)
 #define ARM_INSTRUCTION_EXTRACT(alias)                                                             \
   [[nodiscard]] static std::unique_ptr<IArmInstruction> extract(u32 alias)
 #define ARM_INSTRUCTION_TOASM std::string toAsm() const
-#define ARM_INSTRUCTION_EXECUTE(alias) void execute(ARM7TDMI& alias)
+#define ARM_INSTRUCTION_EXECUTE(NAMESPACE, alias) void NAMESPACE execute(ARM7TDMI& alias)
 
 namespace neogba::arm7::arm_mode {
 
 struct IArmInstruction {
   virtual ~IArmInstruction() = default;
   virtual ARM_INSTRUCTION_TOASM = 0;
-  virtual ARM_INSTRUCTION_EXECUTE(cpu) = 0;
+  virtual ARM_INSTRUCTION_EXECUTE(, cpu) = 0;
 
   friend class ARM7TDMI;
 };
@@ -118,7 +112,7 @@ struct MultiplyAccumulate : public IArmInstruction {
     return "Not Implemented Yet";
   };
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct MultiplyAccumulateLong : public IArmInstruction {
@@ -151,7 +145,7 @@ struct MultiplyAccumulateLong : public IArmInstruction {
     return "Not Implemented Yet";
   }
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct BranchAndExchange : public IArmInstruction {
@@ -170,7 +164,7 @@ struct BranchAndExchange : public IArmInstruction {
   ARM_INSTRUCTION_TOASM override {
     return "Not implemented yet";
   }
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct SingleDataSwap : public IArmInstruction {
@@ -195,7 +189,7 @@ struct SingleDataSwap : public IArmInstruction {
   ARM_INSTRUCTION_TOASM override {
     return "Not implemented yet";
   }
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct HalfwordDataTransRegisterOffset : public IArmInstruction {
@@ -226,7 +220,7 @@ struct HalfwordDataTransRegisterOffset : public IArmInstruction {
   ARM_INSTRUCTION_TOASM override {
     return "Not implemented yet";
   }
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct HalfwordDataTransImmediateOffset : public IArmInstruction {
@@ -259,7 +253,7 @@ struct HalfwordDataTransImmediateOffset : public IArmInstruction {
     return "Not implemented yet";
   }
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct SignedDataTrans : public IArmInstruction {
@@ -296,7 +290,7 @@ struct SignedDataTrans : public IArmInstruction {
     return "Not implemented yet";
   }
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct DataProcessingPSRTrans : public IArmInstruction {
@@ -343,7 +337,7 @@ struct DataProcessingPSRTrans : public IArmInstruction {
     return "Not implemented yet";
   }
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct LoadStoreRegisterUnsigned : public IArmInstruction {
@@ -379,7 +373,7 @@ struct LoadStoreRegisterUnsigned : public IArmInstruction {
     return "Not implemented yet";
   }
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct Undefined : public IArmInstruction {
@@ -399,7 +393,7 @@ struct Undefined : public IArmInstruction {
     return "Undefined";
   }
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct BlockDataTrans : public IArmInstruction {
@@ -429,7 +423,7 @@ struct BlockDataTrans : public IArmInstruction {
     return "Not implemented yet";
   }
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct Branch : public IArmInstruction {
@@ -451,7 +445,7 @@ struct Branch : public IArmInstruction {
     return "Not implemented yet";
   }
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct CoprocDataTrans : public IArmInstruction {
@@ -487,7 +481,7 @@ struct CoprocDataTrans : public IArmInstruction {
     return "Not implemented yet";
   }
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct CoprocDataOperation : public IArmInstruction {
@@ -517,7 +511,7 @@ struct CoprocDataOperation : public IArmInstruction {
     return "Not implemented yet";
   }
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct CoprocRegisterTrans : public IArmInstruction {
@@ -549,7 +543,7 @@ struct CoprocRegisterTrans : public IArmInstruction {
     return "Not implemented yet";
   }
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 struct SoftwareInterrupt : public IArmInstruction {
@@ -569,7 +563,7 @@ struct SoftwareInterrupt : public IArmInstruction {
     return "Not implemented yet";
   }
 
-  ARM_INSTRUCTION_EXECUTE(cpu) override;
+  ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
 
 }; // namespace neogba::arm7::arm_mode

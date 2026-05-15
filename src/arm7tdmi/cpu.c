@@ -1,10 +1,4 @@
-#include "neogba/arm7tdmi/cpu.hpp"
-#include "neogba/arm7tdmi/isa_arm.hpp"
-#include "neogba/arm7tdmi/registers.hpp"
-#include "neogba/types.hpp"
-
-using namespace neogba;
-using namespace neogba::arm7;
+#include "neogba/arm7tdmi/cpu.h"
 
 u32 ARM7TDMI::fetch() {
   return 0;

@@ -21,3 +21,8 @@ void neogba_ARM7TDMI_execute_arm(struct neogba_ARM7TDMI* self, u32 instruction);
 void neogba_ARM7TDMI_execute_thumb(struct neogba_ARM7TDMI* self, u32 instruction);
 
 void neogba_ARM7TDMI_step(struct neogba_ARM7TDMI* self);
+
+struct neogba_IARMV4TInstruction {
+  bool (*is)(int a);
+  void* specific;
+};
