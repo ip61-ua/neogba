@@ -15,10 +15,11 @@ void neogba_MemoryBusProperties_init(struct neogba_MemoryBusProperties* self, u3
   self->n_max_index = (self->mask_index >> n_bits_offset);
 }
 
-void neogba_IMemory_init(struct neogba_IMemory* self) {
+void neogba_IMemory_init(struct neogba_IMemory* self, u32 n_bytes) {
   neogba_MemoryBusProperties_init(&self->bus_properties, 0);
-  self->memory_bytes = nullptr;
-  self->n_bytes = 0;
+
+  self->memory_bytes = (n_bytes == 0) ? nullptr : calloc(n_bytes, sizeof(u8));
+  self->n_bytes = n_bytes;
   self->is_read_only = true;
   self->name = nullptr;
 
@@ -26,6 +27,7 @@ void neogba_IMemory_init(struct neogba_IMemory* self) {
   self->detached = nullptr;
   self->read = nullptr;
   self->write = nullptr;
+  self->destroy = nullptr;
 }
 
 bool neogba_IMemory_std_read(struct neogba_IMemory* self, u32 addr, u32* dst,
@@ -113,6 +115,24 @@ bool neogba_IMemory_std_write(struct neogba_IMemory* self, u32 addr, u32 val,
 
   return true;
 }
+
+void neogba_IMemory_std_destroy(struct neogba_IMemory* self) {
+  if (self == nullptr)
+    return;
+
+  if (self->destroy != nullptr)
+    self->destroy(self);
+
+  free(self->memory_bytes);
+
+  self->n_bytes = 0;
+  self->name = nullptr;
+  self->attached = nullptr;
+  self->detached = nullptr;
+  self->read = nullptr;
+  self->write = nullptr;
+  self->destroy = nullptr;
+};
 
 void neogba_MemoryBus_init(struct neogba_MemoryBus* self, u32 offset_bit_size) {
   neogba_MemoryBusProperties_init(&self->properties, offset_bit_size);

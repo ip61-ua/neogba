@@ -1,36 +1,23 @@
 #pragma once
-#include "neogba/arm7tdmi/memory.hpp"
-#include "neogba/arm7tdmi/registers.hpp"
-#include "neogba/types.hpp"
-#include <memory>
+#include "neogba/arm7tdmi/memory.h"
+#include "neogba/arm7tdmi/registers.h"
 
-namespace neogba::arm7 {
-
-class ARM7TDMI {
-private:
-  Registers registers;
-  std::shared_ptr<MemoryBus> bus;
-  u32 fetchedInstruction;
-
-  friend struct IArmInstruction;
-
-public:
-  ARM7TDMI(Registers inyectableRegisters = {}) : registers{inyectableRegisters}, bus{nullptr} {};
-
-  [[nodiscard]] inline bool isMemoryBusDefined() const {
-    return bus != nullptr;
-  }
-  inline void useMemoryBus(std::shared_ptr<MemoryBus> bus) {
-    this->bus = bus;
-  }
-
-  const Registers getRegisters() const {
-    return registers;
-  };
-  u32 fetch();
-  void executeArm(u32 instruction);
-  void executeThumb(u32 instruction);
-  void execute();
-  void step();
+struct neogba_ARM7TDMI {
+  struct neogba_Registers* registers;
+  struct neogba_MemoryBus* bus;
+  u32 fetched_instruction;
+  u32 decoded_instruction;
+  u32 executed_instruction;
 };
-} // namespace neogba::arm7
+
+void neogba_ARM7TDMI_init(struct neogba_ARM7TDMI* self);
+void neogba_ARM7TDMI_destroy(struct neogba_ARM7TDMI* self);
+
+void neogba_ARM7TDMI_fetch(struct neogba_ARM7TDMI* self);
+void neogba_ARM7TDMI_decode(struct neogba_ARM7TDMI* self);
+void neogba_ARM7TDMI_execute(struct neogba_ARM7TDMI* self);
+
+void neogba_ARM7TDMI_execute_arm(struct neogba_ARM7TDMI* self, u32 instruction);
+void neogba_ARM7TDMI_execute_thumb(struct neogba_ARM7TDMI* self, u32 instruction);
+
+void neogba_ARM7TDMI_step(struct neogba_ARM7TDMI* self);

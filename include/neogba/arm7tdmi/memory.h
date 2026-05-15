@@ -38,13 +38,15 @@ struct neogba_IMemory {
   bool (*detached)(struct neogba_IMemory* self);
   bool (*read)(struct neogba_IMemory* self, u32 addr, u32* dst, enum neogba_BlockLength len);
   bool (*write)(struct neogba_IMemory* self, u32 addr, u32 val, enum neogba_BlockLength len);
+  void (*destroy)(struct neogba_IMemory* self);
 };
 
-void neogba_IMemory_init(struct neogba_IMemory* self);
+void neogba_IMemory_init(struct neogba_IMemory* self, u32 n_bytes);
 bool neogba_IMemory_std_read(struct neogba_IMemory* self, u32 addr, u32* dst,
                              enum neogba_BlockLength len);
 bool neogba_IMemory_std_write(struct neogba_IMemory* self, u32 addr, u32 val,
                               enum neogba_BlockLength len);
+void neogba_IMemory_std_destroy(struct neogba_IMemory* self);
 
 struct neogba_MemoryBus {
   struct neogba_MemoryBusProperties properties;
