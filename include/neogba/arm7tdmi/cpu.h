@@ -17,12 +17,12 @@ void neogba_ARM7TDMI_fetch(struct neogba_ARM7TDMI* self);
 void neogba_ARM7TDMI_decode(struct neogba_ARM7TDMI* self);
 void neogba_ARM7TDMI_execute(struct neogba_ARM7TDMI* self);
 
-void neogba_ARM7TDMI_execute_arm(struct neogba_ARM7TDMI* self, u32 instruction);
-void neogba_ARM7TDMI_execute_thumb(struct neogba_ARM7TDMI* self, u32 instruction);
+void neogba_ARM7TDMI_execute_arm(struct neogba_ARM7TDMI* self, u32 raw);
+void neogba_ARM7TDMI_execute_thumb(struct neogba_ARM7TDMI* self, u32 raw);
 
 void neogba_ARM7TDMI_step(struct neogba_ARM7TDMI* self);
 
 struct neogba_IARMV4TInstruction {
-  bool (*is)(int a);
-  void* specific;
+  bool (*execute)(struct neogba_ARM7TDMI* cpu, u32 raw);
+  const char* (*to_asm)(u32 raw);
 };

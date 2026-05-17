@@ -1,89 +1,81 @@
 #pragma once
 #include "neogba/arm7tdmi/cpu.h"
 
-#define ARM_INSTRUCTION_IS(alias) [[nodiscard]] constexpr static bool is(u32 alias)
-#define ARM_INSTRUCTION_EXTRACT(alias)                                                             \
-  [[nodiscard]] static std::unique_ptr<IArmInstruction> extract(u32 alias)
-#define ARM_INSTRUCTION_TOASM std::string toAsm() const
-#define ARM_INSTRUCTION_EXECUTE(NAMESPACE, alias) void NAMESPACE execute(ARM7TDMI& alias)
+constexpr auto neogba_ARMModeLUT_length = 4096;
+struct neogba_IARMV4TInstruction neogba_ARMModeLUT[neogba_ARMModeLUT_length];
 
-namespace neogba::arm7::arm_mode {
+void neogba_ARMModeLUT_init(struct neogba_IARMV4TInstruction self[]);
 
-struct IArmInstruction {
-  virtual ~IArmInstruction() = default;
-  virtual ARM_INSTRUCTION_TOASM = 0;
-  virtual ARM_INSTRUCTION_EXECUTE(, cpu) = 0;
+// no recursivo. -> iterativo mejor. Recursivo, llena la cola más rápido + copias de datos.
+// en comparación, O(1) iter < O(n) recursivo de memoria.
+//               , O(n) recursivo < O(2^n) iter en tiempo. n \in [0, 12].
+u32 neogba_ARMModeLUT_append(struct neogba_IARMV4TInstruction self[], u32 where, u32 mask,
+                             struct neogba_IARMV4TInstruction data);
 
-  friend class ARM7TDMI;
+enum neogba_ARMModeCondition {
+  EQ = 0b0000, // 0000 = EQ - Z set (equal)
+  NE = 0b0001, // 0001 = NE - Z clear (not equal)
+  HS = 0b0010, // 0010 = HS / CS - C set (unsigned higher or same)
+  LO = 0b0011, // 0011 = LO / CC - C clear (unsigned lower)
+  MI = 0b0100, // 0100 = MI - N set (negative)
+  PL = 0b0101, // 0101 = PL - N clear (positive or zero)
+  VS = 0b0110, // 0110 = VS - V set (overflow)
+  VC = 0b0111, // 0111 = VC - V clear (no overflow)
+  HI = 0b1000, // 1000 = HI - C set and Z clear (unsigned higher)
+  LS = 0b1001, // 1001 = LS - C clear or Z (set unsigned lower or same)
+  GE = 0b1010, // 1010 = GE - N set and V set, or N clear and V clear (> or =)
+  LT = 0b1011, // 1011 = LT - N set and V clear, or N clear and V set (>)
+  GT = 0b1100, // 1100 = GT - Z clear, and either N set and V set, or N clear and V set (>)
+  LE = 0b1101, // 1101 = LE - Z set, or N set and V clear, or N clear and V set (<, or =)
+  AL = 0b1110, // 1110 = AL - always
+  NV = 0b1111, // 1111 = NV - reserved.
 };
 
-struct Condition {
-  enum ConditionType : u8 {
-    EQ = 0b0000, // 0000 = EQ - Z set (equal)
-    NE = 0b0001, // 0001 = NE - Z clear (not equal)
-    HS = 0b0010, // 0010 = HS / CS - C set (unsigned higher or same)
-    LO = 0b0011, // 0011 = LO / CC - C clear (unsigned lower)
-    MI = 0b0100, // 0100 = MI - N set (negative)
-    PL = 0b0101, // 0101 = PL - N clear (positive or zero)
-    VS = 0b0110, // 0110 = VS - V set (overflow)
-    VC = 0b0111, // 0111 = VC - V clear (no overflow)
-    HI = 0b1000, // 1000 = HI - C set and Z clear (unsigned higher)
-    LS = 0b1001, // 1001 = LS - C clear or Z (set unsigned lower or same)
-    GE = 0b1010, // 1010 = GE - N set and V set, or N clear and V clear (> or =)
-    LT = 0b1011, // 1011 = LT - N set and V clear, or N clear and V set (>)
-    GT = 0b1100, // 1100 = GT - Z clear, and either N set and V set, or N clear and V set (>)
-    LE = 0b1101, // 1101 = LE - Z set, or N set and V clear, or N clear and V set (<, or =)
-    AL = 0b1110, // 1110 = AL - always
-    NV = 0b1111, // 1111 = NV - reserved.
-  };
+inline enum neogba_ARMModeCondition neogba_ARMModeCondition_get_code(u32 raw) {
+  return ((enum neogba_ARMModeCondition)((raw & 0xf0000000) >> (4 * 7)));
+}
 
-  [[nodiscard]] static constexpr ConditionType getCode(u32 instruction) {
-    return static_cast<ConditionType>((instruction & 0xf0000000) >> (4 * 7));
-  }
+bool neogba_ARMModeCondition_check_code(struct neogba_ARM7TDMI* cpu,
+                                        enum neogba_ARMModeCondition code);
 
-  [[nodiscard]] constexpr bool checkCode(Registers const& registers, ConditionType code) {
-    switch (code) {
-    case EQ:
-      return registers.isFlag(Registers::Z);
-    case NE:
-      return !registers.isFlag(Registers::Z);
-    case HS:
-      return registers.isFlag(Registers::C);
-    case LO:
-      return !registers.isFlag(Registers::C);
-    case MI:
-      return registers.isFlag(Registers::N);
-    case PL:
-      return !registers.isFlag(Registers::N);
-    case VS:
-      return registers.isFlag(Registers::V);
-    case VC:
-      return !registers.isFlag(Registers::V);
-    case HI:
-      return registers.isFlag(Registers::C) && !registers.isFlag(Registers::Z);
-    case LS:
-      return !registers.isFlag(Registers::C) || registers.isFlag(Registers::Z);
-    case GE:
-      return registers.isFlag(Registers::N) == registers.isFlag(Registers::V);
-    case LT:
-      return registers.isFlag(Registers::N) != registers.isFlag(Registers::V);
-    case GT:
-      return !registers.isFlag(Registers::Z) &&
-             (registers.isFlag(Registers::N) == registers.isFlag(Registers::V));
-    case LE:
-      return registers.isFlag(Registers::Z) ||
-             (registers.isFlag(Registers::N) != registers.isFlag(Registers::V));
-    case AL:
-      return true;
-    case NV:
-      return true;
-    }
-  }
-};
-
-enum ShifterOperand : u16 {
-
-};
+/* [[nodiscard]] constexpr bool checkCode(Registers const& registers, ConditionType code) { */
+/*   switch (code) { */
+/*   case EQ: */
+/*     return registers.isFlag(Registers::Z); */
+/*   case NE: */
+/*     return !registers.isFlag(Registers::Z); */
+/*   case HS: */
+/*     return registers.isFlag(Registers::C); */
+/*   case LO: */
+/*     return !registers.isFlag(Registers::C); */
+/*   case MI: */
+/*     return registers.isFlag(Registers::N); */
+/*   case PL: */
+/*     return !registers.isFlag(Registers::N); */
+/*   case VS: */
+/*     return registers.isFlag(Registers::V); */
+/*   case VC: */
+/*     return !registers.isFlag(Registers::V); */
+/*   case HI: */
+/*     return registers.isFlag(Registers::C) && !registers.isFlag(Registers::Z); */
+/*   case LS: */
+/*     return !registers.isFlag(Registers::C) || registers.isFlag(Registers::Z); */
+/*   case GE: */
+/*     return registers.isFlag(Registers::N) == registers.isFlag(Registers::V); */
+/*   case LT: */
+/*     return registers.isFlag(Registers::N) != registers.isFlag(Registers::V); */
+/*   case GT: */
+/*     return !registers.isFlag(Registers::Z) && */
+/*            (registers.isFlag(Registers::N) == registers.isFlag(Registers::V)); */
+/*   case LE: */
+/*     return registers.isFlag(Registers::Z) || */
+/*            (registers.isFlag(Registers::N) != registers.isFlag(Registers::V)); */
+/*   case AL: */
+/*     return true; */
+/*   case NV: */
+/*     return true; */
+/*   } */
+/* } */
 
 struct MultiplyAccumulate : public IArmInstruction {
   bool a;
@@ -565,5 +557,3 @@ struct SoftwareInterrupt : public IArmInstruction {
 
   ARM_INSTRUCTION_EXECUTE(, cpu) override;
 };
-
-}; // namespace neogba::arm7::arm_mode
