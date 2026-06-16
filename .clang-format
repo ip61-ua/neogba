@@ -9,3 +9,4 @@ ColumnLimit: 100
 AllowShortFunctionsOnASingleLine: Empty
 PointerAlignment: Left
 BreakBeforeBraces: Attach
+BasedOnStyle: LLVM
