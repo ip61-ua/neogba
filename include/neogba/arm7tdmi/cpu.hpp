@@ -1,3 +1,4 @@
+#pragma once
 #include "neogba/types.hpp"
 
 #define K_CPU_TOTAL_REGISTERS 36
@@ -13,7 +14,7 @@
 #define K_CPU_MASK_OVERFLOW /*     */ (1u << 28)
 #define K_CPU_MASK_IRQ_DISABLE /*  */ (1u << 7)
 #define K_CPU_MASK_FIQ_DISABLE /*  */ (1u << 6)
-#define K_CPU_MASK_STATE_BIT /*    */ (1u << 5)
+#define K_CPU_MASK_THUMB_BIT /*    */ (1u << 5)
 #define K_CPU_MASK_MODE_BITS /*    */ ((1u << 5) - 1)
 
 #define K_CPU_MODE_USR 0b10000
@@ -23,6 +24,15 @@
 #define K_CPU_MODE_ABT 0b10111
 #define K_CPU_MODE_UND 0b11011
 #define K_CPU_MODE_SYS 0b11111
+
+#define K_CPU_EXCEPTION_RESET /*      */ 0x00000000
+#define K_CPU_EXCEPTION_UNDEF_INS /*  */ 0x00000004
+#define K_CPU_EXCEPTION_SW_INT /*     */ 0x00000008
+#define K_CPU_EXCEPTION_PREFET_ABT /* */ 0x0000000c
+#define K_CPU_EXCEPTION_DATA_ABT /*   */ 0x00000010
+#define K_CPU_EXCEPTION_RESERVED /*   */ 0x00000014
+#define K_CPU_EXCEPTION_IRQ /*        */ 0x00000018
+#define K_CPU_EXCEPTION_FIQ /*        */ 0x0000001c
 
 enum Register { K_CPU_ORDER_REGISTERS };
 
