@@ -1,13 +1,35 @@
 #pragma once
+#include "neogba/types.hpp"
+
+inline static u32 util_mask(u32 a, u32 b) { return (a & b); }
+inline static u32 util_mask_rshift(u32 a, u32 b, u32 c) { return (a & b) >> c; }
+inline static bool util_mask_is(u32 a, u32 b) { return (a & b) != 0; }
+
+#define ISA_GETTER_SHIFTED(name, prefix)                                       \
+  inline u32 name(u32 inst) {                                                  \
+    return util_mask_rshift(inst, prefix##_MASK, prefix##_SHIFT);              \
+  }
+
+#define ISA_GETTER(name, prefix)                                               \
+  inline u32 name(u32 inst) { return util_mask(inst, prefix##_MASK); }
+
+#define ISA_ISSER(name, prefix)                                                \
+  inline bool name(u32 inst) { return util_mask_is(inst, prefix##_MASK); }
+
+#define ISA_GETTER_SPLIT_OFFSET(name, prefix)                                  \
+  inline bool name(u32 inst) {                                                 \
+    return (((inst) & (prefix##_1_MASK)) >> (prefix##_JOIN)) |                 \
+           ((inst) & (prefix##_2_MASK));                                       \
+  }
 
 ///
 /// Generic
 ///
 
 #define ARM_COND_SHIFT /*  */ 28
-#define ARM_COND_MASK /*   */ 0xf0000000u
+#define ARM_COND_MASK /*   */ (0xfu << ARM_COND_SHIFT)
 
-#define ARM_GET_COND(inst) (((inst)) & ARM_COND_MASK) // optimización: no shift
+ISA_GETTER(arm_get_cond, ARM_COND);
 
 ///
 /// Data processing and FSR transfer
@@ -28,13 +50,14 @@
 #define ARM_FSR_OPERAND2_SHIFT /* */ 0
 #define ARM_FSR_OPERAND2_MASK /*  */ ((1u << 12) - 1)
 
-#define ARM_FSR_GET_OPCODE(inst) (((inst)) & ARM_FSR_OPCODE_MASK)
+ISA_GETTER_SHIFTED(arm_fsr_get_opcode, ARM_FSR_OPCODE);
 
-#define ARM_FSR_IS_S(inst) ((((inst)) & ARM_FSR_S_MASK) != 0)
+ISA_ISSER(arm_fsr_is_s, ARM_FSR_S);
 
-#define ARM_FSR_GET_RN(inst) ((((inst)) & ARM_FSR_RN_MASK) >> ARM_FSR_RN_SHIFT)
-#define ARM_FSR_GET_RD(inst) ((((inst)) & ARM_FSR_RD_MASK) >> ARM_FSR_RD_SHIFT)
-#define ARM_FSR_GET_OPERAND2(inst) (((inst)) & ARM_FSR_OPERAND2_MASK)
+ISA_GETTER_SHIFTED(arm_fsr_get_rn, ARM_FSR_RN);
+ISA_GETTER_SHIFTED(arm_fsr_get_rd, ARM_FSR_RD);
+
+ISA_GETTER(arm_fsr_get_operand2, ARM_FSR_OPERAND2);
 
 ///
 /// Multiply
@@ -58,14 +81,14 @@
 #define ARM_MULTIPLY_RM_SHIFT /*   */ 0
 #define ARM_MULTIPLY_RM_MASK /*    */ (0xfu)
 
-#define ARM_MULTIPLY_IS_A(inst) ((((inst)) & ARM_MULTIPLY_A_MASK) != 0)
-#define ARM_MULTIPLY_IS_S(inst) (ARM_FSR_IS_S(inst))
+ISA_ISSER(arm_multiply_is_a, ARM_MULTIPLY_A);
+ISA_ISSER(arm_multiply_is_s, ARM_MULTIPLY_S);
 
-#define ARM_MULTIPLY_GET_RD(inst) (ARM_FSR_GET_RN(inst))
-#define ARM_MULTIPLY_GET_RN(inst) (ARM_FSR_GET_RD(inst))
-#define ARM_MULTIPLY_GET_RS(inst)                                              \
-  ((((inst)) & (ARM_MULTIPLY_RS_MASK)) >> ARM_MULTIPLY_RS_SHIFT)
-#define ARM_MULTIPLY_GET_RM(inst) (((inst)) & ARM_MULTIPLY_RM_MASK)
+ISA_GETTER_SHIFTED(arm_multiply_get_rd, ARM_MULTIPLY_RD);
+ISA_GETTER_SHIFTED(arm_multiply_get_rn, ARM_MULTIPLY_RN);
+ISA_GETTER_SHIFTED(arm_multiply_get_rs, ARM_MULTIPLY_RS);
+
+ISA_GETTER(arm_multiply_get_rm, ARM_MULTIPLY_RM);
 
 ///
 /// Multiply long
@@ -92,15 +115,15 @@
 #define ARM_MULTIPLY_LONG_RM_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
 #define ARM_MULTIPLY_LONG_RM_MASK /*    */ ARM_MULTIPLY_RM_MASK
 
-#define ARM_MULTIPLY_LONG_IS_U(inst)                                           \
-  ((((inst)) & ARM_MULTIPLY_LONG_U_MASK) != 0)
-#define ARM_MULTIPLY_LONG_IS_A(inst) (ARM_MULTIPLY_IS_A(inst))
-#define ARM_MULTIPLY_LONG_IS_S(inst) (ARM_MULTIPLY_IS_S(inst))
+ISA_ISSER(arm_multiply_long_is_u, ARM_MULTIPLY_LONG_U);
+ISA_ISSER(arm_multiply_long_is_a, ARM_MULTIPLY_LONG_A);
+ISA_ISSER(arm_multiply_long_is_s, ARM_MULTIPLY_LONG_S);
 
-#define ARM_MULTIPLY_LONG_GET_RDHI(inst) (ARM_MULTIPLY_GET_RD(inst))
-#define ARM_MULTIPLY_LONG_GET_RDLO(inst) (ARM_MULTIPLY_GET_RN(inst))
-#define ARM_MULTIPLY_LONG_GET_RN(inst) (ARM_MULTIPLY_GET_RS(inst))
-#define ARM_MULTIPLY_LONG_GET_RM(inst) (ARM_MULTIPLY_GET_RM(inst))
+ISA_GETTER_SHIFTED(arm_multiply_long_get_rdhi, ARM_MULTIPLY_LONG_RDHI);
+ISA_GETTER_SHIFTED(arm_multiply_long_get_rdlo, ARM_MULTIPLY_LONG_RDLO);
+ISA_GETTER_SHIFTED(arm_multiply_long_get_rn, ARM_MULTIPLY_LONG_RN);
+
+ISA_GETTER(arm_multiply_long_get_rm, ARM_MULTIPLY_LONG_RM);
 
 ///
 /// Single data swap
@@ -118,12 +141,11 @@
 #define ARM_SINGLE_DATA_SWAP_RM_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
 #define ARM_SINGLE_DATA_SWAP_RM_MASK /*    */ ARM_MULTIPLY_RM_MASK
 
-#define ARM_SINGLE_DATA_SWAP_IS_U(inst)                                        \
-  ((((inst)) & ARM_SINGLE_DATA_SWAP_B_MASK) != 0)
+ISA_ISSER(arm_single_data_swap_is_b, ARM_SINGLE_DATA_SWAP_B);
 
-#define ARM_SINGLE_DATA_SWAP_GET_RN(inst) (ARM_FSR_GET_RN(inst))
-#define ARM_SINGLE_DATA_SWAP_GET_RD(inst) (ARM_FSR_GET_RD(inst))
-#define ARM_SINGLE_DATA_SWAP_GET_RM(inst) (ARM_MULTIPLY_GET_RM(inst))
+ISA_GETTER_SHIFTED(arm_single_data_swap_get_rn, ARM_SINGLE_DATA_SWAP_RN);
+ISA_GETTER_SHIFTED(arm_single_data_swap_get_rd, ARM_SINGLE_DATA_SWAP_RD);
+ISA_GETTER(arm_single_data_swap_get_rm, ARM_SINGLE_DATA_SWAP_RM);
 
 ///
 /// Branch and Exchange
@@ -132,96 +154,94 @@
 #define ARM_BRANCH_AND_EXCHANGE_RN_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
 #define ARM_BRANCH_AND_EXCHANGE_RN_MASK /*    */ ARM_MULTIPLY_RM_MASK
 
-#define ARM_BRANCH_AND_EXCHANGE_GET_RM(inst) (ARM_MULTIPLY_GET_RM(inst))
+ISA_GETTER(arm_branch_and_exchange_get_rm, ARM_BRANCH_AND_EXCHANGE_RN);
 
 ///
 /// Halfword data transfer, register offset
 ///
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_P_SHIFT 24
-#define ARM_HALF_DATA_TRANSFER_REGISTER_P_MASK                                 \
-  (1u << ARM_HALF_DATA_TRANSFER_REGISTER_P_SHIFT)
+#define ARM_HALF_DATA_TRANS_REG_P_SHIFT 24
+#define ARM_HALF_DATA_TRANS_REG_P_MASK (1u << ARM_HALF_DATA_TRANS_REG_P_SHIFT)
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_U_SHIFT 23
-#define ARM_HALF_DATA_TRANSFER_REGISTER_U_MASK                                 \
-  (1u << ARM_HALF_DATA_TRANSFER_REGISTER_U_SHIFT)
+#define ARM_HALF_DATA_TRANS_REG_U_SHIFT 23
+#define ARM_HALF_DATA_TRANS_REG_U_MASK (1u << ARM_HALF_DATA_TRANS_REG_U_SHIFT)
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_W_SHIFT /*    */ ARM_MULTIPLY_A_SHIFT
-#define ARM_HALF_DATA_TRANSFER_REGISTER_W_MASK /*     */ ARM_MULTIPLY_A_MASK
+#define ARM_HALF_DATA_TRANS_REG_W_SHIFT /*    */ ARM_MULTIPLY_A_SHIFT
+#define ARM_HALF_DATA_TRANS_REG_W_MASK /*     */ ARM_MULTIPLY_A_MASK
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_L_SHIFT /*    */ ARM_FSR_S_SHIFT
-#define ARM_HALF_DATA_TRANSFER_REGISTER_L_MASK /*     */ ARM_FSR_S_MASK
+#define ARM_HALF_DATA_TRANS_REG_L_SHIFT /*    */ ARM_FSR_S_SHIFT
+#define ARM_HALF_DATA_TRANS_REG_L_MASK /*     */ ARM_FSR_S_MASK
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_RN_SHIFT /*   */ ARM_FSR_RN_SHIFT
-#define ARM_HALF_DATA_TRANSFER_REGISTER_RN_MASK /*    */ ARM_FSR_RN_MASK
+#define ARM_HALF_DATA_TRANS_REG_RN_SHIFT /*   */ ARM_FSR_RN_SHIFT
+#define ARM_HALF_DATA_TRANS_REG_RN_MASK /*    */ ARM_FSR_RN_MASK
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_RD_SHIFT /*   */ ARM_FSR_RD_SHIFT
-#define ARM_HALF_DATA_TRANSFER_REGISTER_RD_MASK /*    */ ARM_FSR_RD_MASK
+#define ARM_HALF_DATA_TRANS_REG_RD_SHIFT /*   */ ARM_FSR_RD_SHIFT
+#define ARM_HALF_DATA_TRANS_REG_RD_MASK /*    */ ARM_FSR_RD_MASK
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_S_SHIFT 6
-#define ARM_HALF_DATA_TRANSFER_REGISTER_S_MASK                                 \
-  (1u << ARM_HALF_DATA_TRANSFER_REGISTER_S_SHIFT)
+#define ARM_HALF_DATA_TRANS_REG_S_SHIFT 6
+#define ARM_HALF_DATA_TRANS_REG_S_MASK (1u << ARM_HALF_DATA_TRANS_REG_S_SHIFT)
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_H_SHIFT 5
-#define ARM_HALF_DATA_TRANSFER_REGISTER_H_MASK                                 \
-  (1u << ARM_HALF_DATA_TRANSFER_REGISTER_H_SHIFT)
+#define ARM_HALF_DATA_TRANS_REG_H_SHIFT 5
+#define ARM_HALF_DATA_TRANS_REG_H_MASK (1u << ARM_HALF_DATA_TRANS_REG_H_SHIFT)
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_RM_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
-#define ARM_HALF_DATA_TRANSFER_REGISTER_RM_MASK /*    */ ARM_MULTIPLY_RM_MASK
+#define ARM_HALF_DATA_TRANS_REG_RM_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
+#define ARM_HALF_DATA_TRANS_REG_RM_MASK /*    */ ARM_MULTIPLY_RM_MASK
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_IS_P(inst)                             \
-  ((((inst)) & ARM_HALF_DATA_TRANSFER_REGISTER_P_MASK) != 0)
+ISA_ISSER(arm_half_data_trans_reg_is_p, ARM_HALF_DATA_TRANS_REG_P);
+ISA_ISSER(arm_half_data_trans_reg_is_u, ARM_HALF_DATA_TRANS_REG_U);
+ISA_ISSER(arm_half_data_trans_reg_is_w, ARM_HALF_DATA_TRANS_REG_W);
+ISA_ISSER(arm_half_data_trans_reg_is_l, ARM_HALF_DATA_TRANS_REG_L);
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_IS_U(inst)                             \
-  ((((inst)) & ARM_HALF_DATA_TRANSFER_REGISTER_U_MASK) != 0)
+ISA_GETTER_SHIFTED(arm_half_data_trans_reg_get_rn, ARM_HALF_DATA_TRANS_REG_RN);
+ISA_GETTER_SHIFTED(arm_half_data_trans_reg_get_rd, ARM_HALF_DATA_TRANS_REG_RD);
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_IS_W(inst) (ARM_MULTIPLY_IS_A(inst))
-#define ARM_HALF_DATA_TRANSFER_REGISTER_IS_L(inst) (ARM_FSR_IS_S(inst))
+ISA_ISSER(arm_half_data_trans_reg_is_s, ARM_HALF_DATA_TRANS_REG_S);
+ISA_ISSER(arm_half_data_trans_reg_is_h, ARM_HALF_DATA_TRANS_REG_H);
 
-#define ARM_HALF_DATA_TRANSFER_REGISTER_IS_S(inst)                             \
-  ((((inst)) & ARM_HALF_DATA_TRANSFER_REGISTER_S_MASK) != 0)
-
-#define ARM_HALF_DATA_TRANSFER_REGISTER_IS_H(inst)                             \
-  ((((inst)) & ARM_HALF_DATA_TRANSFER_REGISTER_H_MASK) != 0)
-
-#define ARM_HALF_DATA_TRANSFER_REGISTER_GET_RN(inst) (ARM_FSR_GET_RN(inst))
-#define ARM_HALF_DATA_TRANSFER_REGISTER_GET_RD(inst) (ARM_FSR_GET_RD(inst))
-#define ARM_HALF_DATA_TRANSFER_REGISTER_GET_RM(inst) (ARM_MULTIPLY_GET_RM(inst))
+ISA_GETTER(arm_half_data_trans_reg_get_rm, ARM_HALF_DATA_TRANS_REG_RM);
 
 ///
 /// Halfword data transfer, immediate offset
 ///
 
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_P_SHIFT                               \
-  ARM_HALF_DATA_TRANSFER_REGISTER_P_SHIFT
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_P_MASK                                \
-  ARM_HALF_DATA_TRANSFER_REGISTER_P_MASK
+#define ARM_HALF_DATA_TRANS_IMM_P_SHIFT ARM_HALF_DATA_TRANS_REG_P_SHIFT
+#define ARM_HALF_DATA_TRANS_IMM_P_MASK ARM_HALF_DATA_TRANS_REG_P_MASK
 
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_U_SHIFT                               \
-  ARM_HALF_DATA_TRANSFER_REGISTER_U_SHIFT
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_U_MASK                                \
-  ARM_HALF_DATA_TRANSFER_REGISTER_U_MASK
+#define ARM_HALF_DATA_TRANS_IMM_U_SHIFT ARM_HALF_DATA_TRANS_REG_U_SHIFT
+#define ARM_HALF_DATA_TRANS_IMM_U_MASK ARM_HALF_DATA_TRANS_REG_U_MASK
 
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_W_SHIFT /*    */ ARM_MULTIPLY_A_SHIFT
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_W_MASK /*     */ ARM_MULTIPLY_A_MASK
+#define ARM_HALF_DATA_TRANS_IMM_W_SHIFT /*    */ ARM_MULTIPLY_A_SHIFT
+#define ARM_HALF_DATA_TRANS_IMM_W_MASK /*     */ ARM_MULTIPLY_A_MASK
 
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_L_SHIFT /*    */ ARM_FSR_S_SHIFT
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_L_MASK /*     */ ARM_FSR_S_MASK
+#define ARM_HALF_DATA_TRANS_IMM_L_SHIFT /*    */ ARM_FSR_S_SHIFT
+#define ARM_HALF_DATA_TRANS_IMM_L_MASK /*     */ ARM_FSR_S_MASK
 
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_RN_SHIFT /*   */ ARM_FSR_RN_SHIFT
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_RN_MASK /*    */ ARM_FSR_RN_MASK
+#define ARM_HALF_DATA_TRANS_IMM_RN_SHIFT /*   */ ARM_FSR_RN_SHIFT
+#define ARM_HALF_DATA_TRANS_IMM_RN_MASK /*    */ ARM_FSR_RN_MASK
 
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_RD_SHIFT /*   */ ARM_FSR_RD_SHIFT
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_RD_MASK /*    */ ARM_FSR_RD_MASK
+#define ARM_HALF_DATA_TRANS_IMM_RD_SHIFT /*   */ ARM_FSR_RD_SHIFT
+#define ARM_HALF_DATA_TRANS_IMM_RD_MASK /*    */ ARM_FSR_RD_MASK
 
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_S_SHIFT                               \
-  ARM_HALF_DATA_TRANSFER_REGISTER_S_SHIFT
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_S_MASK                                \
-  ARM_HALF_DATA_TRANSFER_REGISTER_S_MASK
+#define ARM_HALF_DATA_TRANS_IMM_S_SHIFT ARM_HALF_DATA_TRANS_REG_S_SHIFT
+#define ARM_HALF_DATA_TRANS_IMM_S_MASK ARM_HALF_DATA_TRANS_REG_S_MASK
 
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_H_SHIFT                               \
-  ARM_HALF_DATA_TRANSFER_REGISTER_H_SHIFT
-#define ARM_HALF_DATA_TRANSFER_IMMEDIATE_H_MASK                                \
-  ARM_HALF_DATA_TRANSFER_REGISTER_H_MASK
+#define ARM_HALF_DATA_TRANS_IMM_H_SHIFT ARM_HALF_DATA_TRANS_REG_H_SHIFT
+#define ARM_HALF_DATA_TRANS_IMM_H_MASK ARM_HALF_DATA_TRANS_REG_H_MASK
 
-// falta operaciones y offset partido
+#define ARM_HALF_DATA_TRANS_IMM_OFFSET_1_MASK (0xfu << 8)
+#define ARM_HALF_DATA_TRANS_IMM_OFFSET_2_MASK 0xfu
+#define ARM_HALF_DATA_TRANS_IMM_OFFSET_JOIN 4
+
+ISA_ISSER(arm_half_data_imm_reg_is_p, ARM_HALF_DATA_TRANS_IMM_P);
+ISA_ISSER(arm_half_data_imm_reg_is_u, ARM_HALF_DATA_TRANS_IMM_U);
+ISA_ISSER(arm_half_data_imm_reg_is_w, ARM_HALF_DATA_TRANS_IMM_W);
+ISA_ISSER(arm_half_data_imm_reg_is_l, ARM_HALF_DATA_TRANS_IMM_L);
+
+ISA_GETTER_SHIFTED(arm_half_data_imm_reg_get_rn, ARM_HALF_DATA_TRANS_IMM_RN);
+ISA_GETTER_SHIFTED(arm_half_data_imm_reg_get_rd, ARM_HALF_DATA_TRANS_IMM_RD);
+
+ISA_GETTER_SPLIT_OFFSET(arm_half_data_imm_reg_get_offset,
+                        ARM_HALF_DATA_TRANS_IMM_OFFSET);
+
+ISA_ISSER(arm_half_data_imm_reg_is_s, ARM_HALF_DATA_TRANS_IMM_S);
+ISA_ISSER(arm_half_data_imm_reg_is_h, ARM_HALF_DATA_TRANS_IMM_H);
