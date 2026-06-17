@@ -1,9 +1,9 @@
 #pragma once
 #include "neogba/types.hpp"
 
-inline static u32 util_mask(u32 a, u32 b) { return (a & b); }
-inline static u32 util_mask_rshift(u32 a, u32 b, u32 c) { return (a & b) >> c; }
-inline static bool util_mask_is(u32 a, u32 b) { return (a & b) != 0; }
+inline u32 util_mask(u32 a, u32 b) { return (a & b); }
+inline u32 util_mask_rshift(u32 a, u32 b, u32 c) { return (a & b) >> c; }
+inline bool util_mask_is(u32 a, u32 b) { return (a & b) != 0; }
 
 #define ISA_GETTER_SHIFTED(name, prefix)                                       \
   inline u32 name(u32 inst) {                                                  \
@@ -17,7 +17,7 @@ inline static bool util_mask_is(u32 a, u32 b) { return (a & b) != 0; }
   inline bool name(u32 inst) { return util_mask_is(inst, prefix##_MASK); }
 
 #define ISA_GETTER_SPLIT_OFFSET(name, prefix)                                  \
-  inline bool name(u32 inst) {                                                 \
+  inline u32 name(u32 inst) {                                                  \
     return (((inst) & (prefix##_1_MASK)) >> (prefix##_JOIN)) |                 \
            ((inst) & (prefix##_2_MASK));                                       \
   }
@@ -29,6 +29,9 @@ inline static bool util_mask_is(u32 a, u32 b) { return (a & b) != 0; }
 #define ARM_COND_SHIFT /*  */ 28
 #define ARM_COND_MASK /*   */ (0xfu << ARM_COND_SHIFT)
 
+// NO DEVUELVE el campo condición rotado, sino que EXCLUSIVAMENTE OPACA los bits
+// distractores.
+// Returns condition bits in their encoded position [31:28].
 ISA_GETTER(arm_get_cond, ARM_COND);
 
 ///
@@ -154,7 +157,7 @@ ISA_GETTER(arm_single_data_swap_get_rm, ARM_SINGLE_DATA_SWAP_RM);
 #define ARM_BRANCH_AND_EXCHANGE_RN_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
 #define ARM_BRANCH_AND_EXCHANGE_RN_MASK /*    */ ARM_MULTIPLY_RM_MASK
 
-ISA_GETTER(arm_branch_and_exchange_get_rm, ARM_BRANCH_AND_EXCHANGE_RN);
+ISA_GETTER(arm_branch_and_exchange_get_rn, ARM_BRANCH_AND_EXCHANGE_RN);
 
 ///
 /// Halfword data transfer, register offset
@@ -245,3 +248,48 @@ ISA_GETTER_SPLIT_OFFSET(arm_half_data_imm_reg_get_offset,
 
 ISA_ISSER(arm_half_data_imm_reg_is_s, ARM_HALF_DATA_TRANS_IMM_S);
 ISA_ISSER(arm_half_data_imm_reg_is_h, ARM_HALF_DATA_TRANS_IMM_H);
+
+///
+/// Single data transfer
+///
+
+#define ARM_SINGLE_DATA_TRANS_P_SHIFT ARM_HALF_DATA_TRANS_IMM_P_SHIFT
+#define ARM_SINGLE_DATA_TRANS_P_MASK ARM_HALF_DATA_TRANS_IMM_P_MASK
+
+#define ARM_SINGLE_DATA_TRANS_U_SHIFT ARM_HALF_DATA_TRANS_IMM_U_SHIFT
+#define ARM_SINGLE_DATA_TRANS_U_MASK ARM_HALF_DATA_TRANS_IMM_U_MASK
+
+#define ARM_SINGLE_DATA_TRANS_B_SHIFT ARM_SINGLE_DATA_SWAP_B_SHIFT
+#define ARM_SINGLE_DATA_TRANS_B_MASK ARM_SINGLE_DATA_SWAP_B_MASK
+
+#define ARM_SINGLE_DATA_TRANS_W_SHIFT ARM_HALF_DATA_TRANS_IMM_W_SHIFT
+#define ARM_SINGLE_DATA_TRANS_W_MASK ARM_HALF_DATA_TRANS_IMM_W_MASK
+
+#define ARM_SINGLE_DATA_TRANS_L_SHIFT ARM_HALF_DATA_TRANS_IMM_L_SHIFT
+#define ARM_SINGLE_DATA_TRANS_L_MASK ARM_HALF_DATA_TRANS_IMM_L_MASK
+
+#define ARM_SINGLE_DATA_TRANS_RN_SHIFT ARM_HALF_DATA_TRANS_IMM_RN_SHIFT
+#define ARM_SINGLE_DATA_TRANS_RN_MASK ARM_HALF_DATA_TRANS_IMM_RN_MASK
+
+#define ARM_SINGLE_DATA_TRANS_RD_SHIFT ARM_HALF_DATA_TRANS_IMM_RD_SHIFT
+#define ARM_SINGLE_DATA_TRANS_RD_MASK ARM_HALF_DATA_TRANS_IMM_RD_MASK
+
+#define ARM_SINGLE_DATA_TRANS_OFFSET_SHIFT 0
+#define ARM_SINGLE_DATA_TRANS_OFFSET_MASK (0xfffu)
+
+ISA_ISSER(arm_single_data_trans_is_p, ARM_SINGLE_DATA_TRANS_P);
+ISA_ISSER(arm_single_data_trans_is_u, ARM_SINGLE_DATA_TRANS_U);
+ISA_ISSER(arm_single_data_trans_is_b, ARM_SINGLE_DATA_TRANS_B);
+ISA_ISSER(arm_single_data_trans_is_w, ARM_SINGLE_DATA_TRANS_W);
+ISA_ISSER(arm_single_data_trans_is_l, ARM_SINGLE_DATA_TRANS_L);
+
+ISA_GETTER_SHIFTED(arm_single_data_trans_get_rn, ARM_SINGLE_DATA_TRANS_RN);
+ISA_GETTER_SHIFTED(arm_single_data_trans_get_rd, ARM_SINGLE_DATA_TRANS_RD);
+
+ISA_GETTER(arm_single_data_trans_get_offset, ARM_SINGLE_DATA_TRANS_OFFSET);
+
+///
+/// Undefined
+///
+
+// lol
