@@ -235,19 +235,19 @@ ISA_GETTER(arm_half_data_trans_reg_get_rm, ARM_HALF_DATA_TRANS_REG_RM);
 #define ARM_HALF_DATA_TRANS_IMM_OFFSET_2_MASK ARM_MULTIPLY_RM_MASK
 #define ARM_HALF_DATA_TRANS_IMM_OFFSET_JOIN 4
 
-ISA_ISSER(arm_half_data_imm_reg_is_p, ARM_HALF_DATA_TRANS_IMM_P);
-ISA_ISSER(arm_half_data_imm_reg_is_u, ARM_HALF_DATA_TRANS_IMM_U);
-ISA_ISSER(arm_half_data_imm_reg_is_w, ARM_HALF_DATA_TRANS_IMM_W);
-ISA_ISSER(arm_half_data_imm_reg_is_l, ARM_HALF_DATA_TRANS_IMM_L);
+ISA_ISSER(arm_half_data_trans_imm_is_p, ARM_HALF_DATA_TRANS_IMM_P);
+ISA_ISSER(arm_half_data_trans_imm_is_u, ARM_HALF_DATA_TRANS_IMM_U);
+ISA_ISSER(arm_half_data_trans_imm_is_w, ARM_HALF_DATA_TRANS_IMM_W);
+ISA_ISSER(arm_half_data_trans_imm_is_l, ARM_HALF_DATA_TRANS_IMM_L);
 
-ISA_GETTER_SHIFTED(arm_half_data_imm_reg_get_rn, ARM_HALF_DATA_TRANS_IMM_RN);
-ISA_GETTER_SHIFTED(arm_half_data_imm_reg_get_rd, ARM_HALF_DATA_TRANS_IMM_RD);
+ISA_GETTER_SHIFTED(arm_half_data_trans_imm_get_rn, ARM_HALF_DATA_TRANS_IMM_RN);
+ISA_GETTER_SHIFTED(arm_half_data_trans_imm_get_rd, ARM_HALF_DATA_TRANS_IMM_RD);
 
-ISA_GETTER_SPLIT_OFFSET(arm_half_data_imm_reg_get_offset,
+ISA_GETTER_SPLIT_OFFSET(arm_half_data_trans_imm_get_offset,
                         ARM_HALF_DATA_TRANS_IMM_OFFSET);
 
-ISA_ISSER(arm_half_data_imm_reg_is_s, ARM_HALF_DATA_TRANS_IMM_S);
-ISA_ISSER(arm_half_data_imm_reg_is_h, ARM_HALF_DATA_TRANS_IMM_H);
+ISA_ISSER(arm_half_data_trans_imm_is_s, ARM_HALF_DATA_TRANS_IMM_S);
+ISA_ISSER(arm_half_data_trans_imm_is_h, ARM_HALF_DATA_TRANS_IMM_H);
 
 ///
 /// Single data transfer
