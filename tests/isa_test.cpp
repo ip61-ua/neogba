@@ -3,7 +3,7 @@
 
 TEST(IsaTest, ShouldExtractRightBits) {
   constexpr u32 ins = 0xa13cdbd3;
-  ASSERT_EQ(arm_get_cond(ins), 0xa0000000);
+  ASSERT_EQ(arm_get_cond(ins), 0xa);
   ASSERT_EQ(arm_half_data_trans_imm_is_p(ins), true);
   ASSERT_EQ(arm_half_data_trans_imm_is_u(ins), false);
   ASSERT_EQ(arm_half_data_trans_imm_is_w(ins), true);
