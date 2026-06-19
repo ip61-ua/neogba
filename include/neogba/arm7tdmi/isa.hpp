@@ -1,19 +1,19 @@
 #pragma once
 #include "neogba/types.hpp"
 
-#define ISA_GETTER_SHIFTED(name, prefix)                                       \
-  inline u32 name(u32 inst) {                                                  \
+#define ISA_GETTER_SHIFTED(type, name, prefix)                                 \
+  inline type name(type inst) {                                                \
     return (inst & ((prefix##_MASK))) >> (((prefix##_SHIFT)));                 \
   }
 
-#define ISA_GETTER(name, prefix)                                               \
-  inline u32 name(u32 inst) { return inst & (((prefix##_MASK))); }
+#define ISA_GETTER(type, name, prefix)                                         \
+  inline type name(type inst) { return inst & (((prefix##_MASK))); }
 
-#define ISA_ISSER(name, prefix)                                                \
-  inline bool name(u32 inst) { return (inst & (((prefix##_MASK)))) != 0; }
+#define ISA_ISSER(type, name, prefix)                                          \
+  inline bool name(type inst) { return (inst & (((prefix##_MASK)))) != 0; }
 
-#define ISA_GETTER_SPLIT_OFFSET(name, prefix)                                  \
-  inline u32 name(u32 inst) {                                                  \
+#define ISA_GETTER_SPLIT_OFFSET(type, name, prefix)                            \
+  inline type name(type inst) {                                                \
     return (((inst) & (prefix##_1_MASK)) >> (prefix##_JOIN)) |                 \
            ((inst) & (prefix##_2_MASK));                                       \
   }
@@ -28,7 +28,7 @@
 // NO DEVUELVE el campo condición rotado, sino que EXCLUSIVAMENTE OPACA los bits
 // distractores.
 // Returns condition bits in their encoded position [31:28].
-ISA_GETTER(arm_get_cond, ARM_COND);
+ISA_GETTER(u32, arm_get_cond, ARM_COND);
 
 ///
 /// Data processing and FSR transfer
@@ -49,14 +49,14 @@ ISA_GETTER(arm_get_cond, ARM_COND);
 #define ARM_FSR_OPERAND2_SHIFT /* */ 0
 #define ARM_FSR_OPERAND2_MASK /*  */ ((1u << 12) - 1)
 
-ISA_GETTER_SHIFTED(arm_fsr_get_opcode, ARM_FSR_OPCODE);
+ISA_GETTER_SHIFTED(u32, arm_fsr_get_opcode, ARM_FSR_OPCODE);
 
-ISA_ISSER(arm_fsr_is_s, ARM_FSR_S);
+ISA_ISSER(u32, arm_fsr_is_s, ARM_FSR_S);
 
-ISA_GETTER_SHIFTED(arm_fsr_get_rn, ARM_FSR_RN);
-ISA_GETTER_SHIFTED(arm_fsr_get_rd, ARM_FSR_RD);
+ISA_GETTER_SHIFTED(u32, arm_fsr_get_rn, ARM_FSR_RN);
+ISA_GETTER_SHIFTED(u32, arm_fsr_get_rd, ARM_FSR_RD);
 
-ISA_GETTER(arm_fsr_get_operand2, ARM_FSR_OPERAND2);
+ISA_GETTER(u32, arm_fsr_get_operand2, ARM_FSR_OPERAND2);
 
 ///
 /// Multiply
@@ -80,14 +80,14 @@ ISA_GETTER(arm_fsr_get_operand2, ARM_FSR_OPERAND2);
 #define ARM_MULTIPLY_RM_SHIFT /*   */ 0
 #define ARM_MULTIPLY_RM_MASK /*    */ (0xfu)
 
-ISA_ISSER(arm_multiply_is_a, ARM_MULTIPLY_A);
-ISA_ISSER(arm_multiply_is_s, ARM_MULTIPLY_S);
+ISA_ISSER(u32, arm_multiply_is_a, ARM_MULTIPLY_A);
+ISA_ISSER(u32, arm_multiply_is_s, ARM_MULTIPLY_S);
 
-ISA_GETTER_SHIFTED(arm_multiply_get_rd, ARM_MULTIPLY_RD);
-ISA_GETTER_SHIFTED(arm_multiply_get_rn, ARM_MULTIPLY_RN);
-ISA_GETTER_SHIFTED(arm_multiply_get_rs, ARM_MULTIPLY_RS);
+ISA_GETTER_SHIFTED(u32, arm_multiply_get_rd, ARM_MULTIPLY_RD);
+ISA_GETTER_SHIFTED(u32, arm_multiply_get_rn, ARM_MULTIPLY_RN);
+ISA_GETTER_SHIFTED(u32, arm_multiply_get_rs, ARM_MULTIPLY_RS);
 
-ISA_GETTER(arm_multiply_get_rm, ARM_MULTIPLY_RM);
+ISA_GETTER(u32, arm_multiply_get_rm, ARM_MULTIPLY_RM);
 
 ///
 /// Multiply long
@@ -114,15 +114,15 @@ ISA_GETTER(arm_multiply_get_rm, ARM_MULTIPLY_RM);
 #define ARM_MULTIPLY_LONG_RM_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
 #define ARM_MULTIPLY_LONG_RM_MASK /*    */ ARM_MULTIPLY_RM_MASK
 
-ISA_ISSER(arm_multiply_long_is_u, ARM_MULTIPLY_LONG_U);
-ISA_ISSER(arm_multiply_long_is_a, ARM_MULTIPLY_LONG_A);
-ISA_ISSER(arm_multiply_long_is_s, ARM_MULTIPLY_LONG_S);
+ISA_ISSER(u32, arm_multiply_long_is_u, ARM_MULTIPLY_LONG_U);
+ISA_ISSER(u32, arm_multiply_long_is_a, ARM_MULTIPLY_LONG_A);
+ISA_ISSER(u32, arm_multiply_long_is_s, ARM_MULTIPLY_LONG_S);
 
-ISA_GETTER_SHIFTED(arm_multiply_long_get_rdhi, ARM_MULTIPLY_LONG_RDHI);
-ISA_GETTER_SHIFTED(arm_multiply_long_get_rdlo, ARM_MULTIPLY_LONG_RDLO);
-ISA_GETTER_SHIFTED(arm_multiply_long_get_rn, ARM_MULTIPLY_LONG_RN);
+ISA_GETTER_SHIFTED(u32, arm_multiply_long_get_rdhi, ARM_MULTIPLY_LONG_RDHI);
+ISA_GETTER_SHIFTED(u32, arm_multiply_long_get_rdlo, ARM_MULTIPLY_LONG_RDLO);
+ISA_GETTER_SHIFTED(u32, arm_multiply_long_get_rn, ARM_MULTIPLY_LONG_RN);
 
-ISA_GETTER(arm_multiply_long_get_rm, ARM_MULTIPLY_LONG_RM);
+ISA_GETTER(u32, arm_multiply_long_get_rm, ARM_MULTIPLY_LONG_RM);
 
 ///
 /// Single data swap
@@ -140,11 +140,11 @@ ISA_GETTER(arm_multiply_long_get_rm, ARM_MULTIPLY_LONG_RM);
 #define ARM_SINGLE_DATA_SWAP_RM_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
 #define ARM_SINGLE_DATA_SWAP_RM_MASK /*    */ ARM_MULTIPLY_RM_MASK
 
-ISA_ISSER(arm_single_data_swap_is_b, ARM_SINGLE_DATA_SWAP_B);
+ISA_ISSER(u32, arm_single_data_swap_is_b, ARM_SINGLE_DATA_SWAP_B);
 
-ISA_GETTER_SHIFTED(arm_single_data_swap_get_rn, ARM_SINGLE_DATA_SWAP_RN);
-ISA_GETTER_SHIFTED(arm_single_data_swap_get_rd, ARM_SINGLE_DATA_SWAP_RD);
-ISA_GETTER(arm_single_data_swap_get_rm, ARM_SINGLE_DATA_SWAP_RM);
+ISA_GETTER_SHIFTED(u32, arm_single_data_swap_get_rn, ARM_SINGLE_DATA_SWAP_RN);
+ISA_GETTER_SHIFTED(u32, arm_single_data_swap_get_rd, ARM_SINGLE_DATA_SWAP_RD);
+ISA_GETTER(u32, arm_single_data_swap_get_rm, ARM_SINGLE_DATA_SWAP_RM);
 
 ///
 /// Branch and Exchange
@@ -153,7 +153,7 @@ ISA_GETTER(arm_single_data_swap_get_rm, ARM_SINGLE_DATA_SWAP_RM);
 #define ARM_BRANCH_AND_EXCHANGE_RN_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
 #define ARM_BRANCH_AND_EXCHANGE_RN_MASK /*    */ ARM_MULTIPLY_RM_MASK
 
-ISA_GETTER(arm_branch_and_exchange_get_rn, ARM_BRANCH_AND_EXCHANGE_RN);
+ISA_GETTER(u32, arm_branch_and_exchange_get_rn, ARM_BRANCH_AND_EXCHANGE_RN);
 
 ///
 /// Halfword data transfer, register offset
@@ -186,18 +186,20 @@ ISA_GETTER(arm_branch_and_exchange_get_rn, ARM_BRANCH_AND_EXCHANGE_RN);
 #define ARM_HALF_DATA_TRANS_REG_RM_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
 #define ARM_HALF_DATA_TRANS_REG_RM_MASK /*    */ ARM_MULTIPLY_RM_MASK
 
-ISA_ISSER(arm_half_data_trans_reg_is_p, ARM_HALF_DATA_TRANS_REG_P);
-ISA_ISSER(arm_half_data_trans_reg_is_u, ARM_HALF_DATA_TRANS_REG_U);
-ISA_ISSER(arm_half_data_trans_reg_is_w, ARM_HALF_DATA_TRANS_REG_W);
-ISA_ISSER(arm_half_data_trans_reg_is_l, ARM_HALF_DATA_TRANS_REG_L);
+ISA_ISSER(u32, arm_half_data_trans_reg_is_p, ARM_HALF_DATA_TRANS_REG_P);
+ISA_ISSER(u32, arm_half_data_trans_reg_is_u, ARM_HALF_DATA_TRANS_REG_U);
+ISA_ISSER(u32, arm_half_data_trans_reg_is_w, ARM_HALF_DATA_TRANS_REG_W);
+ISA_ISSER(u32, arm_half_data_trans_reg_is_l, ARM_HALF_DATA_TRANS_REG_L);
 
-ISA_GETTER_SHIFTED(arm_half_data_trans_reg_get_rn, ARM_HALF_DATA_TRANS_REG_RN);
-ISA_GETTER_SHIFTED(arm_half_data_trans_reg_get_rd, ARM_HALF_DATA_TRANS_REG_RD);
+ISA_GETTER_SHIFTED(u32, arm_half_data_trans_reg_get_rn,
+                   ARM_HALF_DATA_TRANS_REG_RN);
+ISA_GETTER_SHIFTED(u32, arm_half_data_trans_reg_get_rd,
+                   ARM_HALF_DATA_TRANS_REG_RD);
 
-ISA_ISSER(arm_half_data_trans_reg_is_s, ARM_HALF_DATA_TRANS_REG_S);
-ISA_ISSER(arm_half_data_trans_reg_is_h, ARM_HALF_DATA_TRANS_REG_H);
+ISA_ISSER(u32, arm_half_data_trans_reg_is_s, ARM_HALF_DATA_TRANS_REG_S);
+ISA_ISSER(u32, arm_half_data_trans_reg_is_h, ARM_HALF_DATA_TRANS_REG_H);
 
-ISA_GETTER(arm_half_data_trans_reg_get_rm, ARM_HALF_DATA_TRANS_REG_RM);
+ISA_GETTER(u32, arm_half_data_trans_reg_get_rm, ARM_HALF_DATA_TRANS_REG_RM);
 
 ///
 /// Halfword data transfer, immediate offset
@@ -231,19 +233,21 @@ ISA_GETTER(arm_half_data_trans_reg_get_rm, ARM_HALF_DATA_TRANS_REG_RM);
 #define ARM_HALF_DATA_TRANS_IMM_OFFSET_2_MASK ARM_MULTIPLY_RM_MASK
 #define ARM_HALF_DATA_TRANS_IMM_OFFSET_JOIN 4
 
-ISA_ISSER(arm_half_data_trans_imm_is_p, ARM_HALF_DATA_TRANS_IMM_P);
-ISA_ISSER(arm_half_data_trans_imm_is_u, ARM_HALF_DATA_TRANS_IMM_U);
-ISA_ISSER(arm_half_data_trans_imm_is_w, ARM_HALF_DATA_TRANS_IMM_W);
-ISA_ISSER(arm_half_data_trans_imm_is_l, ARM_HALF_DATA_TRANS_IMM_L);
+ISA_ISSER(u32, arm_half_data_trans_imm_is_p, ARM_HALF_DATA_TRANS_IMM_P);
+ISA_ISSER(u32, arm_half_data_trans_imm_is_u, ARM_HALF_DATA_TRANS_IMM_U);
+ISA_ISSER(u32, arm_half_data_trans_imm_is_w, ARM_HALF_DATA_TRANS_IMM_W);
+ISA_ISSER(u32, arm_half_data_trans_imm_is_l, ARM_HALF_DATA_TRANS_IMM_L);
 
-ISA_GETTER_SHIFTED(arm_half_data_trans_imm_get_rn, ARM_HALF_DATA_TRANS_IMM_RN);
-ISA_GETTER_SHIFTED(arm_half_data_trans_imm_get_rd, ARM_HALF_DATA_TRANS_IMM_RD);
+ISA_GETTER_SHIFTED(u32, arm_half_data_trans_imm_get_rn,
+                   ARM_HALF_DATA_TRANS_IMM_RN);
+ISA_GETTER_SHIFTED(u32, arm_half_data_trans_imm_get_rd,
+                   ARM_HALF_DATA_TRANS_IMM_RD);
 
-ISA_GETTER_SPLIT_OFFSET(arm_half_data_trans_imm_get_offset,
+ISA_GETTER_SPLIT_OFFSET(u32, arm_half_data_trans_imm_get_offset,
                         ARM_HALF_DATA_TRANS_IMM_OFFSET);
 
-ISA_ISSER(arm_half_data_trans_imm_is_s, ARM_HALF_DATA_TRANS_IMM_S);
-ISA_ISSER(arm_half_data_trans_imm_is_h, ARM_HALF_DATA_TRANS_IMM_H);
+ISA_ISSER(u32, arm_half_data_trans_imm_is_s, ARM_HALF_DATA_TRANS_IMM_S);
+ISA_ISSER(u32, arm_half_data_trans_imm_is_h, ARM_HALF_DATA_TRANS_IMM_H);
 
 ///
 /// Single data transfer
@@ -273,16 +277,16 @@ ISA_ISSER(arm_half_data_trans_imm_is_h, ARM_HALF_DATA_TRANS_IMM_H);
 #define ARM_SINGLE_DATA_TRANS_OFFSET_SHIFT ARM_FSR_OPERAND2_SHIFT
 #define ARM_SINGLE_DATA_TRANS_OFFSET_MASK ARM_FSR_OPERAND2_MASK
 
-ISA_ISSER(arm_single_data_trans_is_p, ARM_SINGLE_DATA_TRANS_P);
-ISA_ISSER(arm_single_data_trans_is_u, ARM_SINGLE_DATA_TRANS_U);
-ISA_ISSER(arm_single_data_trans_is_b, ARM_SINGLE_DATA_TRANS_B);
-ISA_ISSER(arm_single_data_trans_is_w, ARM_SINGLE_DATA_TRANS_W);
-ISA_ISSER(arm_single_data_trans_is_l, ARM_SINGLE_DATA_TRANS_L);
+ISA_ISSER(u32, arm_single_data_trans_is_p, ARM_SINGLE_DATA_TRANS_P);
+ISA_ISSER(u32, arm_single_data_trans_is_u, ARM_SINGLE_DATA_TRANS_U);
+ISA_ISSER(u32, arm_single_data_trans_is_b, ARM_SINGLE_DATA_TRANS_B);
+ISA_ISSER(u32, arm_single_data_trans_is_w, ARM_SINGLE_DATA_TRANS_W);
+ISA_ISSER(u32, arm_single_data_trans_is_l, ARM_SINGLE_DATA_TRANS_L);
 
-ISA_GETTER_SHIFTED(arm_single_data_trans_get_rn, ARM_SINGLE_DATA_TRANS_RN);
-ISA_GETTER_SHIFTED(arm_single_data_trans_get_rd, ARM_SINGLE_DATA_TRANS_RD);
+ISA_GETTER_SHIFTED(u32, arm_single_data_trans_get_rn, ARM_SINGLE_DATA_TRANS_RN);
+ISA_GETTER_SHIFTED(u32, arm_single_data_trans_get_rd, ARM_SINGLE_DATA_TRANS_RD);
 
-ISA_GETTER(arm_single_data_trans_get_offset, ARM_SINGLE_DATA_TRANS_OFFSET);
+ISA_GETTER(u32, arm_single_data_trans_get_offset, ARM_SINGLE_DATA_TRANS_OFFSET);
 
 ///
 /// Undefined
@@ -315,15 +319,15 @@ ISA_GETTER(arm_single_data_trans_get_offset, ARM_SINGLE_DATA_TRANS_OFFSET);
 #define ARM_BLOCK_DATA_TRANS_REGISTERLIST_SHIFT 0
 #define ARM_BLOCK_DATA_TRANS_REGISTERLIST_MASK (0xffffu)
 
-ISA_ISSER(arm_block_data_trans_is_p, ARM_BLOCK_DATA_TRANS_P);
-ISA_ISSER(arm_block_data_trans_is_u, ARM_BLOCK_DATA_TRANS_U);
-ISA_ISSER(arm_block_data_trans_is_s, ARM_BLOCK_DATA_TRANS_S);
-ISA_ISSER(arm_block_data_trans_is_w, ARM_BLOCK_DATA_TRANS_W);
-ISA_ISSER(arm_block_data_trans_is_l, ARM_BLOCK_DATA_TRANS_L);
+ISA_ISSER(u32, arm_block_data_trans_is_p, ARM_BLOCK_DATA_TRANS_P);
+ISA_ISSER(u32, arm_block_data_trans_is_u, ARM_BLOCK_DATA_TRANS_U);
+ISA_ISSER(u32, arm_block_data_trans_is_s, ARM_BLOCK_DATA_TRANS_S);
+ISA_ISSER(u32, arm_block_data_trans_is_w, ARM_BLOCK_DATA_TRANS_W);
+ISA_ISSER(u32, arm_block_data_trans_is_l, ARM_BLOCK_DATA_TRANS_L);
 
-ISA_GETTER_SHIFTED(arm_block_data_trans_get_rn, ARM_BLOCK_DATA_TRANS_RN);
+ISA_GETTER_SHIFTED(u32, arm_block_data_trans_get_rn, ARM_BLOCK_DATA_TRANS_RN);
 
-ISA_GETTER(arm_block_data_trans_get_registerlist,
+ISA_GETTER(u32, arm_block_data_trans_get_registerlist,
            ARM_BLOCK_DATA_TRANS_REGISTERLIST);
 
 ///
@@ -336,9 +340,9 @@ ISA_GETTER(arm_block_data_trans_get_registerlist,
 #define ARM_BRANCH_OFFSET_SHIFT 0
 #define ARM_BRANCH_OFFSET_MASK (0xffffffu)
 
-ISA_ISSER(arm_branch_is_l, ARM_BLOCK_DATA_TRANS_L);
+ISA_ISSER(u32, arm_branch_is_l, ARM_BLOCK_DATA_TRANS_L);
 
-ISA_GETTER(arm_branch_get_offset, ARM_BRANCH_OFFSET);
+ISA_GETTER(u32, arm_branch_get_offset, ARM_BRANCH_OFFSET);
 
 ///
 /// Coprocessor data transfer
@@ -371,17 +375,17 @@ ISA_GETTER(arm_branch_get_offset, ARM_BRANCH_OFFSET);
 #define ARM_COPROC_DATA_TRANS_OFFSET_SHIFT 0
 #define ARM_COPROC_DATA_TRANS_OFFSET_MASK 0xffu
 
-ISA_ISSER(arm_coproc_data_trans_is_p, ARM_COPROC_DATA_TRANS_P);
-ISA_ISSER(arm_coproc_data_trans_is_u, ARM_COPROC_DATA_TRANS_U);
-ISA_ISSER(arm_coproc_data_trans_is_n, ARM_COPROC_DATA_TRANS_N);
-ISA_ISSER(arm_coproc_data_trans_is_w, ARM_COPROC_DATA_TRANS_W);
-ISA_ISSER(arm_coproc_data_trans_is_l, ARM_COPROC_DATA_TRANS_L);
+ISA_ISSER(u32, arm_coproc_data_trans_is_p, ARM_COPROC_DATA_TRANS_P);
+ISA_ISSER(u32, arm_coproc_data_trans_is_u, ARM_COPROC_DATA_TRANS_U);
+ISA_ISSER(u32, arm_coproc_data_trans_is_n, ARM_COPROC_DATA_TRANS_N);
+ISA_ISSER(u32, arm_coproc_data_trans_is_w, ARM_COPROC_DATA_TRANS_W);
+ISA_ISSER(u32, arm_coproc_data_trans_is_l, ARM_COPROC_DATA_TRANS_L);
 
-ISA_GETTER_SHIFTED(arm_coproc_data_trans_rn, ARM_COPROC_DATA_TRANS_RN);
-ISA_GETTER_SHIFTED(arm_coproc_data_trans_crd, ARM_COPROC_DATA_TRANS_CRD);
-ISA_GETTER_SHIFTED(arm_coproc_data_trans_cpsharp,
+ISA_GETTER_SHIFTED(u32, arm_coproc_data_trans_rn, ARM_COPROC_DATA_TRANS_RN);
+ISA_GETTER_SHIFTED(u32, arm_coproc_data_trans_crd, ARM_COPROC_DATA_TRANS_CRD);
+ISA_GETTER_SHIFTED(u32, arm_coproc_data_trans_cpsharp,
                    ARM_COPROC_DATA_TRANS_CPSHARP);
-ISA_GETTER(arm_coproc_data_trans_offset, ARM_COPROC_DATA_TRANS_OFFSET);
+ISA_GETTER(u32, arm_coproc_data_trans_offset, ARM_COPROC_DATA_TRANS_OFFSET);
 
 ///
 /// Coprocessor data operation
@@ -405,12 +409,13 @@ ISA_GETTER(arm_coproc_data_trans_offset, ARM_COPROC_DATA_TRANS_OFFSET);
 #define ARM_COPROC_DATA_OP_CRM_SHIFT ARM_MULTIPLY_RM_SHIFT
 #define ARM_COPROC_DATA_OP_CRM_MASK ARM_MULTIPLY_RM_MASK
 
-ISA_GETTER_SHIFTED(arm_coproc_data_op_get_cpopc, ARM_COPROC_DATA_OP_CPOPC);
-ISA_GETTER_SHIFTED(arm_coproc_data_op_get_crn, ARM_COPROC_DATA_OP_CRN);
-ISA_GETTER_SHIFTED(arm_coproc_data_op_get_crd, ARM_COPROC_DATA_OP_CRD);
-ISA_GETTER_SHIFTED(arm_coproc_data_op_get_cpsharp, ARM_COPROC_DATA_OP_CPSHARP);
-ISA_GETTER_SHIFTED(arm_coproc_data_op_get_cp, ARM_COPROC_DATA_OP_CP);
-ISA_GETTER(arm_coproc_data_op_get_crm, ARM_COPROC_DATA_OP_CRM);
+ISA_GETTER_SHIFTED(u32, arm_coproc_data_op_get_cpopc, ARM_COPROC_DATA_OP_CPOPC);
+ISA_GETTER_SHIFTED(u32, arm_coproc_data_op_get_crn, ARM_COPROC_DATA_OP_CRN);
+ISA_GETTER_SHIFTED(u32, arm_coproc_data_op_get_crd, ARM_COPROC_DATA_OP_CRD);
+ISA_GETTER_SHIFTED(u32, arm_coproc_data_op_get_cpsharp,
+                   ARM_COPROC_DATA_OP_CPSHARP);
+ISA_GETTER_SHIFTED(u32, arm_coproc_data_op_get_cp, ARM_COPROC_DATA_OP_CP);
+ISA_GETTER(u32, arm_coproc_data_op_get_crm, ARM_COPROC_DATA_OP_CRM);
 
 ///
 /// Coprocessor register transfer
@@ -434,13 +439,14 @@ ISA_GETTER(arm_coproc_data_op_get_crm, ARM_COPROC_DATA_OP_CRM);
 #define ARM_COPROC_REG_TRANS_CRM_SHIFT ARM_MULTIPLY_RM_SHIFT
 #define ARM_COPROC_REG_TRANS_CRM_MASK ARM_MULTIPLY_RM_MASK
 
-ISA_GETTER_SHIFTED(arm_coproc_reg_trans_get_cpopc, ARM_COPROC_REG_TRANS_CPOPC);
-ISA_GETTER_SHIFTED(arm_coproc_reg_trans_get_crn, ARM_COPROC_REG_TRANS_CRN);
-ISA_GETTER_SHIFTED(arm_coproc_reg_trans_get_rd, ARM_COPROC_REG_TRANS_RD);
-ISA_GETTER_SHIFTED(arm_coproc_reg_trans_get_cpsharp,
+ISA_GETTER_SHIFTED(u32, arm_coproc_reg_trans_get_cpopc,
+                   ARM_COPROC_REG_TRANS_CPOPC);
+ISA_GETTER_SHIFTED(u32, arm_coproc_reg_trans_get_crn, ARM_COPROC_REG_TRANS_CRN);
+ISA_GETTER_SHIFTED(u32, arm_coproc_reg_trans_get_rd, ARM_COPROC_REG_TRANS_RD);
+ISA_GETTER_SHIFTED(u32, arm_coproc_reg_trans_get_cpsharp,
                    ARM_COPROC_REG_TRANS_CPSHARP);
-ISA_GETTER_SHIFTED(arm_coproc_reg_trans_get_cp, ARM_COPROC_REG_TRANS_CP);
-ISA_GETTER(arm_coproc_reg_trans_get_crm, ARM_COPROC_REG_TRANS_CRM);
+ISA_GETTER_SHIFTED(u32, arm_coproc_reg_trans_get_cp, ARM_COPROC_REG_TRANS_CP);
+ISA_GETTER(u32, arm_coproc_reg_trans_get_crm, ARM_COPROC_REG_TRANS_CRM);
 
 ///
 /// Software interrupt
@@ -449,4 +455,4 @@ ISA_GETTER(arm_coproc_reg_trans_get_crm, ARM_COPROC_REG_TRANS_CRM);
 #define ARM_SW_INT_SWI_SHIFT 0
 #define ARM_SW_INT_SWI_MASK (0xffffffu)
 
-ISA_GETTER(arm_sw_int_get_swi, ARM_SW_INT_SWI);
+ISA_GETTER(u32, arm_sw_int_get_swi, ARM_SW_INT_SWI);
