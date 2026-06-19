@@ -631,3 +631,60 @@ ISA_GETTER(u16, thumb_13_get_sword7, THUMB_13_SWORD7);
 ISA_ISSER(u16, thumb_14_is_l, THUMB_14_L);
 ISA_GETTER_SHIFTED(u16, thumb_14_is_r, THUMB_14_R);
 ISA_GETTER(u16, thumb_14_get_rlist, THUMB_14_RLIST);
+
+///
+/// Format 15 - Multiple load and store
+///
+
+#define THUMB_15_L_SHIFT /*     */ THUMB_12_SP_SHIFT
+#define THUMB_15_L_MASK /*      */ THUMB_12_SP_MASK
+#define THUMB_15_RB_SHIFT /*    */ THUMB_12_RD_SHIFT
+#define THUMB_15_RB_MASK /*     */ THUMB_12_RD_MASK
+#define THUMB_15_RLIST_SHIFT /* */ THUMB_12_WORD8_SHIFT
+#define THUMB_15_RLIST_MASK /*  */ THUMB_12_WORD8_MASK
+
+ISA_ISSER(u16, thumb_15_is_l, THUMB_15_L);
+ISA_GETTER_SHIFTED(u16, thumb_15_get_rb, THUMB_15_RB);
+ISA_GETTER(u16, thumb_15_get_rlist, THUMB_15_RLIST);
+
+///
+/// Format 16 - Conditional branch
+///
+
+#define THUMB_16_COND_SHIFT /*     */ THUMB_12_RD_SHIFT
+#define THUMB_16_COND_MASK /*      */ (0xfu << THUMB_16_COND_SHIFT)
+#define THUMB_16_SOFTSET8_SHIFT /* */ THUMB_12_WORD8_SHIFT
+#define THUMB_16_SOFTSET8_MASK /*  */ THUMB_12_WORD8_MASK
+
+ISA_GETTER_SHIFTED(u16, thumb_16_get_cond, THUMB_16_COND);
+ISA_GETTER(u16, thumb_16_get_softset8, THUMB_16_SOFTSET8);
+
+///
+/// Format 17 - Software interrupt
+///
+
+#define THUMB_17_VALUE8_SHIFT /* */ 0
+#define THUMB_17_VALUE8_MASK /*  */ 0xffu
+
+ISA_GETTER(u16, thumb_17_get_value8, THUMB_17_VALUE8);
+
+///
+/// Format 18 - Unconditional branch
+///
+
+#define THUMB_18_OFFSET11_SHIFT /* */ 0
+#define THUMB_18_OFFSET11_MASK /*  */ 0x3ffu
+
+ISA_GETTER(u16, thumb_18_get_offset11, THUMB_18_OFFSET11);
+
+///
+/// Format 19 - Long branch with link
+///
+
+#define THUMB_19_H_SHIFT /*     */ THUMB_15_L_SHIFT
+#define THUMB_19_H_MASK /*      */ THUMB_15_L_MASK
+#define THUMB_19_OFFSET_SHIFT /* */ THUMB_18_OFFSET11_SHIFT
+#define THUMB_19_OFFSET_MASK /*  */ THUMB_18_OFFSET11_MASK
+
+ISA_ISSER(u16, thumb_19_is_h, THUMB_19_H);
+ISA_GETTER(u16, thumb_19_get_offset, THUMB_19_OFFSET);
