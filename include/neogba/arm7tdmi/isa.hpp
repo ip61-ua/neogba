@@ -1,20 +1,16 @@
 #pragma once
 #include "neogba/types.hpp"
 
-inline u32 util_mask(u32 a, u32 b) { return (a & b); }
-inline u32 util_mask_rshift(u32 a, u32 b, u32 c) { return (a & b) >> c; }
-inline bool util_mask_is(u32 a, u32 b) { return (a & b) != 0; }
-
 #define ISA_GETTER_SHIFTED(name, prefix)                                       \
   inline u32 name(u32 inst) {                                                  \
-    return util_mask_rshift(inst, prefix##_MASK, prefix##_SHIFT);              \
+    return (inst & ((prefix##_MASK))) >> (((prefix##_SHIFT)));                 \
   }
 
 #define ISA_GETTER(name, prefix)                                               \
-  inline u32 name(u32 inst) { return util_mask(inst, prefix##_MASK); }
+  inline u32 name(u32 inst) { return inst & (((prefix##_MASK))); }
 
 #define ISA_ISSER(name, prefix)                                                \
-  inline bool name(u32 inst) { return util_mask_is(inst, prefix##_MASK); }
+  inline bool name(u32 inst) { return (inst & (((prefix##_MASK)))) != 0; }
 
 #define ISA_GETTER_SPLIT_OFFSET(name, prefix)                                  \
   inline u32 name(u32 inst) {                                                  \
