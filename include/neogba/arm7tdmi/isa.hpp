@@ -1,6 +1,9 @@
 #pragma once
 #include "neogba/types.hpp"
 
+#define ISA_SHIFTED(type, name, prefix)                                        \
+  inline type name(type inst) { return inst >> (((prefix##_SHIFT))); }
+
 #define ISA_GETTER_SHIFTED(type, name, prefix)                                 \
   inline type name(type inst) {                                                \
     return (inst & ((prefix##_MASK))) >> (((prefix##_SHIFT)));                 \
@@ -25,10 +28,7 @@
 #define ARM_COND_SHIFT /*  */ 28
 #define ARM_COND_MASK /*   */ (0xfu << ARM_COND_SHIFT)
 
-// NO DEVUELVE el campo condición rotado, sino que EXCLUSIVAMENTE OPACA los bits
-// distractores.
-// Returns condition bits in their encoded position [31:28].
-ISA_GETTER(u32, arm_get_cond, ARM_COND);
+ISA_SHIFTED(u32, arm_get_cond, ARM_COND);
 
 ///
 /// Data processing and FSR transfer
@@ -486,10 +486,10 @@ ISA_GETTER(u16, thumb_05_get_rdhd, THUMB_05_RDHD);
 /// Format 06 - PC-relative load
 ///
 
-#define THUMB_06_RD_SHIFT /*        */ THUMB_03_RD_SHIFT
-#define THUMB_06_RD_MASK /*         */ THUMB_03_RD_MASK
-#define THUMB_06_WORD8_SHIFT /*      */ THUMB_01_RD_SHIFT
-#define THUMB_06_WORD8_MASK /*       */ 0x3ffu
+#define THUMB_06_RD_SHIFT /*    */ THUMB_03_RD_SHIFT
+#define THUMB_06_RD_MASK /*     */ THUMB_03_RD_MASK
+#define THUMB_06_WORD8_SHIFT /* */ THUMB_01_RD_SHIFT
+#define THUMB_06_WORD8_MASK /*  */ 0x3ffu
 
 ISA_GETTER_SHIFTED(u16, thumb_06_get_rd, THUMB_06_RD);
 ISA_GETTER(u16, thumb_06_get_word8, THUMB_06_WORD8);
@@ -535,3 +535,99 @@ ISA_ISSER(u16, thumb_08_is_s, THUMB_08_S);
 ISA_GETTER_SHIFTED(u16, thumb_08_get_ro, THUMB_08_RO);
 ISA_GETTER_SHIFTED(u16, thumb_08_get_rb, THUMB_08_RB);
 ISA_GETTER(u16, thumb_08_get_rd, THUMB_08_RD);
+
+///
+/// Format 09 - Load and store with immediate offset
+///
+
+#define THUMB_09_B_SHIFT /*         */ (THUMB_01_OP_SHIFT + 1)
+#define THUMB_09_B_MASK /*          */ (0x1u << THUMB_09_B_SHIFT)
+#define THUMB_09_L_SHIFT /*         */ THUMB_01_OP_SHIFT
+#define THUMB_09_L_MASK /*          */ (0x1u << THUMB_09_L_SHIFT)
+#define THUMB_09_OFFSET5_SHIFT /*   */ THUMB_01_OFFSET5_SHIFT
+#define THUMB_09_OFFSET5_MASK /*    */ THUMB_01_OFFSET5_MASK
+#define THUMB_09_RB_SHIFT /*        */ THUMB_01_RS_SHIFT
+#define THUMB_09_RB_MASK /*         */ THUMB_01_RS_MASK
+#define THUMB_09_RD_SHIFT /*        */ THUMB_01_RD_SHIFT
+#define THUMB_09_RD_MASK /*         */ THUMB_01_RD_MASK
+
+ISA_ISSER(u16, thumb_09_is_b, THUMB_09_B);
+ISA_ISSER(u16, thumb_09_is_l, THUMB_09_L);
+ISA_GETTER_SHIFTED(u16, thumb_09_get_offset5, THUMB_09_OFFSET5);
+ISA_GETTER_SHIFTED(u16, thumb_09_get_rb, THUMB_09_RB);
+ISA_GETTER(u16, thumb_09_get_rd, THUMB_09_RD);
+
+///
+/// Format 10 - Load and store halfword
+///
+
+#define THUMB_10_L_SHIFT /*         */ THUMB_01_OP_SHIFT
+#define THUMB_10_L_MASK /*          */ (0x1u << THUMB_10_L_SHIFT)
+#define THUMB_10_OFFSET5_SHIFT /*   */ THUMB_01_OFFSET5_SHIFT
+#define THUMB_10_OFFSET5_MASK /*    */ THUMB_01_OFFSET5_MASK
+#define THUMB_10_RB_SHIFT /*        */ THUMB_01_RS_SHIFT
+#define THUMB_10_RB_MASK /*         */ THUMB_01_RS_MASK
+#define THUMB_10_RD_SHIFT /*        */ THUMB_01_RD_SHIFT
+#define THUMB_10_RD_MASK /*         */ THUMB_01_RD_MASK
+
+ISA_ISSER(u16, thumb_10_is_l, THUMB_10_L);
+ISA_GETTER_SHIFTED(u16, thumb_10_get_offset5, THUMB_10_OFFSET5);
+ISA_GETTER_SHIFTED(u16, thumb_10_get_rb, THUMB_10_RB);
+ISA_GETTER(u16, thumb_10_get_rd, THUMB_09_RD);
+
+///
+/// Format 11 - SP-relative load and store
+///
+
+#define THUMB_11_L_SHIFT /*     */ THUMB_10_L_SHIFT
+#define THUMB_11_L_MASK /*      */ THUMB_10_L_MASK
+#define THUMB_11_RD_SHIFT /*    */ THUMB_06_RD_SHIFT
+#define THUMB_11_RD_MASK /*     */ THUMB_06_RD_MASK
+#define THUMB_11_WORD8_SHIFT /* */ THUMB_06_WORD8_SHIFT
+#define THUMB_11_WORD8_MASK /*  */ THUMB_06_WORD8_MASK
+
+ISA_ISSER(u16, thumb_11_is_l, THUMB_11_L);
+ISA_GETTER_SHIFTED(u16, thumb_11_get_rd, THUMB_11_RD);
+ISA_GETTER(u16, thumb_11_get_word8, THUMB_11_WORD8);
+
+///
+/// Format 12 - Load address
+///
+
+#define THUMB_12_SP_SHIFT /*    */ THUMB_11_L_SHIFT
+#define THUMB_12_SP_MASK /*     */ THUMB_11_L_MASK
+#define THUMB_12_RD_SHIFT /*    */ THUMB_11_RD_SHIFT
+#define THUMB_12_RD_MASK /*     */ THUMB_11_RD_MASK
+#define THUMB_12_WORD8_SHIFT /* */ THUMB_11_WORD8_SHIFT
+#define THUMB_12_WORD8_MASK /*  */ THUMB_11_WORD8_MASK
+
+ISA_ISSER(u16, thumb_12_is_sp, THUMB_12_SP);
+ISA_GETTER_SHIFTED(u16, thumb_12_get_rd, THUMB_12_RD);
+ISA_GETTER(u16, thumb_12_get_word8, THUMB_12_WORD8);
+
+///
+/// Format 13 - Add offset to stack pointer
+///
+
+#define THUMB_13_S_SHIFT /*      */ 8
+#define THUMB_13_S_MASK /*       */ (0x1u << THUMB_13_S_SHIFT)
+#define THUMB_13_SWORD7_SHIFT /* */ 0
+#define THUMB_13_SWORD7_MASK /*  */ 0x7fu
+
+ISA_ISSER(u16, thumb_13_is_s, THUMB_13_S);
+ISA_GETTER(u16, thumb_13_get_sword7, THUMB_13_SWORD7);
+
+///
+/// Format 14 - Push and pop registers
+///
+
+#define THUMB_14_L_SHIFT /*     */ THUMB_11_L_SHIFT
+#define THUMB_14_L_MASK /*      */ THUMB_11_L_MASK
+#define THUMB_14_R_SHIFT /*     */ THUMB_11_RD_SHIFT
+#define THUMB_14_R_MASK /*      */ (0x1u << THUMB_14_R_SHIFT)
+#define THUMB_14_RLIST_SHIFT /* */ THUMB_11_WORD8_SHIFT
+#define THUMB_14_RLIST_MASK /*  */ THUMB_11_WORD8_MASK
+
+ISA_ISSER(u16, thumb_14_is_l, THUMB_14_L);
+ISA_GETTER_SHIFTED(u16, thumb_14_is_r, THUMB_14_R);
+ISA_GETTER(u16, thumb_14_get_rlist, THUMB_14_RLIST);
