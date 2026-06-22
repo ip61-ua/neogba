@@ -1,15 +1,29 @@
 #pragma once
 #include "neogba/types.hpp"
 
-#define /* */ ISA_UNPACK_INSTT(inst_t, ret_t, shift, mask) inst_t
-#define /*  */ ISA_UNPACK_RETT(inst_t, ret_t, shift, mask) ret_t
-#define /* */ ISA_UNPACK_SHIFT(inst_t, ret_t, shift, mask) shift
-#define /*  */ ISA_UNPACK_MASK(inst_t, ret_t, shift, mask) mask
+#define /* */ ISA_UNPACK_INSTT(inst, ret, shift, mask) inst
+#define /*  */ ISA_UNPACK_RETT(inst, ret, shift, mask) ret
+#define /* */ ISA_UNPACK_SHIFT(inst, ret, shift, mask) shift
+#define /*  */ ISA_UNPACK_MASK(inst, ret, shift, mask) mask
+
+#define /* */ ISA_UNPACK_OFF_INSTT(inst, ret, shift, mask, mask2, join) inst
+#define /*  */ ISA_UNPACK_OFF_RETT(inst, ret, shift, mask, mask2, join) ret
+#define /* */ ISA_UNPACK_OFF_SHIFT(inst, ret, shift, mask, mask2, join) shift
+#define /*  */ ISA_UNPACK_OFF_MASK(inst, ret, shift, mask, mask2, join) mask
+#define /*  */ ISA_UNPACK_OFF_MSK2(inst, ret, shift, mask, mask2, join) mask2
+#define /*  */ ISA_UNPACK_OFF_JOIN(inst, ret, shift, mask, mask2, join) join
 
 #define ISA_GET_INSTT(...) /* */ ISA_UNPACK_INSTT(__VA_ARGS__)
 #define ISA_GET_RETT(...) /*  */ ISA_UNPACK_RETT(__VA_ARGS__)
 #define ISA_GET_SHIFT(...) /* */ ISA_UNPACK_SHIFT(__VA_ARGS__)
 #define ISA_GET_MASK(...) /*  */ ISA_UNPACK_MASK(__VA_ARGS__)
+
+#define ISA_GET2_INSTT(...) /* */ ISA_UNPACK_INSTT(__VA_ARGS__)
+#define ISA_GET2_RETT(...) /*  */ ISA_UNPACK_RETT(__VA_ARGS__)
+#define ISA_GET2_SHIFT(...) /* */ ISA_UNPACK_SHIFT(__VA_ARGS__)
+#define ISA_GET2_MASK(...) /*  */ ISA_UNPACK_MASK(__VA_ARGS__)
+#define ISA_GET2_MSK2(...) /*  */ ISA_UNPACK_MSK2(__VA_ARGS__)
+#define ISA_GET2_JOIN(...) /*  */ ISA_UNPACK_JOIN(__VA_ARGS__)
 
 #define ISA_SHIFTED(field)                                                     \
   [[nodiscard]] inline ISA_GET_RETT(field)                                     \
@@ -23,21 +37,70 @@
            (field##_value << ISA_GET_SHIFT(field));                            \
   }
 
-#define ISA_GETTER_SHIFTED(type, name, prefix)                                 \
-  inline type name(type inst) {                                                \
-    return (inst & ((prefix##_MASK))) >> (((prefix##_SHIFT)));                 \
+#define ISA_MASKED_SHIFTED(field)                                              \
+  [[nodiscard]] inline ISA_GET_RETT(field)                                     \
+      isa_get_##field(ISA_GET_INSTT(field) inst) {                             \
+    return static_cast<ISA_GET_RETT(field)>((inst & ISA_GET_MASK(field)) >>    \
+                                            ISA_GET_SHIFT(field));             \
+  }                                                                            \
+                                                                               \
+  [[nodiscard]] inline ISA_GET_INSTT(field) isa_set_##field(                   \
+      ISA_GET_INSTT(field) inst, ISA_GET_INSTT(field) field##_value) {         \
+    return (inst & ~ISA_GET_MASK(field)) |                                     \
+           ((field##_value << ISA_GET_SHIFT(field)) & ISA_GET_MASK(field));    \
   }
 
-#define ISA_GETTER(type, name, prefix)                                         \
-  inline type name(type inst) { return inst & (((prefix##_MASK))); }
+#define ISA_MASKED_BOOL(field)                                                 \
+  [[nodiscard]] inline bool isa_is_##field(ISA_GET_INSTT(field) inst) {        \
+    return ((inst & ISA_GET_MASK(field)) != 0);                                \
+  }                                                                            \
+                                                                               \
+  [[nodiscard]] inline ISA_GET_INSTT(field)                                    \
+      isa_set_##field(ISA_GET_INSTT(field) inst, bool field##_value) {         \
+    return (inst & ~ISA_GET_MASK(field)) |                                     \
+           ((field##_value) ? (ISA_GET_MASK(field)) : 0);                      \
+  }                                                                            \
+                                                                               \
+  [[nodiscard]] inline ISA_GET_INSTT(field)                                    \
+      isa_set0_##field(ISA_GET_INSTT(field) inst) {                            \
+    return (inst & ~ISA_GET_MASK(field));                                      \
+  }                                                                            \
+                                                                               \
+  [[nodiscard]] inline ISA_GET_INSTT(field)                                    \
+      isa_set1_##field(ISA_GET_INSTT(field) inst) {                            \
+    return (inst | ISA_GET_MASK(field));                                       \
+  }                                                                            \
+                                                                               \
+  [[nodiscard]] inline ISA_GET_INSTT(field)                                    \
+      isa_toggle_##field(ISA_GET_INSTT(field) inst) {                          \
+    return /* xor */ (inst ^ ISA_GET_MASK(field));                             \
+  }
 
-#define ISA_ISSER(type, name, prefix)                                          \
-  inline bool name(type inst) { return (inst & (((prefix##_MASK)))) != 0; }
+#define ISA_MASKED(field)                                                      \
+  [[nodiscard]] inline ISA_GET_RETT(field)                                     \
+      isa_get_##field(ISA_GET_INSTT(field) inst) {                             \
+    return static_cast<ISA_GET_RETT(field)>((inst & ISA_GET_MASK(field)));     \
+  }                                                                            \
+                                                                               \
+  [[nodiscard]] inline ISA_GET_INSTT(field) isa_set_##field(                   \
+      ISA_GET_INSTT(field) inst, ISA_GET_INSTT(field) field##_value) {         \
+    return (inst & ~ISA_GET_MASK(field)) |                                     \
+           (((field##_value << ISA_GET_SHIFT(field)) & ISA_GET_MASK(field)));  \
+  }
 
-#define ISA_GETTER_SPLIT_OFFSET(type, name, prefix)                            \
-  inline type name(type inst) {                                                \
-    return (((inst) & (prefix##_1_MASK)) >> (prefix##_JOIN)) |                 \
-           ((inst) & (prefix##_2_MASK));                                       \
+#define ISA_SPLIT_OFFSET(field)                                                \
+  [[nodiscard]] inline ISA_GET2_RETT(field)                                    \
+      isa_get_##field(ISA_GET2_INSTT(field) inst) {                            \
+    return static_cast<ISA_GET2_RETT(field)>(                                  \
+        ((inst & ISA_GET2_MASK(field)) >> ISA_GET2_JOIN(field)) |              \
+        (inst & ISA_GET2_MSK2(field)));                                        \
+  }                                                                            \
+                                                                               \
+  [[nodiscard]] inline ISA_GET2_INSTT(field) isa_set_##field(                  \
+      ISA_GET2_INSTT(field) inst, ISA_GET2_INSTT(field) field##_value) {       \
+    return (inst & ~(ISA_GET2_MASK(field) | ISA_GET2_MSK2(field))) |           \
+           (field##_value & ISA_GET2_MSK2(field)) |                            \
+           ((field##_value << ISA_GET2_JOIN(field)) & ISA_GET2_MASK(field));   \
   }
 
 ///
@@ -55,34 +118,25 @@ ISA_SHIFTED(ARM_COND)
 /// Data processing and FSR transfer
 ///
 
-#define ARM_FSR_OPCODE_SHIFT /*   */ 21
-#define ARM_FSR_OPCODE_MASK /*    */ (0xfu << ARM_FSR_OPCODE_SHIFT)
-#define ARM_FSR_S_SHIFT /*        */ 20
-#define ARM_FSR_S_MASK /*         */ (1u << ARM_FSR_S_SHIFT)
-#define ARM_FSR_RN_SHIFT /*       */ 16
-#define ARM_FSR_RN_MASK /*        */ (0xfu << ARM_FSR_RN_SHIFT)
-#define ARM_FSR_RD_SHIFT /*       */ 12
-#define ARM_FSR_RD_MASK /*        */ (0xfu << ARM_FSR_RD_SHIFT)
-#define ARM_FSR_OPERAND2_SHIFT /* */ 0
-#define ARM_FSR_OPERAND2_MASK /*  */ ((1u << 12) - 1)
+#define ARM_FSR_OPCODE /*   */ u32, u8, 21, (0xfu << 21)
+#define ARM_FSR_S /*        */ u32, bool, 20, (1u << 20)
+#define ARM_FSR_RN /*       */ u32, u8, 16, (0xfu << 16)
+#define ARM_FSR_RD /*       */ u32, u8, 12, (0xfu << 12)
+#define ARM_FSR_OPERAND2 /* */ u32, u8, 0, ((1u << 12) - 1)
 
-ISA_GETTER_SHIFTED(u32, arm_fsr_get_opcode, ARM_FSR_OPCODE);
-
-ISA_ISSER(u32, arm_fsr_is_s, ARM_FSR_S);
-
-ISA_GETTER_SHIFTED(u32, arm_fsr_get_rn, ARM_FSR_RN);
-ISA_GETTER_SHIFTED(u32, arm_fsr_get_rd, ARM_FSR_RD);
-
-ISA_GETTER(u32, arm_fsr_get_operand2, ARM_FSR_OPERAND2);
+ISA_MASKED_SHIFTED(ARM_FSR_OPCODE);
+ISA_MASKED_BOOL(ARM_FSR_S);
+ISA_MASKED_SHIFTED(ARM_FSR_RN);
+ISA_MASKED_SHIFTED(ARM_FSR_RD);
+ISA_MASKED(ARM_FSR_OPERAND2);
 
 ///
 /// Multiply
 ///
 
-#define ARM_MULTIPLY_A_SHIFT /*    */ 21
-#define ARM_MULTIPLY_A_MASK /*     */ (1u << ARM_MULTIPLY_A_SHIFT)
-#define ARM_MULTIPLY_S_SHIFT /*    */ ARM_FSR_S_SHIFT
-#define ARM_MULTIPLY_S_MASK /*     */ ARM_FSR_S_MASK
+#define ARM_MULTIPLY_A /*        */ u32, bool, 21, (0x1u << 21)
+#define ARM_MULTIPLY_S /*        */ ARM_FSR_S
+
 #define ARM_MULTIPLY_RD_SHIFT /*   */ ARM_FSR_RN_SHIFT
 #define ARM_MULTIPLY_RD_MASK /*    */ ARM_FSR_RN_MASK
 #define ARM_MULTIPLY_RN_SHIFT /*   */ ARM_FSR_RD_SHIFT
@@ -92,8 +146,8 @@ ISA_GETTER(u32, arm_fsr_get_operand2, ARM_FSR_OPERAND2);
 #define ARM_MULTIPLY_RM_SHIFT /*   */ 0
 #define ARM_MULTIPLY_RM_MASK /*    */ (0xfu)
 
-ISA_ISSER(u32, arm_multiply_is_a, ARM_MULTIPLY_A);
-ISA_ISSER(u32, arm_multiply_is_s, ARM_MULTIPLY_S);
+ISA_MASKED_BOOL(ARM_MULTIPLY_A);
+ISA_MASKED_BOOL(ARM_MULTIPLY_S);
 
 ISA_GETTER_SHIFTED(u32, arm_multiply_get_rd, ARM_MULTIPLY_RD);
 ISA_GETTER_SHIFTED(u32, arm_multiply_get_rn, ARM_MULTIPLY_RN);
@@ -120,9 +174,9 @@ ISA_GETTER(u32, arm_multiply_get_rm, ARM_MULTIPLY_RM);
 #define ARM_MULTIPLY_LONG_RM_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
 #define ARM_MULTIPLY_LONG_RM_MASK /*    */ ARM_MULTIPLY_RM_MASK
 
-ISA_ISSER(u32, arm_multiply_long_is_u, ARM_MULTIPLY_LONG_U);
-ISA_ISSER(u32, arm_multiply_long_is_a, ARM_MULTIPLY_LONG_A);
-ISA_ISSER(u32, arm_multiply_long_is_s, ARM_MULTIPLY_LONG_S);
+ISA_MASKED_BOOL(, ARM_MULTIPLY_LONG_U);
+ISA_MASKED_BOOL(, ARM_MULTIPLY_LONG_A);
+ISA_MASKED_BOOL(, ARM_MULTIPLY_LONG_S);
 
 ISA_GETTER_SHIFTED(u32, arm_multiply_long_get_rdhi, ARM_MULTIPLY_LONG_RDHI);
 ISA_GETTER_SHIFTED(u32, arm_multiply_long_get_rdlo, ARM_MULTIPLY_LONG_RDLO);
@@ -143,7 +197,7 @@ ISA_GETTER(u32, arm_multiply_long_get_rm, ARM_MULTIPLY_LONG_RM);
 #define ARM_SINGLE_DATA_SWAP_RM_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
 #define ARM_SINGLE_DATA_SWAP_RM_MASK /*    */ ARM_MULTIPLY_RM_MASK
 
-ISA_ISSER(u32, arm_single_data_swap_is_b, ARM_SINGLE_DATA_SWAP_B);
+ISA_MASKED_BOOL(s_b, ARM_SINGLE_DATA_SWAP_B);
 
 ISA_GETTER_SHIFTED(u32, arm_single_data_swap_get_rn, ARM_SINGLE_DATA_SWAP_RN);
 ISA_GETTER_SHIFTED(u32, arm_single_data_swap_get_rd, ARM_SINGLE_DATA_SWAP_RD);
@@ -181,18 +235,18 @@ ISA_GETTER(u32, arm_branch_and_exchange_get_rn, ARM_BRANCH_AND_EXCHANGE_RN);
 #define ARM_HALF_DATA_TRANS_REG_RM_SHIFT /*   */ ARM_MULTIPLY_RM_SHIFT
 #define ARM_HALF_DATA_TRANS_REG_RM_MASK /*    */ ARM_MULTIPLY_RM_MASK
 
-ISA_ISSER(u32, arm_half_data_trans_reg_is_p, ARM_HALF_DATA_TRANS_REG_P);
-ISA_ISSER(u32, arm_half_data_trans_reg_is_u, ARM_HALF_DATA_TRANS_REG_U);
-ISA_ISSER(u32, arm_half_data_trans_reg_is_w, ARM_HALF_DATA_TRANS_REG_W);
-ISA_ISSER(u32, arm_half_data_trans_reg_is_l, ARM_HALF_DATA_TRANS_REG_L);
+ISA_MASKED_BOOL(eg_is_p, ARM_HALF_DATA_TRANS_REG_P);
+ISA_MASKED_BOOL(eg_is_u, ARM_HALF_DATA_TRANS_REG_U);
+ISA_MASKED_BOOL(eg_is_w, ARM_HALF_DATA_TRANS_REG_W);
+ISA_MASKED_BOOL(eg_is_l, ARM_HALF_DATA_TRANS_REG_L);
 
 ISA_GETTER_SHIFTED(u32, arm_half_data_trans_reg_get_rn,
                    ARM_HALF_DATA_TRANS_REG_RN);
 ISA_GETTER_SHIFTED(u32, arm_half_data_trans_reg_get_rd,
                    ARM_HALF_DATA_TRANS_REG_RD);
 
-ISA_ISSER(u32, arm_half_data_trans_reg_is_s, ARM_HALF_DATA_TRANS_REG_S);
-ISA_ISSER(u32, arm_half_data_trans_reg_is_h, ARM_HALF_DATA_TRANS_REG_H);
+ISA_MASKED_BOOL(eg_is_s, ARM_HALF_DATA_TRANS_REG_S);
+ISA_MASKED_BOOL(eg_is_h, ARM_HALF_DATA_TRANS_REG_H);
 
 ISA_GETTER(u32, arm_half_data_trans_reg_get_rm, ARM_HALF_DATA_TRANS_REG_RM);
 
@@ -220,10 +274,10 @@ ISA_GETTER(u32, arm_half_data_trans_reg_get_rm, ARM_HALF_DATA_TRANS_REG_RM);
 #define ARM_HALF_DATA_TRANS_IMM_OFFSET_2_MASK ARM_MULTIPLY_RM_MASK
 #define ARM_HALF_DATA_TRANS_IMM_OFFSET_JOIN 4
 
-ISA_ISSER(u32, arm_half_data_trans_imm_is_p, ARM_HALF_DATA_TRANS_IMM_P);
-ISA_ISSER(u32, arm_half_data_trans_imm_is_u, ARM_HALF_DATA_TRANS_IMM_U);
-ISA_ISSER(u32, arm_half_data_trans_imm_is_w, ARM_HALF_DATA_TRANS_IMM_W);
-ISA_ISSER(u32, arm_half_data_trans_imm_is_l, ARM_HALF_DATA_TRANS_IMM_L);
+ISA_MASKED_BOOL(mm_is_p, ARM_HALF_DATA_TRANS_IMM_P);
+ISA_MASKED_BOOL(mm_is_u, ARM_HALF_DATA_TRANS_IMM_U);
+ISA_MASKED_BOOL(mm_is_w, ARM_HALF_DATA_TRANS_IMM_W);
+ISA_MASKED_BOOL(mm_is_l, ARM_HALF_DATA_TRANS_IMM_L);
 
 ISA_GETTER_SHIFTED(u32, arm_half_data_trans_imm_get_rn,
                    ARM_HALF_DATA_TRANS_IMM_RN);
@@ -233,8 +287,8 @@ ISA_GETTER_SHIFTED(u32, arm_half_data_trans_imm_get_rd,
 ISA_GETTER_SPLIT_OFFSET(u32, arm_half_data_trans_imm_get_offset,
                         ARM_HALF_DATA_TRANS_IMM_OFFSET);
 
-ISA_ISSER(u32, arm_half_data_trans_imm_is_s, ARM_HALF_DATA_TRANS_IMM_S);
-ISA_ISSER(u32, arm_half_data_trans_imm_is_h, ARM_HALF_DATA_TRANS_IMM_H);
+ISA_MASKED_BOOL(mm_is_s, ARM_HALF_DATA_TRANS_IMM_S);
+ISA_MASKED_BOOL(mm_is_h, ARM_HALF_DATA_TRANS_IMM_H);
 
 ///
 /// Single data transfer
@@ -257,11 +311,11 @@ ISA_ISSER(u32, arm_half_data_trans_imm_is_h, ARM_HALF_DATA_TRANS_IMM_H);
 #define ARM_SINGLE_DATA_TRANS_OFFSET_SHIFT ARM_FSR_OPERAND2_SHIFT
 #define ARM_SINGLE_DATA_TRANS_OFFSET_MASK ARM_FSR_OPERAND2_MASK
 
-ISA_ISSER(u32, arm_single_data_trans_is_p, ARM_SINGLE_DATA_TRANS_P);
-ISA_ISSER(u32, arm_single_data_trans_is_u, ARM_SINGLE_DATA_TRANS_U);
-ISA_ISSER(u32, arm_single_data_trans_is_b, ARM_SINGLE_DATA_TRANS_B);
-ISA_ISSER(u32, arm_single_data_trans_is_w, ARM_SINGLE_DATA_TRANS_W);
-ISA_ISSER(u32, arm_single_data_trans_is_l, ARM_SINGLE_DATA_TRANS_L);
+ISA_MASKED_BOOL(s_p, ARM_SINGLE_DATA_TRANS_P);
+ISA_MASKED_BOOL(s_u, ARM_SINGLE_DATA_TRANS_U);
+ISA_MASKED_BOOL(s_b, ARM_SINGLE_DATA_TRANS_B);
+ISA_MASKED_BOOL(s_w, ARM_SINGLE_DATA_TRANS_W);
+ISA_MASKED_BOOL(s_l, ARM_SINGLE_DATA_TRANS_L);
 
 ISA_GETTER_SHIFTED(u32, arm_single_data_trans_get_rn, ARM_SINGLE_DATA_TRANS_RN);
 ISA_GETTER_SHIFTED(u32, arm_single_data_trans_get_rd, ARM_SINGLE_DATA_TRANS_RD);
@@ -293,11 +347,11 @@ ISA_GETTER(u32, arm_single_data_trans_get_offset, ARM_SINGLE_DATA_TRANS_OFFSET);
 #define ARM_BLOCK_DATA_TRANS_REGISTERLIST_SHIFT 0
 #define ARM_BLOCK_DATA_TRANS_REGISTERLIST_MASK (0xffffu)
 
-ISA_ISSER(u32, arm_block_data_trans_is_p, ARM_BLOCK_DATA_TRANS_P);
-ISA_ISSER(u32, arm_block_data_trans_is_u, ARM_BLOCK_DATA_TRANS_U);
-ISA_ISSER(u32, arm_block_data_trans_is_s, ARM_BLOCK_DATA_TRANS_S);
-ISA_ISSER(u32, arm_block_data_trans_is_w, ARM_BLOCK_DATA_TRANS_W);
-ISA_ISSER(u32, arm_block_data_trans_is_l, ARM_BLOCK_DATA_TRANS_L);
+ISA_MASKED_BOOL(s_p, ARM_BLOCK_DATA_TRANS_P);
+ISA_MASKED_BOOL(s_u, ARM_BLOCK_DATA_TRANS_U);
+ISA_MASKED_BOOL(s_s, ARM_BLOCK_DATA_TRANS_S);
+ISA_MASKED_BOOL(s_w, ARM_BLOCK_DATA_TRANS_W);
+ISA_MASKED_BOOL(s_l, ARM_BLOCK_DATA_TRANS_L);
 
 ISA_GETTER_SHIFTED(u32, arm_block_data_trans_get_rn, ARM_BLOCK_DATA_TRANS_RN);
 
@@ -313,7 +367,7 @@ ISA_GETTER(u32, arm_block_data_trans_get_registerlist,
 #define ARM_BRANCH_OFFSET_SHIFT 0
 #define ARM_BRANCH_OFFSET_MASK (0xffffffu)
 
-ISA_ISSER(u32, arm_branch_is_l, ARM_BLOCK_DATA_TRANS_L);
+ISA_MASKED_BOOL(ARM_BLOCK_DATA_TRANS_L);
 
 ISA_GETTER(u32, arm_branch_get_offset, ARM_BRANCH_OFFSET);
 
@@ -340,11 +394,11 @@ ISA_GETTER(u32, arm_branch_get_offset, ARM_BRANCH_OFFSET);
 #define ARM_COPROC_DATA_TRANS_OFFSET_SHIFT 0
 #define ARM_COPROC_DATA_TRANS_OFFSET_MASK 0xffu
 
-ISA_ISSER(u32, arm_coproc_data_trans_is_p, ARM_COPROC_DATA_TRANS_P);
-ISA_ISSER(u32, arm_coproc_data_trans_is_u, ARM_COPROC_DATA_TRANS_U);
-ISA_ISSER(u32, arm_coproc_data_trans_is_n, ARM_COPROC_DATA_TRANS_N);
-ISA_ISSER(u32, arm_coproc_data_trans_is_w, ARM_COPROC_DATA_TRANS_W);
-ISA_ISSER(u32, arm_coproc_data_trans_is_l, ARM_COPROC_DATA_TRANS_L);
+ISA_MASKED_BOOL(s_p, ARM_COPROC_DATA_TRANS_P);
+ISA_MASKED_BOOL(s_u, ARM_COPROC_DATA_TRANS_U);
+ISA_MASKED_BOOL(s_n, ARM_COPROC_DATA_TRANS_N);
+ISA_MASKED_BOOL(s_w, ARM_COPROC_DATA_TRANS_W);
+ISA_MASKED_BOOL(s_l, ARM_COPROC_DATA_TRANS_L);
 
 ISA_GETTER_SHIFTED(u32, arm_coproc_data_trans_rn, ARM_COPROC_DATA_TRANS_RN);
 ISA_GETTER_SHIFTED(u32, arm_coproc_data_trans_crd, ARM_COPROC_DATA_TRANS_CRD);
@@ -399,7 +453,7 @@ ISA_GETTER(u32, arm_coproc_data_op_get_crm, ARM_COPROC_DATA_OP_CRM);
 
 ISA_GETTER_SHIFTED(u32, arm_coproc_reg_trans_get_cpopc,
                    ARM_COPROC_REG_TRANS_CPOPC);
-ISA_ISSER(u32, arm_coproc_reg_trans_is_l, ARM_COPROC_REG_TRANS_L);
+ISA_MASKED_BOOL(s_l, ARM_COPROC_REG_TRANS_L);
 ISA_GETTER_SHIFTED(u32, arm_coproc_reg_trans_get_crn, ARM_COPROC_REG_TRANS_CRN);
 ISA_GETTER_SHIFTED(u32, arm_coproc_reg_trans_get_rd, ARM_COPROC_REG_TRANS_RD);
 ISA_GETTER_SHIFTED(u32, arm_coproc_reg_trans_get_cpsharp,
@@ -451,7 +505,7 @@ ISA_GETTER(u16, thumb_01_get_rd, THUMB_01_RD);
 #define THUMB_02_RD_SHIFT /*        */ THUMB_01_RD_SHIFT
 #define THUMB_02_RD_MASK /*         */ THUMB_01_RD_MASK
 
-ISA_ISSER(u16, thumb_02_is_op, THUMB_02_OP);
+ISA_MASKED_BOOL(THUMB_02_OP);
 ISA_GETTER_SHIFTED(u16, thumb_02_get_rnoffset3, THUMB_02_RNOFFSET3);
 ISA_GETTER_SHIFTED(u16, thumb_02_get_rs, THUMB_02_RS);
 ISA_GETTER(u16, thumb_02_get_rd, THUMB_02_RD);
@@ -502,8 +556,8 @@ ISA_GETTER(u16, thumb_04_get_rd, THUMB_04_RD);
 #define THUMB_05_RDHD_MASK /*       */ THUMB_01_RD_MASK
 
 ISA_GETTER_SHIFTED(u16, thumb_05_get_op, THUMB_05_OP);
-ISA_ISSER(u16, thumb_05_is_h1, THUMB_05_H1);
-ISA_ISSER(u16, thumb_05_is_h2, THUMB_05_H2);
+ISA_MASKED_BOOL(THUMB_05_H1);
+ISA_MASKED_BOOL(THUMB_05_H2);
 ISA_GETTER_SHIFTED(u16, thumb_05_get_rshs, THUMB_05_RSHS);
 ISA_GETTER(u16, thumb_05_get_rdhd, THUMB_05_RDHD);
 
@@ -534,8 +588,8 @@ ISA_GETTER(u16, thumb_06_get_word8, THUMB_06_WORD8);
 #define THUMB_07_RD_SHIFT /*   */ THUMB_01_RD_SHIFT
 #define THUMB_07_RD_MASK /*    */ THUMB_01_RD_MASK
 
-ISA_ISSER(u16, thumb_07_is_l, THUMB_07_L);
-ISA_ISSER(u16, thumb_07_is_b, THUMB_07_B);
+ISA_MASKED_BOOL(THUMB_07_L);
+ISA_MASKED_BOOL(THUMB_07_B);
 ISA_GETTER_SHIFTED(u16, thumb_07_get_ro, THUMB_07_RO);
 ISA_GETTER_SHIFTED(u16, thumb_07_get_rb, THUMB_07_RB);
 ISA_GETTER(u16, thumb_07_get_rd, THUMB_07_RD);
@@ -555,8 +609,8 @@ ISA_GETTER(u16, thumb_07_get_rd, THUMB_07_RD);
 #define THUMB_08_RD_SHIFT /*   */ THUMB_07_RD_SHIFT
 #define THUMB_08_RD_MASK /*    */ THUMB_07_RD_MASK
 
-ISA_ISSER(u16, thumb_08_is_h, THUMB_08_H);
-ISA_ISSER(u16, thumb_08_is_s, THUMB_08_S);
+ISA_MASKED_BOOL(THUMB_08_H);
+ISA_MASKED_BOOL(THUMB_08_S);
 ISA_GETTER_SHIFTED(u16, thumb_08_get_ro, THUMB_08_RO);
 ISA_GETTER_SHIFTED(u16, thumb_08_get_rb, THUMB_08_RB);
 ISA_GETTER(u16, thumb_08_get_rd, THUMB_08_RD);
@@ -576,8 +630,8 @@ ISA_GETTER(u16, thumb_08_get_rd, THUMB_08_RD);
 #define THUMB_09_RD_SHIFT /*        */ THUMB_01_RD_SHIFT
 #define THUMB_09_RD_MASK /*         */ THUMB_01_RD_MASK
 
-ISA_ISSER(u16, thumb_09_is_b, THUMB_09_B);
-ISA_ISSER(u16, thumb_09_is_l, THUMB_09_L);
+ISA_MASKED_BOOL(THUMB_09_B);
+ISA_MASKED_BOOL(THUMB_09_L);
 ISA_GETTER_SHIFTED(u16, thumb_09_get_offset5, THUMB_09_OFFSET5);
 ISA_GETTER_SHIFTED(u16, thumb_09_get_rb, THUMB_09_RB);
 ISA_GETTER(u16, thumb_09_get_rd, THUMB_09_RD);
@@ -595,7 +649,7 @@ ISA_GETTER(u16, thumb_09_get_rd, THUMB_09_RD);
 #define THUMB_10_RD_SHIFT /*        */ THUMB_01_RD_SHIFT
 #define THUMB_10_RD_MASK /*         */ THUMB_01_RD_MASK
 
-ISA_ISSER(u16, thumb_10_is_l, THUMB_10_L);
+ISA_MASKED_BOOL(THUMB_10_L);
 ISA_GETTER_SHIFTED(u16, thumb_10_get_offset5, THUMB_10_OFFSET5);
 ISA_GETTER_SHIFTED(u16, thumb_10_get_rb, THUMB_10_RB);
 ISA_GETTER(u16, thumb_10_get_rd, THUMB_10_RD);
@@ -611,7 +665,7 @@ ISA_GETTER(u16, thumb_10_get_rd, THUMB_10_RD);
 #define THUMB_11_WORD8_SHIFT /* */ THUMB_06_WORD8_SHIFT
 #define THUMB_11_WORD8_MASK /*  */ THUMB_06_WORD8_MASK
 
-ISA_ISSER(u16, thumb_11_is_l, THUMB_11_L);
+ISA_MASKED_BOOL(THUMB_11_L);
 ISA_GETTER_SHIFTED(u16, thumb_11_get_rd, THUMB_11_RD);
 ISA_GETTER(u16, thumb_11_get_word8, THUMB_11_WORD8);
 
@@ -626,7 +680,7 @@ ISA_GETTER(u16, thumb_11_get_word8, THUMB_11_WORD8);
 #define THUMB_12_WORD8_SHIFT /* */ THUMB_11_WORD8_SHIFT
 #define THUMB_12_WORD8_MASK /*  */ THUMB_11_WORD8_MASK
 
-ISA_ISSER(u16, thumb_12_is_sp, THUMB_12_SP);
+ISA_MASKED_BOOL(THUMB_12_SP);
 ISA_GETTER_SHIFTED(u16, thumb_12_get_rd, THUMB_12_RD);
 ISA_GETTER(u16, thumb_12_get_word8, THUMB_12_WORD8);
 
@@ -639,7 +693,7 @@ ISA_GETTER(u16, thumb_12_get_word8, THUMB_12_WORD8);
 #define THUMB_13_SWORD7_SHIFT /* */ 0
 #define THUMB_13_SWORD7_MASK /*  */ 0x7fu
 
-ISA_ISSER(u16, thumb_13_is_s, THUMB_13_S);
+ISA_MASKED_BOOL(THUMB_13_S);
 ISA_GETTER(u16, thumb_13_get_sword7, THUMB_13_SWORD7);
 
 ///
@@ -653,7 +707,7 @@ ISA_GETTER(u16, thumb_13_get_sword7, THUMB_13_SWORD7);
 #define THUMB_14_RLIST_SHIFT /* */ THUMB_11_WORD8_SHIFT
 #define THUMB_14_RLIST_MASK /*  */ THUMB_11_WORD8_MASK
 
-ISA_ISSER(u16, thumb_14_is_l, THUMB_14_L);
+ISA_MASKED_BOOL(THUMB_14_L);
 ISA_GETTER_SHIFTED(u16, thumb_14_is_r, THUMB_14_R);
 ISA_GETTER(u16, thumb_14_get_rlist, THUMB_14_RLIST);
 
@@ -668,7 +722,7 @@ ISA_GETTER(u16, thumb_14_get_rlist, THUMB_14_RLIST);
 #define THUMB_15_RLIST_SHIFT /* */ THUMB_12_WORD8_SHIFT
 #define THUMB_15_RLIST_MASK /*  */ THUMB_12_WORD8_MASK
 
-ISA_ISSER(u16, thumb_15_is_l, THUMB_15_L);
+ISA_MASKED_BOOL(THUMB_15_L);
 ISA_GETTER_SHIFTED(u16, thumb_15_get_rb, THUMB_15_RB);
 ISA_GETTER(u16, thumb_15_get_rlist, THUMB_15_RLIST);
 
@@ -711,5 +765,5 @@ ISA_GETTER(u16, thumb_18_get_offset11, THUMB_18_OFFSET11);
 #define THUMB_19_OFFSET_SHIFT /* */ THUMB_18_OFFSET11_SHIFT
 #define THUMB_19_OFFSET_MASK /*  */ THUMB_18_OFFSET11_MASK
 
-ISA_ISSER(u16, thumb_19_is_h, THUMB_19_H);
+ISA_MASKED_BOOL(THUMB_19_H);
 ISA_GETTER(u16, thumb_19_get_offset, THUMB_19_OFFSET);
