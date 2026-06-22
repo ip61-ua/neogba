@@ -1,8 +1,27 @@
 #pragma once
 #include "neogba/types.hpp"
 
-#define ISA_SHIFTED(type, name, prefix)                                        \
-  inline type name(type inst) { return inst >> (((prefix##_SHIFT))); }
+#define /* */ ISA_UNPACK_INSTT(inst_t, ret_t, shift, mask) inst_t
+#define /*  */ ISA_UNPACK_RETT(inst_t, ret_t, shift, mask) ret_t
+#define /* */ ISA_UNPACK_SHIFT(inst_t, ret_t, shift, mask) shift
+#define /*  */ ISA_UNPACK_MASK(inst_t, ret_t, shift, mask) mask
+
+#define ISA_GET_INSTT(...) /* */ ISA_UNPACK_INSTT(__VA_ARGS__)
+#define ISA_GET_RETT(...) /*  */ ISA_UNPACK_RETT(__VA_ARGS__)
+#define ISA_GET_SHIFT(...) /* */ ISA_UNPACK_SHIFT(__VA_ARGS__)
+#define ISA_GET_MASK(...) /*  */ ISA_UNPACK_MASK(__VA_ARGS__)
+
+#define ISA_SHIFTED(field)                                                     \
+  [[nodiscard]] inline ISA_GET_RETT(field)                                     \
+      isa_get_##field(ISA_GET_INSTT(field) inst) {                             \
+    return static_cast<ISA_GET_RETT(field)>(inst >> ISA_GET_SHIFT(field));     \
+  }                                                                            \
+                                                                               \
+  [[nodiscard]] inline ISA_GET_INSTT(field) isa_set_##field(                   \
+      ISA_GET_INSTT(field) inst, ISA_GET_INSTT(field) field##_value) {         \
+    return (inst & ~ISA_GET_MASK(field)) |                                     \
+           (field##_value << ISA_GET_SHIFT(field));                            \
+  }
 
 #define ISA_GETTER_SHIFTED(type, name, prefix)                                 \
   inline type name(type inst) {                                                \
@@ -25,10 +44,12 @@
 /// ARM
 ///
 
-#define ARM_COND_SHIFT /*  */ 28
-#define ARM_COND_MASK /*   */ (0xfu << ARM_COND_SHIFT)
+#define ARM_COND u32, u8, 28, 0xf0000000u
+ISA_SHIFTED(ARM_COND)
 
-ISA_SHIFTED(u32, arm_get_cond, ARM_COND);
+// con esto podemos hacer esto
+// auto a = isa_get_ARM_COND(0x0);
+// auto b = isa_set_ARM_COND(0x0, 0x2);
 
 ///
 /// Data processing and FSR transfer
