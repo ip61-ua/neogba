@@ -134,26 +134,19 @@ ISA_MASKED(ARM_FSR_OPERAND2);
 /// Multiply
 ///
 
-#define ARM_MULTIPLY_A /*        */ u32, bool, 21, (0x1u << 21)
-#define ARM_MULTIPLY_S /*        */ ARM_FSR_S
-
-#define ARM_MULTIPLY_RD_SHIFT /*   */ ARM_FSR_RN_SHIFT
-#define ARM_MULTIPLY_RD_MASK /*    */ ARM_FSR_RN_MASK
-#define ARM_MULTIPLY_RN_SHIFT /*   */ ARM_FSR_RD_SHIFT
-#define ARM_MULTIPLY_RN_MASK /*    */ ARM_FSR_RD_MASK
-#define ARM_MULTIPLY_RS_SHIFT /*   */ 8
-#define ARM_MULTIPLY_RS_MASK /*    */ (0xfu << ARM_MULTIPLY_RS_SHIFT)
-#define ARM_MULTIPLY_RM_SHIFT /*   */ 0
-#define ARM_MULTIPLY_RM_MASK /*    */ (0xfu)
+#define ARM_MULTIPLY_A /*  */ u32, bool, 21, (0x1u << 21)
+#define ARM_MULTIPLY_S /*  */ ARM_FSR_S
+#define ARM_MULTIPLY_RD /* */ ARM_FSR_RN
+#define ARM_MULTIPLY_RN /* */ ARM_FSR_RD
+#define ARM_MULTIPLY_RS /* */ u32, u8, 8, (0xfu << 8)
+#define ARM_MULTIPLY_RM /* */ u32, u8, 0, 0xfu
 
 ISA_MASKED_BOOL(ARM_MULTIPLY_A);
 ISA_MASKED_BOOL(ARM_MULTIPLY_S);
-
-ISA_GETTER_SHIFTED(u32, arm_multiply_get_rd, ARM_MULTIPLY_RD);
-ISA_GETTER_SHIFTED(u32, arm_multiply_get_rn, ARM_MULTIPLY_RN);
-ISA_GETTER_SHIFTED(u32, arm_multiply_get_rs, ARM_MULTIPLY_RS);
-
-ISA_GETTER(u32, arm_multiply_get_rm, ARM_MULTIPLY_RM);
+ISA_MASKED_SHIFTED(ARM_MULTIPLY_RD);
+ISA_MASKED_SHIFTED(ARM_MULTIPLY_RN);
+ISA_MASKED_SHIFTED(ARM_MULTIPLY_RS);
+ISA_MASKED(ARM_MULTIPLY_RM);
 
 ///
 /// Multiply long
