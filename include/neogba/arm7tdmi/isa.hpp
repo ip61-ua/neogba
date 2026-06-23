@@ -335,7 +335,7 @@ ISA_MASKED(ARM_COPROCTRANS_OFFSET);
 /// Coprocessor data operation
 ///
 
-#define ARM_COPROCOP_TEMPLATE /**/ 0x0e000000
+#define ARM_COPROCOP_TEMPLATE /**/ 0x0e000000u
 #define ARM_COPROCOP_CPOPC /*   */ u32, u8, 21, (0xfu << 21)
 #define ARM_COPROCOP_CRN /*     */ ARM_HALFIMM_RN
 #define ARM_COPROCOP_CRD /*     */ ARM_FSR_RD
@@ -354,7 +354,7 @@ ISA_MASKED(ARM_COPROCOP_CRM);
 /// Coprocessor register transfer
 ///
 
-#define ARM_COPROCREGTRANS_TEMPLATE /**/ 0x0e000010
+#define ARM_COPROCREGTRANS_TEMPLATE /**/ 0x0e000010u
 #define ARM_COPROCREGTRANS_CPOPC /*   */ u32, u8, 21, (0x7u << 21)
 #define ARM_COPROCREGTRANS_L /*       */ ARM_SINGLETRANS_L
 #define ARM_COPROCREGTRANS_CRN /*     */ ARM_COPROCOP_CRN
@@ -388,19 +388,16 @@ ISA_MASKED(ARM_SWINT_SWI);
 /// Format 01 - Move shifted register
 ///
 
-#define THUMB_01_OP_SHIFT /*        */ 11
-#define THUMB_01_OP_MASK /*         */ (0x3u << THUMB_01_OP_SHIFT)
-#define THUMB_01_OFFSET5_SHIFT /*   */ 6
-#define THUMB_01_OFFSET5_MASK /*    */ (0x1fu << THUMB_01_OFFSET5_SHIFT)
-#define THUMB_01_RS_SHIFT /*        */ 3
-#define THUMB_01_RS_MASK /*         */ (0x7u << THUMB_01_RS_SHIFT)
-#define THUMB_01_RD_SHIFT /*        */ 0
-#define THUMB_01_RD_MASK /*         */ 0x7u
+#define THUMB_01_TEMPLATE /**/ 0x0000
+#define THUMB_01_OP /*      */ u16, u8, 11, (0x3u << 11)
+#define THUMB_01_OFFSET5 /* */ u16, u8, 6, (0x1fu << 6)
+#define THUMB_01_RS /*      */ u16, u8, 3, (0x7u << 3)
+#define THUMB_01_RD /*      */ u16, u8, 0, 0x7u
 
-ISA_MASKED_SHIFTED(u16, thumb_01_get_op, THUMB_01_OP);
-ISA_MASKED_SHIFTED(u16, thumb_01_get_offset5, THUMB_01_OFFSET5);
-ISA_MASKED_SHIFTED(u16, thumb_01_get_rs, THUMB_01_RS);
-ISA_MASKED(u16, thumb_01_get_rd, THUMB_01_RD);
+ISA_MASKED_SHIFTED(THUMB_01_OP);
+ISA_MASKED_SHIFTED(THUMB_01_OFFSET5);
+ISA_MASKED_SHIFTED(THUMB_01_RS);
+ISA_MASKED(THUMB_01_RD);
 
 ///
 /// Format 02 - Add and substract
