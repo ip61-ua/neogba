@@ -1,7 +1,7 @@
 #include "neogba/arm7tdmi/isa.hpp"
 #include <gtest/gtest.h>
 
-static constexpr u32 K_TEST_HALFIMM_INS = 0xa13cdbd3;
+static constexpr u32 K_TEST_HALFIMM_INS = 0xa17cdbd3u;
 static constexpr auto K_TEST_HALFIMM_INS_COND = 0xa;
 static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_P = true;
 static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_U = false;
