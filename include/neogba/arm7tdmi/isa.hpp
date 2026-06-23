@@ -45,7 +45,7 @@
   }                                                                            \
                                                                                \
   [[nodiscard]] inline ISA_GET_INSTT(field) isa_set_##field(                   \
-      ISA_GET_INSTT(field) inst, ISA_GET_INSTT(field) field##_value) {         \
+      ISA_GET_INSTT(field) inst, ISA_GET_RETT(field) field##_value) {          \
     return (inst & ~ISA_GET_MASK(field)) |                                     \
            ((field##_value << ISA_GET_SHIFT(field)) & ISA_GET_MASK(field));    \
   }
