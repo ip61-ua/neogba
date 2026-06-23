@@ -472,7 +472,7 @@ ISA_MASKED(THUMB_06_WORD8);
 /// Format 07 - Load and store with relative offset
 ///
 
-#define THUMB_07_TEMPLATE 0x5000
+#define THUMB_07_TEMPLATE 0x5000u
 #define THUMB_07_L /*  */ u16, bool, 11, (1u << 11)
 #define THUMB_07_B /*  */ u16, bool, 10, (1u << 10)
 #define THUMB_07_RO /* */ THUMB_02_RNOFFSET3
@@ -489,7 +489,7 @@ ISA_MASKED(THUMB_07_RD);
 /// Format 08 - Load and store sign-extended byte and halfword
 ///
 
-#define THUMB_08_TEMPLATE 0x5200
+#define THUMB_08_TEMPLATE 0x5200u
 #define THUMB_08_H /*  */ THUMB_07_L
 #define THUMB_08_S /*  */ THUMB_07_B
 #define THUMB_08_RO /* */ THUMB_07_RO
@@ -506,7 +506,7 @@ ISA_MASKED(THUMB_08_RD);
 /// Format 09 - Load and store with immediate offset
 ///
 
-#define THUMB_09_TEMPLATE /**/ 0x6000
+#define THUMB_09_TEMPLATE /**/ 0x6000u
 #define THUMB_09_B /*       */ u16, bool, 12, (1u << 12)
 #define THUMB_09_L /*       */ THUMB_07_L
 #define THUMB_09_OFFSET5 /* */ THUMB_01_OFFSET5
@@ -523,7 +523,7 @@ ISA_MASKED(THUMB_09_RD);
 /// Format 10 - Load and store halfword
 ///
 
-#define THUMB_10_TEMPLATE /**/ 0x8000
+#define THUMB_10_TEMPLATE /**/ 0x8000u
 #define THUMB_10_L /*       */ THUMB_09_L
 #define THUMB_10_OFFSET5 /* */ THUMB_01_OFFSET5
 #define THUMB_10_RB /*      */ THUMB_01_RS
@@ -538,12 +538,10 @@ ISA_MASKED(THUMB_10_RD);
 /// Format 11 - SP-relative load and store
 ///
 
-#define THUMB_11_L_SHIFT /*     */ THUMB_10_L_SHIFT
-#define THUMB_11_L_MASK /*      */ THUMB_10_L_MASK
-#define THUMB_11_RD_SHIFT /*    */ THUMB_06_RD_SHIFT
-#define THUMB_11_RD_MASK /*     */ THUMB_06_RD_MASK
-#define THUMB_11_WORD8_SHIFT /* */ THUMB_06_WORD8_SHIFT
-#define THUMB_11_WORD8_MASK /*  */ THUMB_06_WORD8_MASK
+#define THUMB_11_TEMPLATE /**/ 0x9000u
+#define THUMB_11_L /*       */ THUMB_10_L
+#define THUMB_11_RD /*      */ THUMB_06_RD
+#define THUMB_11_WORD8 /*   */ THUMB_06_WORD8
 
 ISA_MASKED_BOOL(THUMB_11_L);
 ISA_MASKED_SHIFTED(THUMB_11_RD);
@@ -553,12 +551,10 @@ ISA_MASKED(THUMB_11_WORD8);
 /// Format 12 - Load address
 ///
 
-#define THUMB_12_SP_SHIFT /*    */ THUMB_11_L_SHIFT
-#define THUMB_12_SP_MASK /*     */ THUMB_11_L_MASK
-#define THUMB_12_RD_SHIFT /*    */ THUMB_11_RD_SHIFT
-#define THUMB_12_RD_MASK /*     */ THUMB_11_RD_MASK
-#define THUMB_12_WORD8_SHIFT /* */ THUMB_11_WORD8_SHIFT
-#define THUMB_12_WORD8_MASK /*  */ THUMB_11_WORD8_MASK
+#define THUMB_12_TEMPLATE /**/ 0xa000u
+#define THUMB_12_SP /*      */ THUMB_11_L
+#define THUMB_12_RD /*      */ THUMB_11_RD
+#define THUMB_12_WORD8 /*   */ THUMB_11_WORD8
 
 ISA_MASKED_BOOL(THUMB_12_SP);
 ISA_MASKED_SHIFTED(THUMB_12_RD);
@@ -568,10 +564,9 @@ ISA_MASKED(THUMB_12_WORD8);
 /// Format 13 - Add offset to stack pointer
 ///
 
-#define THUMB_13_S_SHIFT /*      */ 7
-#define THUMB_13_S_MASK /*       */ (0x1u << THUMB_13_S_SHIFT)
-#define THUMB_13_SWORD7_SHIFT /* */ 0
-#define THUMB_13_SWORD7_MASK /*  */ 0x7fu
+#define THUMB_13_TEMPLATE /**/ 0xb000u
+#define THUMB_13_S /*       */ u16, bool, 7, (1u << 7)
+#define THUMB_13_SWORD7 /*  */ u16, u8, 0, 0x7fu
 
 ISA_MASKED_BOOL(THUMB_13_S);
 ISA_MASKED(THUMB_13_SWORD7);
@@ -580,12 +575,10 @@ ISA_MASKED(THUMB_13_SWORD7);
 /// Format 14 - Push and pop registers
 ///
 
-#define THUMB_14_L_SHIFT /*     */ THUMB_11_L_SHIFT
-#define THUMB_14_L_MASK /*      */ THUMB_11_L_MASK
-#define THUMB_14_R_SHIFT /*     */ THUMB_11_RD_SHIFT
-#define THUMB_14_R_MASK /*      */ (0x1u << THUMB_14_R_SHIFT)
-#define THUMB_14_RLIST_SHIFT /* */ THUMB_11_WORD8_SHIFT
-#define THUMB_14_RLIST_MASK /*  */ THUMB_11_WORD8_MASK
+#define THUMB_14_TEMPLATE /**/ 0xb400u
+#define THUMB_14_L /*       */ THUMB_11_L
+#define THUMB_14_R /*       */ u16, u8, 8, (1u << 8)
+#define THUMB_14_RLIST /*   */ THUMB_11_WORD8
 
 ISA_MASKED_BOOL(THUMB_14_L);
 ISA_MASKED_SHIFTED(THUMB_14_R);
@@ -595,12 +588,10 @@ ISA_MASKED(THUMB_14_RLIST);
 /// Format 15 - Multiple load and store
 ///
 
-#define THUMB_15_L_SHIFT /*     */ THUMB_12_SP_SHIFT
-#define THUMB_15_L_MASK /*      */ THUMB_12_SP_MASK
-#define THUMB_15_RB_SHIFT /*    */ THUMB_12_RD_SHIFT
-#define THUMB_15_RB_MASK /*     */ THUMB_12_RD_MASK
-#define THUMB_15_RLIST_SHIFT /* */ THUMB_12_WORD8_SHIFT
-#define THUMB_15_RLIST_MASK /*  */ THUMB_12_WORD8_MASK
+#define THUMB_15_TEMPLATE /**/ 0xc000u
+#define THUMB_15_L /*       */ THUMB_12_SP
+#define THUMB_15_RB /*      */ THUMB_12_RD
+#define THUMB_15_RLIST /*   */ THUMB_12_WORD8
 
 ISA_MASKED_BOOL(THUMB_15_L);
 ISA_MASKED_SHIFTED(THUMB_15_RB);
@@ -610,10 +601,9 @@ ISA_MASKED(THUMB_15_RLIST);
 /// Format 16 - Conditional branch
 ///
 
-#define THUMB_16_COND_SHIFT /*     */ THUMB_12_RD_SHIFT
-#define THUMB_16_COND_MASK /*      */ (0xfu << THUMB_16_COND_SHIFT)
-#define THUMB_16_SOFTSET8_SHIFT /* */ THUMB_12_WORD8_SHIFT
-#define THUMB_16_SOFTSET8_MASK /*  */ THUMB_12_WORD8_MASK
+#define THUMB_16_TEMPLATE /**/ 0xd000u
+#define THUMB_16_COND /*    */ u16, u8, 8, (0xfu << 8)
+#define THUMB_16_SOFTSET8 /**/ THUMB_12_WORD8
 
 ISA_MASKED_SHIFTED(THUMB_16_COND);
 ISA_MASKED(THUMB_16_SOFTSET8);
@@ -622,8 +612,8 @@ ISA_MASKED(THUMB_16_SOFTSET8);
 /// Format 17 - Software interrupt
 ///
 
-#define THUMB_17_VALUE8_SHIFT /* */ 0
-#define THUMB_17_VALUE8_MASK /*  */ 0xffu
+#define THUMB_17_TEMPLATE /**/ 0xdf00u
+#define THUMB_17_VALUE8 /*  */ u16, u8, 0, 0xffu
 
 ISA_MASKED(THUMB_17_VALUE8);
 
@@ -631,8 +621,8 @@ ISA_MASKED(THUMB_17_VALUE8);
 /// Format 18 - Unconditional branch
 ///
 
-#define THUMB_18_OFFSET11_SHIFT /* */ 0
-#define THUMB_18_OFFSET11_MASK /*  */ 0x7ffu
+#define THUMB_18_TEMPLATE 0xe000u
+#define THUMB_18_OFFSET11 u16, u16, 0, 0x7ffu
 
 ISA_MASKED(THUMB_18_OFFSET11);
 
@@ -640,10 +630,9 @@ ISA_MASKED(THUMB_18_OFFSET11);
 /// Format 19 - Long branch with link
 ///
 
-#define THUMB_19_H_SHIFT /*     */ THUMB_15_L_SHIFT
-#define THUMB_19_H_MASK /*      */ THUMB_15_L_MASK
-#define THUMB_19_OFFSET_SHIFT /* */ THUMB_18_OFFSET11_SHIFT
-#define THUMB_19_OFFSET_MASK /*  */ THUMB_18_OFFSET11_MASK
+#define THUMB_19_TEMPLATE /**/ 0xf000u
+#define THUMB_19_H /*       */ THUMB_15_L
+#define THUMB_19_OFFSET /*  */ THUMB_18_OFFSET11
 
 ISA_MASKED_BOOL(THUMB_19_H);
 ISA_MASKED(THUMB_19_OFFSET);
