@@ -1,7 +1,15 @@
 #include "neogba/arm7tdmi/isa.hpp"
 #include <gtest/gtest.h>
 
-TEST(IsaTest, ShouldExtractRightBitsFromRaw) {
+TEST(isa_test, should_change_only_arm_cond_field) {
+  u32 ins = -1;
+  ASSERT_EQ(isa_get_ARM_COND(ins), 0xf);
+
+  ins = isa_set_ARM_COND(ins, 2);
+  ASSERT_EQ(isa_get_ARM_COND(ins), 2);
+}
+
+TEST(isa_test, should_extract_right_bits_from_raw_arm_halfimm_instruction) {
   constexpr u32 ins = 0xa13cdbd3;
   ASSERT_EQ(isa_get_ARM_COND(ins), 0xa);
   ASSERT_EQ(isa_is_ARM_HALFIMM_P(ins), true);
