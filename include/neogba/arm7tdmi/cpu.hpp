@@ -34,14 +34,19 @@
 #define ARM7TDMI_CPU_EXCEPTION_IRQ /*      */ 0x00000018
 #define ARM7TDMI_CPU_EXCEPTION_FIQ /*      */ 0x0000001c
 
-enum Register { ARM7TDMI_CPU_ORDER_REGISTERS };
+enum ARM7TDMI_CPU_Register : u8 { ARM7TDMI_CPU_ORDER_REGISTERS };
 
-struct ARMTDMI7_CPU {
+struct ARM7TDMI_CPU {
   u32 registers[ARM7TDMI_CPU_TOTAL_REGISTERS];
 
-  u8 convert_mode_register(u8 idx);
-  bool is_thumb();
-  bool is_mode(u8 mode);
+  [[nodiscard]] u8 convert_mode_register(u8 idx);
+
+  [[nodiscard]] bool is_cpsr_bits(u32 bits);
+  void clear_cpsr_bits(u32 bits);
+  void set_cpsr_bits(u32 bits);
+
+  [[nodiscard]] bool is_mode(u8 mode);
+  void set_mode(u8 mode);
 
   void reset();
 };
