@@ -25,13 +25,7 @@ bool ARM7TDMI_CPU::is_mode(u8 mode) const {
   return (this->registers[cpsr] & ARM7TDMI_CPU_MASK_MODE_BITS) == mode;
 }
 
-void ARM7TDMI_CPU::set_mode(u8 mode, bool update_active_registers) {
-  this->registers[cpsr] &= ~ARM7TDMI_CPU_MASK_MODE_BITS;
-  this->registers[cpsr] |= mode & ARM7TDMI_CPU_MASK_MODE_BITS;
-
-  if (!update_active_registers)
-    return;
-
+void ARM7TDMI_CPU::set_mode(u8 mode, bool update_cpsr) {
   u8 idx_lut = 0;
 
   switch (mode) {
@@ -59,14 +53,21 @@ void ARM7TDMI_CPU::set_mode(u8 mode, bool update_active_registers) {
 
   std::memcpy(active_registers, REGISTERS_LUT[idx_lut],
               ARM7TDMI_CPU_REGISTERS_ACTIVE);
+
+  if (!update_cpsr)
+    return;
+
+  this->registers[cpsr] &= ~ARM7TDMI_CPU_MASK_MODE_BITS;
+  this->registers[cpsr] |= mode & ARM7TDMI_CPU_MASK_MODE_BITS;
+}
+
+void ARM7TDMI_CPU::empty_registers() {
+  std::memset(this->registers, 0, sizeof(registers));
 }
 
 void ARM7TDMI_CPU::reset() {
-  std::memset(this->registers, 0, sizeof(registers));
-
-  this->registers[cpsr] =
-      ARM7TDMI_CPU_MASK_IRQDISABLE | ARM7TDMI_CPU_MASK_FIQDISABLE;
-
+  this->empty_registers();
+  this->write_cpsr(ARM7TDMI_CPU_MASK_IRQDISABLE | ARM7TDMI_CPU_MASK_FIQDISABLE);
   this->set_mode(ARM7TDMI_CPU_MODE_SVC);
   this->write_pc(ARM7TDMI_CPU_EXCEPTION_RESET);
 }

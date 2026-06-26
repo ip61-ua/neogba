@@ -2,13 +2,14 @@
 #include "neogba/types.hpp"
 
 #define ARM7TDMI_CPU_REGISTERS_TOTAL 36
+#define ARM7TDMI_CPU_REGISTERS_TOTAL_REAL ARM7TDMI_CPU_REGISTERS_TOTAL + 1
 #define ARM7TDMI_CPU_REGISTERS_ACTIVE 18
 #define ARM7TDMI_CPU_REGISTERS_ORDER                                           \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr,   \
       r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, spsr_fiq,   \
       /* */ r13_svc, r14_svc, spsr_svc, /* */ r13_abt, r14_abt, spsr_abt,      \
       /* */ r13_irq, r14_irq, spsr_irq, /* */ r13_und, r14_und, spsr_und,      \
-      /* */ spsr_
+      /* */ spsr__bad
 
 #define ARM7TDMI_CPU_MASK_NEGATIVE /*  */ (1u << 31)
 #define ARM7TDMI_CPU_MASK_ZERO /*      */ (1u << 30)
@@ -40,7 +41,7 @@ enum ARM7TDMI_CPU_Register : u8 { ARM7TDMI_CPU_REGISTERS_ORDER };
 
 #define ARM7TDMI_CPU_REGISTERS_USR                                             \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr,   \
-      spsr_
+      spsr__bad
 #define ARM7TDMI_CPU_REGISTERS_FIQ                                             \
   r0, r1, r2, r3, r4, r5, r6, r7, r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq,   \
       r13_fiq, r14_fiq, pc, cpsr, spsr_fiq
@@ -58,7 +59,7 @@ enum ARM7TDMI_CPU_Register : u8 { ARM7TDMI_CPU_REGISTERS_ORDER };
       cpsr, spsr_und
 
 struct ARM7TDMI_CPU {
-  u32 registers[ARM7TDMI_CPU_REGISTERS_TOTAL];
+  u32 registers[ARM7TDMI_CPU_REGISTERS_TOTAL_REAL];
   u8 active_registers[ARM7TDMI_CPU_REGISTERS_ACTIVE];
   static constexpr u8 REGISTERS_LUT[6][ARM7TDMI_CPU_REGISTERS_ACTIVE] = {
       {ARM7TDMI_CPU_REGISTERS_USR}, {ARM7TDMI_CPU_REGISTERS_FIQ},
@@ -79,7 +80,8 @@ struct ARM7TDMI_CPU {
   void set_cpsr_bits(u32 mask, u32 bits);
 
   [[nodiscard]] bool is_mode(u8 mode) const;
-  void set_mode(u8 mode, bool update_active_registers = true);
+  void set_mode(u8 mode, bool update_cpsr = true);
 
+  void empty_registers();
   void reset();
 };
