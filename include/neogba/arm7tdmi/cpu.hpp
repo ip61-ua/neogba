@@ -80,6 +80,7 @@ struct ARM7TDMI_CPU {
   void set_cpsr_bits(u32 mask, u32 bits);
 
   [[nodiscard]] bool is_mode(u8 mode) const;
+  static u8 get_idx_registers_lut_by_mode(u8 mode);
   void set_mode(u8 mode, bool update_cpsr = true);
 
   void empty_registers();

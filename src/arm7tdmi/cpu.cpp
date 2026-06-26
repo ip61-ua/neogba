@@ -25,7 +25,7 @@ bool ARM7TDMI_CPU::is_mode(u8 mode) const {
   return (this->registers[cpsr] & ARM7TDMI_CPU_MASK_MODE_BITS) == mode;
 }
 
-void ARM7TDMI_CPU::set_mode(u8 mode, bool update_cpsr) {
+u8 ARM7TDMI_CPU::get_idx_registers_lut_by_mode(u8 mode) {
   u8 idx_lut = 0;
 
   switch (mode) {
@@ -50,6 +50,11 @@ void ARM7TDMI_CPU::set_mode(u8 mode, bool update_cpsr) {
   default:
     break;
   }
+  return idx_lut;
+}
+
+void ARM7TDMI_CPU::set_mode(u8 mode, bool update_cpsr) {
+  u8 idx_lut = get_idx_registers_lut_by_mode(mode);
 
   std::memcpy(active_registers, REGISTERS_LUT[idx_lut],
               ARM7TDMI_CPU_REGISTERS_ACTIVE);
