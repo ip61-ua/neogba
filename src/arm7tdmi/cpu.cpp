@@ -1,33 +1,6 @@
 #include "neogba/arm7tdmi/cpu.hpp"
+#include "neogba/arm7tdmi/isa.hpp"
 #include <cstring>
-
-u8 ARM7TDMI_CPU::convert_mode_register(u8 idx) {
-  auto idx_adapted = idx;
-
-  if (this->is_mode(ARM7TDMI_CPU_MODE_USR) ||
-      this->is_mode(ARM7TDMI_CPU_MODE_SYS) || idx == cpsr || idx == pc)
-    return idx_adapted;
-
-  if (this->is_mode(ARM7TDMI_CPU_MODE_FIQ) && idx >= 8)
-    return r8_fiq + idx_adapted - 8;
-
-  if (idx < 13)
-    return idx_adapted;
-
-  if (this->is_mode(ARM7TDMI_CPU_MODE_SVC))
-    return r13_svc + idx_adapted;
-
-  if (this->is_mode(ARM7TDMI_CPU_MODE_ABT))
-    return r13_abt + idx_adapted;
-
-  if (this->is_mode(ARM7TDMI_CPU_MODE_IRQ))
-    return r13_irq + idx_adapted;
-
-  if (this->is_mode(ARM7TDMI_CPU_MODE_UND))
-    return r13_und + idx_adapted;
-
-  return -1;
-}
 
 bool ARM7TDMI_CPU::is_cpsr_bits(u32 bits) {
   return (this->registers[cpsr] & bits) == bits;
@@ -44,9 +17,40 @@ bool ARM7TDMI_CPU::is_mode(u8 mode) {
   return (this->registers[cpsr] & ARM7TDMI_CPU_MASK_MODE_BITS) == mode;
 }
 
-void ARM7TDMI_CPU::set_mode(u8 mode) {
+void ARM7TDMI_CPU::set_mode(u8 mode, bool update_active_registers) {
   this->registers[cpsr] &= ~ARM7TDMI_CPU_MASK_MODE_BITS;
   this->registers[cpsr] |= mode & ARM7TDMI_CPU_MASK_MODE_BITS;
+
+  if (!update_active_registers)
+    return;
+
+  u8 idx_lut = 0;
+
+  switch (mode) {
+  case ARM7TDMI_CPU_MODE_USR:
+  case ARM7TDMI_CPU_MODE_SYS:
+    break;
+  case ARM7TDMI_CPU_MODE_FIQ:
+    idx_lut = 1;
+    break;
+  case ARM7TDMI_CPU_MODE_IRQ:
+    idx_lut = 2;
+    break;
+  case ARM7TDMI_CPU_MODE_SVC:
+    idx_lut = 3;
+    break;
+  case ARM7TDMI_CPU_MODE_ABT:
+    idx_lut = 4;
+    break;
+  case ARM7TDMI_CPU_MODE_UND:
+    idx_lut = 5;
+    break;
+  default:
+    break;
+  }
+
+  std::memcpy(active_registers, REGISTERS_LUT[idx_lut],
+              ARM7TDMI_CPU_REGISTERS_ACTIVE);
 }
 
 void ARM7TDMI_CPU::reset() {

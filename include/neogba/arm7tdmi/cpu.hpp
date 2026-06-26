@@ -1,8 +1,9 @@
 #pragma once
 #include "neogba/types.hpp"
 
-#define ARM7TDMI_CPU_TOTAL_REGISTERS 36
-#define ARM7TDMI_CPU_ORDER_REGISTERS                                           \
+#define ARM7TDMI_CPU_REGISTERS_TOTAL 36
+#define ARM7TDMI_CPU_REGISTERS_ACTIVE 17
+#define ARM7TDMI_CPU_REGISTERS_ORDER                                           \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr,   \
       r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, spsr_fiq,   \
       /* */ r13_svc, r14_svc, spsr_svc, /* */ r13_abt, r14_abt, spsr_abt,      \
@@ -34,19 +35,40 @@
 #define ARM7TDMI_CPU_EXCEPTION_IRQ /*      */ 0x00000018
 #define ARM7TDMI_CPU_EXCEPTION_FIQ /*      */ 0x0000001c
 
-enum ARM7TDMI_CPU_Register : u8 { ARM7TDMI_CPU_ORDER_REGISTERS };
+enum ARM7TDMI_CPU_Register : u8 { ARM7TDMI_CPU_REGISTERS_ORDER };
+
+#define ARM7TDMI_CPU_REGISTERS_USR                                             \
+  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr
+#define ARM7TDMI_CPU_REGISTERS_FIQ                                             \
+  r0, r1, r2, r3, r4, r5, r6, r7, r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq,   \
+      r13_fiq, r14_fiq, pc, cpsr
+#define ARM7TDMI_CPU_REGISTERS_IRQ                                             \
+  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_irq, r14_irq, pc, \
+      cpsr
+#define ARM7TDMI_CPU_REGISTERS_SVC                                             \
+  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_svc, r14_svc, pc, \
+      cpsr
+#define ARM7TDMI_CPU_REGISTERS_ABT                                             \
+  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_abt, pc, \
+      cpsr
+#define ARM7TDMI_CPU_REGISTERS_UND                                             \
+  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_und, pc, \
+      cpsr
 
 struct ARM7TDMI_CPU {
-  u32 registers[ARM7TDMI_CPU_TOTAL_REGISTERS];
-
-  [[nodiscard]] u8 convert_mode_register(u8 idx);
+  u32 registers[ARM7TDMI_CPU_REGISTERS_TOTAL];
+  u8 active_registers[ARM7TDMI_CPU_REGISTERS_ACTIVE];
+  static constexpr u8 REGISTERS_LUT[6][ARM7TDMI_CPU_REGISTERS_ACTIVE] = {
+      {ARM7TDMI_CPU_REGISTERS_USR}, {ARM7TDMI_CPU_REGISTERS_FIQ},
+      {ARM7TDMI_CPU_REGISTERS_IRQ}, {ARM7TDMI_CPU_REGISTERS_SVC},
+      {ARM7TDMI_CPU_REGISTERS_ABT}, {ARM7TDMI_CPU_REGISTERS_UND}};
 
   [[nodiscard]] bool is_cpsr_bits(u32 bits);
   void clear_cpsr_bits(u32 bits);
   void set_cpsr_bits(u32 bits);
 
   [[nodiscard]] bool is_mode(u8 mode);
-  void set_mode(u8 mode);
+  void set_mode(u8 mode, bool update_active_registers = true);
 
   void reset();
 };
