@@ -4,48 +4,64 @@
 
 namespace {
 class cpu_test : public ::testing::Test {
+protected:
   std::unique_ptr<ARM7TDMI_CPU> cpu;
 
   cpu_test() {}
 
   virtual ~cpu_test() {}
 
-  virtual void SetUp() { cpu = std::make_unique<ARM7TDMI_CPU>(); }
+  void SetUp() override { cpu = std::make_unique<ARM7TDMI_CPU>(); }
 
-  virtual void TearDown() {}
+  void TearDown() override {}
+
+  virtual inline void assert_convert(u32 expected, u32 input) {
+    ASSERT_EQ((u32)expected, (u32)cpu->convert_mode_register(input));
+  }
+
+  virtual inline void assert_convert5(u32 mode, u32 e0, u32 i0, u32 e1, u32 i1,
+                                      u32 e2, u32 i2, u32 e3, u32 i3, u32 e4,
+                                      u32 i4, u32 e5, u32 i5) {
+    cpu->set_mode(mode);
+    ASSERT_EQ(mode, cpu->registers[cpsr]);
+
+    ASSERT_EQ((u32)e0, (u32)cpu->convert_mode_register(i0));
+    ASSERT_EQ((u32)e1, (u32)cpu->convert_mode_register(i1));
+    ASSERT_EQ((u32)e2, (u32)cpu->convert_mode_register(i2));
+    ASSERT_EQ((u32)e3, (u32)cpu->convert_mode_register(i3));
+    ASSERT_EQ((u32)e4, (u32)cpu->convert_mode_register(i4));
+    ASSERT_EQ((u32)e5, (u32)cpu->convert_mode_register(i5));
+  }
 };
 
 } // namespace
 
-static ARM7TDMI_CPU cpu;
-
-TEST(cpu_test, convert_mode_register_should_same_when_mode_is_usr) {
-  cpu.set_mode(ARM7TDMI_CPU_MODE_USR);
-
-  ASSERT_EQ(ARM7TDMI_CPU_MODE_USR, cpu.registers[cpsr]);
-  ASSERT_EQ(r13, cpu.convert_mode_register(r13));
-  ASSERT_EQ(r2, cpu.convert_mode_register(r2));
-  ASSERT_EQ(r8, cpu.convert_mode_register(r8));
-  ASSERT_EQ(pc, cpu.convert_mode_register(pc));
-  ASSERT_EQ(cpsr, cpu.convert_mode_register(cpsr));
+TEST_F(cpu_test, convert_mode_register_should_right_when_mode_is_usr) {
+  assert_convert5(ARM7TDMI_CPU_MODE_USR, r13, r13, r2, r2, r8, r8, pc, pc, cpsr,
+                  cpsr, spsr_irq, spsr_irq);
 }
 
-TEST(cpu_test, convert_mode_register_should_same_when_mode_is_sys) {
-  cpu.set_mode(ARM7TDMI_CPU_MODE_SYS);
-
-  ASSERT_EQ(r13, cpu.convert_mode_register(r13));
-  ASSERT_EQ(r2, cpu.convert_mode_register(r2));
-  ASSERT_EQ(r8, cpu.convert_mode_register(r8));
-  ASSERT_EQ(pc, cpu.convert_mode_register(pc));
-  ASSERT_EQ(cpsr, cpu.convert_mode_register(cpsr));
+TEST_F(cpu_test, convert_mode_register_should_right_when_mode_is_sys) {
+  assert_convert5(ARM7TDMI_CPU_MODE_SYS, r13, r13, r2, r2, r8, r8, pc, pc,
+                  spsr_fiq, spsr_fiq, cpsr, cpsr);
 }
 
-TEST(cpu_test, convert_mode_register_should_same_when_mode_is_fiq) {
-  cpu.set_mode(ARM7TDMI_CPU_MODE_FIQ);
+TEST_F(cpu_test, convert_mode_register_should_right_when_mode_is_fiq) {
+  assert_convert5(ARM7TDMI_CPU_MODE_FIQ, r13_fiq, r13, r2, r2, r8_fiq, r8, r8,
+                  r8, r7, r7, spsr_fiq, spsr_fiq);
+}
 
-  ASSERT_EQ((u32)r13_fiq, (u32)cpu.convert_mode_register(r13));
-  ASSERT_EQ((u32)r2, (u32)cpu.convert_mode_register(r2));
-  ASSERT_EQ((u32)r8_fiq, (u32)cpu.convert_mode_register(r8));
-  ASSERT_EQ((u32)pc, (u32)cpu.convert_mode_register(pc));
-  ASSERT_EQ((u32)cpsr, (u32)cpu.convert_mode_register(cpsr));
+TEST_F(cpu_test, convert_mode_register_should_right_when_mode_is_svc) {
+  assert_convert5(ARM7TDMI_CPU_MODE_SVC, r13_svc, r13, r14_svc, r14, r8, r8,
+                  r12, r12, spsr_svc, spsr_svc, spsr_abt, spsr_abt);
+}
+
+TEST_F(cpu_test, convert_mode_register_should_right_when_mode_is_abt) {
+  assert_convert5(ARM7TDMI_CPU_MODE_ABT, r13_abt, r13, r14_abt, r14, r8, r8,
+                  r12, r12, spsr_svc, spsr_svc, r14, r14);
+}
+
+TEST_F(cpu_test, convert_mode_register_should_right_when_mode_is_irq) {
+  assert_convert5(ARM7TDMI_CPU_MODE_IRQ, r13_irq, r13, r14_irq, r14, r8, r8,
+                  r12, r12, spsr_irq, spsr_irq, r13, r13);
 }
