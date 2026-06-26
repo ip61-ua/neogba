@@ -2,12 +2,13 @@
 #include "neogba/types.hpp"
 
 #define ARM7TDMI_CPU_REGISTERS_TOTAL 36
-#define ARM7TDMI_CPU_REGISTERS_ACTIVE 17
+#define ARM7TDMI_CPU_REGISTERS_ACTIVE 18
 #define ARM7TDMI_CPU_REGISTERS_ORDER                                           \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr,   \
       r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, spsr_fiq,   \
       /* */ r13_svc, r14_svc, spsr_svc, /* */ r13_abt, r14_abt, spsr_abt,      \
-      /* */ r13_irq, r14_irq, spsr_irq, /* */ r13_und, r14_und, spsr_und
+      /* */ r13_irq, r14_irq, spsr_irq, /* */ r13_und, r14_und, spsr_und,      \
+      /* */ spsr_
 
 #define ARM7TDMI_CPU_MASK_NEGATIVE /*  */ (1u << 31)
 #define ARM7TDMI_CPU_MASK_ZERO /*      */ (1u << 30)
@@ -38,22 +39,23 @@
 enum ARM7TDMI_CPU_Register : u8 { ARM7TDMI_CPU_REGISTERS_ORDER };
 
 #define ARM7TDMI_CPU_REGISTERS_USR                                             \
-  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr
+  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr,   \
+      spsr_
 #define ARM7TDMI_CPU_REGISTERS_FIQ                                             \
   r0, r1, r2, r3, r4, r5, r6, r7, r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq,   \
-      r13_fiq, r14_fiq, pc, cpsr
+      r13_fiq, r14_fiq, pc, cpsr, spsr_fiq
 #define ARM7TDMI_CPU_REGISTERS_IRQ                                             \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_irq, r14_irq, pc, \
-      cpsr
+      cpsr, spsr_irq
 #define ARM7TDMI_CPU_REGISTERS_SVC                                             \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_svc, r14_svc, pc, \
-      cpsr
+      cpsr, spsr_svc
 #define ARM7TDMI_CPU_REGISTERS_ABT                                             \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_abt, pc, \
-      cpsr
+      cpsr, spsr_abt
 #define ARM7TDMI_CPU_REGISTERS_UND                                             \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_und, pc, \
-      cpsr
+      cpsr, spsr_und
 
 struct ARM7TDMI_CPU {
   u32 registers[ARM7TDMI_CPU_REGISTERS_TOTAL];
@@ -63,11 +65,20 @@ struct ARM7TDMI_CPU {
       {ARM7TDMI_CPU_REGISTERS_IRQ}, {ARM7TDMI_CPU_REGISTERS_SVC},
       {ARM7TDMI_CPU_REGISTERS_ABT}, {ARM7TDMI_CPU_REGISTERS_UND}};
 
-  [[nodiscard]] bool is_cpsr_bits(u32 bits);
-  void clear_cpsr_bits(u32 bits);
-  void set_cpsr_bits(u32 bits);
+  [[nodiscard]] u32 read_active_register(u8 reg) const;
+  void write_active_register(u8 reg, u32 content);
 
-  [[nodiscard]] bool is_mode(u8 mode);
+  [[nodiscard]] inline u32 read_pc() const { return this->registers[pc]; }
+  inline void write_pc(u32 new_pc) { this->registers[pc] = new_pc; }
+
+  [[nodiscard]] inline u32 read_cpsr() const { return this->registers[cpsr]; }
+  inline void write_cpsr(u32 new_cpsr) { this->registers[cpsr] = new_cpsr; }
+
+  [[nodiscard]] bool is_cpsr_bits(u32 mask, u32 bits) const;
+  void clear_cpsr_bits(u32 mask);
+  void set_cpsr_bits(u32 mask, u32 bits);
+
+  [[nodiscard]] bool is_mode(u8 mode) const;
   void set_mode(u8 mode, bool update_active_registers = true);
 
   void reset();

@@ -2,18 +2,26 @@
 #include "neogba/arm7tdmi/isa.hpp"
 #include <cstring>
 
-bool ARM7TDMI_CPU::is_cpsr_bits(u32 bits) {
-  return (this->registers[cpsr] & bits) == bits;
+u32 ARM7TDMI_CPU::read_active_register(u8 reg) const {
+  return this->registers[this->active_registers[reg]];
 }
 
-void ARM7TDMI_CPU::clear_cpsr_bits(u32 bits) { this->registers[cpsr] &= ~bits; }
+void ARM7TDMI_CPU::write_active_register(u8 reg, u32 content) {
+  this->registers[this->active_registers[reg]] = content;
+}
 
-void ARM7TDMI_CPU::set_cpsr_bits(u32 bits) {
-  this->registers[cpsr] &= ~bits;
+bool ARM7TDMI_CPU::is_cpsr_bits(u32 mask, u32 bits) const {
+  return (this->registers[cpsr] & mask) == bits;
+}
+
+void ARM7TDMI_CPU::clear_cpsr_bits(u32 mask) { this->registers[cpsr] &= ~mask; }
+
+void ARM7TDMI_CPU::set_cpsr_bits(u32 mask, u32 bits) {
+  this->registers[cpsr] &= ~mask;
   this->registers[cpsr] |= bits;
 }
 
-bool ARM7TDMI_CPU::is_mode(u8 mode) {
+bool ARM7TDMI_CPU::is_mode(u8 mode) const {
   return (this->registers[cpsr] & ARM7TDMI_CPU_MASK_MODE_BITS) == mode;
 }
 
@@ -56,8 +64,9 @@ void ARM7TDMI_CPU::set_mode(u8 mode, bool update_active_registers) {
 void ARM7TDMI_CPU::reset() {
   std::memset(this->registers, 0, sizeof(registers));
 
-  this->registers[cpsr] = ARM7TDMI_CPU_MODE_SVC | ARM7TDMI_CPU_MASK_IRQDISABLE |
-                          ARM7TDMI_CPU_MASK_FIQDISABLE;
+  this->registers[cpsr] =
+      ARM7TDMI_CPU_MASK_IRQDISABLE | ARM7TDMI_CPU_MASK_FIQDISABLE;
 
-  this->registers[pc] = ARM7TDMI_CPU_EXCEPTION_RESET;
+  this->set_mode(ARM7TDMI_CPU_MODE_SVC);
+  this->write_pc(ARM7TDMI_CPU_EXCEPTION_RESET);
 }
