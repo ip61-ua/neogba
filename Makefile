@@ -1,5 +1,5 @@
 CXX = clang++
-CXXFLAGS = -Wall -Wextra -std=c++20 -Iinclude -Isrc
+CXXFLAGS = -Wall -Wextra -std=c++26 -Iinclude -Isrc
 TEST_LDFLAGS = -lgtest -lgtest_main -pthread
 
 TARGET = build/neogba

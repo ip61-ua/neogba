@@ -2,7 +2,7 @@
 -Isrc
 -Wall
 -Wextra
--std=c++20
+-std=c++26
 -lgtest
 -lgtest_main
 -pthread
