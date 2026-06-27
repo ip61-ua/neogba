@@ -40,31 +40,40 @@
 enum ARM7TDMI_CPU_Register : u8 { ARM7TDMI_CPU_REGISTERS_ORDER };
 
 #define ARM7TDMI_CPU_REGISTERS_USR                                             \
-  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr,   \
-      spsr__bad
+  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr
+#define ARM7TDMI_CPU_REGISTERS_USR_REAL ARM7TDMI_CPU_REGISTERS_USR, spsr__bad
+
 #define ARM7TDMI_CPU_REGISTERS_FIQ                                             \
   r0, r1, r2, r3, r4, r5, r6, r7, r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq,   \
-      r13_fiq, r14_fiq, pc, cpsr, spsr_fiq
+      r13_fiq, r14_fiq, pc, cpsr
+#define ARM7TDMI_CPU_REGISTERS_FIQ_REAL ARM7TDMI_CPU_REGISTERS_FIQ, spsr_fiq
+
 #define ARM7TDMI_CPU_REGISTERS_IRQ                                             \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_irq, r14_irq, pc, \
-      cpsr, spsr_irq
+      cpsr
+#define ARM7TDMI_CPU_REGISTERS_IRQ_REAL ARM7TDMI_CPU_REGISTERS_IRQ, spsr_irq
+
 #define ARM7TDMI_CPU_REGISTERS_SVC                                             \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_svc, r14_svc, pc, \
-      cpsr, spsr_svc
+      cpsr
+#define ARM7TDMI_CPU_REGISTERS_SVC_REAL ARM7TDMI_CPU_REGISTERS_SVC, spsr_svc
+
 #define ARM7TDMI_CPU_REGISTERS_ABT                                             \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_abt, pc, \
-      cpsr, spsr_abt
+      cpsr
+#define ARM7TDMI_CPU_REGISTERS_ABT_REAL ARM7TDMI_CPU_REGISTERS_ABT, spsr_abt
 #define ARM7TDMI_CPU_REGISTERS_UND                                             \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_und, pc, \
-      cpsr, spsr_und
+      cpsr
+#define ARM7TDMI_CPU_REGISTERS_UND_REAL ARM7TDMI_CPU_REGISTERS_UND, spsr_und
 
 struct ARM7TDMI_CPU {
   u32 registers[ARM7TDMI_CPU_REGISTERS_TOTAL_REAL];
   u8 active_registers[ARM7TDMI_CPU_REGISTERS_ACTIVE];
   static constexpr u8 REGISTERS_LUT[6][ARM7TDMI_CPU_REGISTERS_ACTIVE] = {
-      {ARM7TDMI_CPU_REGISTERS_USR}, {ARM7TDMI_CPU_REGISTERS_FIQ},
-      {ARM7TDMI_CPU_REGISTERS_IRQ}, {ARM7TDMI_CPU_REGISTERS_SVC},
-      {ARM7TDMI_CPU_REGISTERS_ABT}, {ARM7TDMI_CPU_REGISTERS_UND}};
+      {ARM7TDMI_CPU_REGISTERS_USR_REAL}, {ARM7TDMI_CPU_REGISTERS_FIQ_REAL},
+      {ARM7TDMI_CPU_REGISTERS_IRQ_REAL}, {ARM7TDMI_CPU_REGISTERS_SVC_REAL},
+      {ARM7TDMI_CPU_REGISTERS_ABT_REAL}, {ARM7TDMI_CPU_REGISTERS_UND_REAL}};
 
   [[nodiscard]] u32 read_active_register(u8 reg) const;
   void write_active_register(u8 reg, u32 content);
@@ -74,6 +83,13 @@ struct ARM7TDMI_CPU {
 
   [[nodiscard]] inline u32 read_cpsr() const { return this->registers[cpsr]; }
   inline void write_cpsr(u32 new_cpsr) { this->registers[cpsr] = new_cpsr; }
+
+  [[nodiscard]] inline u32 read_spsr() const {
+    return this->registers[active_registers[17]];
+  }
+  inline void write_spsr(u32 new_spsr) {
+    this->registers[active_registers[17]] = new_spsr;
+  }
 
   [[nodiscard]] bool is_cpsr_bits(u32 mask, u32 bits) const;
   void clear_cpsr_bits(u32 mask);
