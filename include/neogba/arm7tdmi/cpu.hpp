@@ -67,6 +67,51 @@ enum ARM7TDMI_CPU_Register : u8 { ARM7TDMI_CPU_REGISTERS_ORDER };
       cpsr
 #define ARM7TDMI_CPU_REGISTERS_UND_REAL ARM7TDMI_CPU_REGISTERS_UND, spsr_und
 
+#define ARM7TDMI_CPU_REGISTERS_CREATE_STUB(                                    \
+    expected, r0_, r1_, r2_, r3_, r4_, r5_, r6_, r7_, r8_, r9_, r10_, r11_,    \
+    r12_, r13_, r14_, pc_, cpsr_, r8_fiq_, r9_fiq_, r10_fiq_, r11_fiq_,        \
+    r12_fiq_, r13_fiq_, r14_fiq_, spsr_fiq_, r13_svc_, r14_svc_, spsr_svc_,    \
+    r13_abt_, r14_abt_, spsr_abt_, r13_irq_, r14_irq_, spsr_irq_, r13_und_,    \
+    r14_und_, spsr_und_, spsr__bad_)                                           \
+  expected[r0] = r0_;                                                          \
+  expected[r1] = r1_;                                                          \
+  expected[r2] = r2_;                                                          \
+  expected[r3] = r3_;                                                          \
+  expected[r4] = r4_;                                                          \
+  expected[r5] = r5_;                                                          \
+  expected[r6] = r6_;                                                          \
+  expected[r7] = r7_;                                                          \
+  expected[r8] = r8_;                                                          \
+  expected[r9] = r9_;                                                          \
+  expected[r10] = r10_;                                                        \
+  expected[r11] = r11_;                                                        \
+  expected[r12] = r12_;                                                        \
+  expected[r13] = r13_;                                                        \
+  expected[r14] = r14_;                                                        \
+  expected[pc] = pc_;                                                          \
+  expected[cpsr] = cpsr_;                                                      \
+  expected[r8_fiq] = r8_fiq_;                                                  \
+  expected[r9_fiq] = r9_fiq_;                                                  \
+  expected[r10_fiq] = r10_fiq_;                                                \
+  expected[r11_fiq] = r11_fiq_;                                                \
+  expected[r12_fiq] = r12_fiq_;                                                \
+  expected[r13_fiq] = r13_fiq_;                                                \
+  expected[r14_fiq] = r14_fiq_;                                                \
+  expected[spsr_fiq] = spsr_fiq_;                                              \
+  expected[r13_svc] = r13_svc_;                                                \
+  expected[r14_svc] = r14_svc_;                                                \
+  expected[spsr_svc] = spsr_svc_;                                              \
+  expected[r13_abt] = r13_abt_;                                                \
+  expected[r14_abt] = r14_abt_;                                                \
+  expected[spsr_abt] = spsr_abt_;                                              \
+  expected[r13_irq] = r13_irq_;                                                \
+  expected[r14_irq] = r14_irq_;                                                \
+  expected[spsr_irq] = spsr_irq_;                                              \
+  expected[r13_und] = r13_und_;                                                \
+  expected[r14_und] = r14_und_;                                                \
+  expected[spsr_und] = spsr_und_;                                              \
+  expected[spsr__bad] = spsr__bad_;
+
 struct ARM7TDMI_CPU {
   u32 registers[ARM7TDMI_CPU_REGISTERS_TOTAL_REAL];
   u8 active_registers[ARM7TDMI_CPU_REGISTERS_ACTIVE];
