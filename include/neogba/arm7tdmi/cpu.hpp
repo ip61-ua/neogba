@@ -62,8 +62,9 @@ enum ARM7TDMI_CPU_Register : u8 { ARM7TDMI_CPU_REGISTERS_ORDER };
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_abt, pc, \
       cpsr
 #define ARM7TDMI_CPU_REGISTERS_ABT_REAL ARM7TDMI_CPU_REGISTERS_ABT, spsr_abt
+
 #define ARM7TDMI_CPU_REGISTERS_UND                                             \
-  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_und, pc, \
+  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_und, r14_und, pc, \
       cpsr
 #define ARM7TDMI_CPU_REGISTERS_UND_REAL ARM7TDMI_CPU_REGISTERS_UND, spsr_und
 
