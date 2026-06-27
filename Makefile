@@ -1,6 +1,6 @@
 CXX = clang++
 CXXFLAGS = -Wall -Wextra -std=c++26 -Iinclude -Isrc
-TEST_LDFLAGS = -lgtest -lgtest_main -pthread
+TEST_LDFLAGS = -lgtest -lgtest_main -pthread -g
 
 TARGET = build/neogba
 TEST_TARGET = build/test_runner
