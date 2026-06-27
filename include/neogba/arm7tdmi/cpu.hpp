@@ -10,6 +10,7 @@
       /* */ r13_svc, r14_svc, spsr_svc, /* */ r13_abt, r14_abt, spsr_abt,      \
       /* */ r13_irq, r14_irq, spsr_irq, /* */ r13_und, r14_und, spsr_und,      \
       /* */ spsr__bad
+#define ARM7TDMI_CPU_ACTIVE_SPSR 17
 
 #define ARM7TDMI_CPU_MASK_NEGATIVE /*  */ (1u << 31)
 #define ARM7TDMI_CPU_MASK_ZERO /*      */ (1u << 30)
@@ -131,10 +132,10 @@ struct ARM7TDMI_CPU {
   inline void write_cpsr(u32 new_cpsr) { this->registers[cpsr] = new_cpsr; }
 
   [[nodiscard]] inline u32 read_spsr() const {
-    return this->registers[active_registers[17]];
+    return this->registers[active_registers[ARM7TDMI_CPU_ACTIVE_SPSR]];
   }
   inline void write_spsr(u32 new_spsr) {
-    this->registers[active_registers[17]] = new_spsr;
+    this->registers[active_registers[ARM7TDMI_CPU_ACTIVE_SPSR]] = new_spsr;
   }
 
   [[nodiscard]] bool is_cpsr_bits(u32 mask, u32 bits) const;
