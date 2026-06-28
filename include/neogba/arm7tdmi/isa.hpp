@@ -21,7 +21,7 @@ struct isa_field {
 };
 
 template <typename instruction_t, typename return_t, u8 n_shift, instruction_t base_mask = 0xfu>
-struct isa_field_delayed : isa_field<instruction_t, bool, n_shift, (base_mask << n_shift)> {};
+struct isa_field_delayed : isa_field<instruction_t, return_t, n_shift, (base_mask << n_shift)> {};
 
 template <typename instruction_t, u8 n_shift>
 struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)> {
