@@ -1,114 +1,135 @@
 #pragma once
 #include "neogba/types.hpp"
 
-#define /* */ ISA_UNPACK_INSTT(inst, ret, shift, mask) inst
-#define /*  */ ISA_UNPACK_RETT(inst, ret, shift, mask) ret
-#define /* */ ISA_UNPACK_SHIFT(inst, ret, shift, mask) shift
-#define /*  */ ISA_UNPACK_MASK(inst, ret, shift, mask) mask
+namespace neogba {
 
-#define /* */ ISA_UNPACK_OFF_INSTT(inst, ret, shift, mask, mask2, join) inst
-#define /*  */ ISA_UNPACK_OFF_RETT(inst, ret, shift, mask, mask2, join) ret
-#define /* */ ISA_UNPACK_OFF_SHIFT(inst, ret, shift, mask, mask2, join) shift
-#define /*  */ ISA_UNPACK_OFF_MASK(inst, ret, shift, mask, mask2, join) mask
-#define /*  */ ISA_UNPACK_OFF_MSK2(inst, ret, shift, mask, mask2, join) mask2
-#define /*  */ ISA_UNPACK_OFF_JOIN(inst, ret, shift, mask, mask2, join) join
+#define /* */ NEOGBA_ISA_UNPACK_INSTT(inst, ret, shift, mask) inst
+#define /*  */ NEOGBA_ISA_UNPACK_RETT(inst, ret, shift, mask) ret
+#define /* */ NEOGBA_ISA_UNPACK_SHIFT(inst, ret, shift, mask) shift
+#define /*  */ NEOGBA_ISA_UNPACK_MASK(inst, ret, shift, mask) mask
 
-#define ISA_GET_INSTT(...) /* */ ISA_UNPACK_INSTT(__VA_ARGS__)
-#define ISA_GET_RETT(...) /*  */ ISA_UNPACK_RETT(__VA_ARGS__)
-#define ISA_GET_SHIFT(...) /* */ ISA_UNPACK_SHIFT(__VA_ARGS__)
-#define ISA_GET_MASK(...) /*  */ ISA_UNPACK_MASK(__VA_ARGS__)
+#define NEOGBA_ISA_UNPACK_OFF_INSTT(inst, ret, shift, mask, mask2, join) inst
+#define NEOGBA_ISA_UNPACK_OFF_RETT(inst, ret, shift, mask, mask2, join) ret
+#define NEOGBA_ISA_UNPACK_OFF_SHIFT(inst, ret, shift, mask, mask2, join) shift
+#define NEOGBA_ISA_UNPACK_OFF_MASK(inst, ret, shift, mask, mask2, join) mask
+#define NEOGBA_ISA_UNPACK_OFF_MSK2(inst, ret, shift, mask, mask2, join) mask2
+#define NEOGBA_ISA_UNPACK_OFF_JOIN(inst, ret, shift, mask, mask2, join) join
 
-#define ISA_GET2_INSTT(...) /* */ ISA_UNPACK_OFF_INSTT(__VA_ARGS__)
-#define ISA_GET2_RETT(...) /*  */ ISA_UNPACK_OFF_RETT(__VA_ARGS__)
-#define ISA_GET2_SHIFT(...) /* */ ISA_UNPACK_OFF_SHIFT(__VA_ARGS__)
-#define ISA_GET2_MASK(...) /*  */ ISA_UNPACK_OFF_MASK(__VA_ARGS__)
-#define ISA_GET2_MSK2(...) /*  */ ISA_UNPACK_OFF_MSK2(__VA_ARGS__)
-#define ISA_GET2_JOIN(...) /*  */ ISA_UNPACK_OFF_JOIN(__VA_ARGS__)
+#define NEOGBA_ISA_GET_INSTT(...) /* */ NEOGBA_ISA_UNPACK_INSTT(__VA_ARGS__)
+#define NEOGBA_ISA_GET_RETT(...) /*  */ NEOGBA_ISA_UNPACK_RETT(__VA_ARGS__)
+#define NEOGBA_ISA_GET_SHIFT(...) /* */ NEOGBA_ISA_UNPACK_SHIFT(__VA_ARGS__)
+#define NEOGBA_ISA_GET_MASK(...) /*  */ NEOGBA_ISA_UNPACK_MASK(__VA_ARGS__)
 
-#define ISA_SHIFTED(field)                                                     \
-  [[nodiscard]] inline ISA_GET_RETT(field)                                     \
-      isa_get_##field(ISA_GET_INSTT(field) inst) {                             \
-    return static_cast<ISA_GET_RETT(field)>(inst >> ISA_GET_SHIFT(field));     \
+#define NEOGBA_ISA_GET2_INSTT(...) NEOGBA_ISA_UNPACK_OFF_INSTT(__VA_ARGS__)
+#define NEOGBA_ISA_GET2_RETT(...) NEOGBA_ISA_UNPACK_OFF_RETT(__VA_ARGS__)
+#define NEOGBA_ISA_GET2_SHIFT(...) NEOGBA_ISA_UNPACK_OFF_SHIFT(__VA_ARGS__)
+#define NEOGBA_ISA_GET2_MASK(...) NEOGBA_ISA_UNPACK_OFF_MASK(__VA_ARGS__)
+#define NEOGBA_ISA_GET2_MSK2(...) NEOGBA_ISA_UNPACK_OFF_MSK2(__VA_ARGS__)
+#define NEOGBA_ISA_GET2_JOIN(...) NEOGBA_ISA_UNPACK_OFF_JOIN(__VA_ARGS__)
+
+#define NEOGBA_ISA_SHIFTED(field)                                              \
+  [[nodiscard]] inline NEOGBA_ISA_GET_RETT(field)                              \
+      isa_get_##field(NEOGBA_ISA_GET_INSTT(field) inst) {                      \
+    return static_cast<NEOGBA_ISA_GET_RETT(field)>(                            \
+        inst >> NEOGBA_ISA_GET_SHIFT(field));                                  \
   }                                                                            \
                                                                                \
-  [[nodiscard]] inline ISA_GET_INSTT(field) isa_set_##field(                   \
-      ISA_GET_INSTT(field) inst, ISA_GET_RETT(field) field##_value) {          \
-    return (inst & ~ISA_GET_MASK(field)) |                                     \
-           (field##_value << ISA_GET_SHIFT(field));                            \
+  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
+      isa_set_##field(NEOGBA_ISA_GET_INSTT(field) inst,                        \
+                      NEOGBA_ISA_GET_RETT(field) field##_value) {              \
+    return (inst & ~NEOGBA_ISA_GET_MASK(field)) |                              \
+           (field##_value << NEOGBA_ISA_GET_SHIFT(field));                     \
   }
 
-#define ISA_MASKED_SHIFTED(field)                                              \
-  [[nodiscard]] inline ISA_GET_RETT(field)                                     \
-      isa_get_##field(ISA_GET_INSTT(field) inst) {                             \
-    return static_cast<ISA_GET_RETT(field)>((inst & ISA_GET_MASK(field)) >>    \
-                                            ISA_GET_SHIFT(field));             \
+#define NEOGBA_ISA_MASKED_SHIFTED(field)                                       \
+  [[nodiscard]] inline NEOGBA_ISA_GET_RETT(field)                              \
+      isa_get_##field(NEOGBA_ISA_GET_INSTT(field) inst) {                      \
+    return static_cast<NEOGBA_ISA_GET_RETT(field)>(                            \
+        (inst & NEOGBA_ISA_GET_MASK(field)) >> NEOGBA_ISA_GET_SHIFT(field));   \
   }                                                                            \
                                                                                \
-  [[nodiscard]] inline ISA_GET_INSTT(field) isa_set_##field(                   \
-      ISA_GET_INSTT(field) inst, ISA_GET_RETT(field) field##_value) {          \
-    return (inst & ~ISA_GET_MASK(field)) |                                     \
-           ((field##_value << ISA_GET_SHIFT(field)) & ISA_GET_MASK(field));    \
+  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
+      isa_set_##field(NEOGBA_ISA_GET_INSTT(field) inst,                        \
+                      NEOGBA_ISA_GET_RETT(field) field##_value) {              \
+    return (inst & ~NEOGBA_ISA_GET_MASK(field)) |                              \
+           ((field##_value << NEOGBA_ISA_GET_SHIFT(field)) &                   \
+            NEOGBA_ISA_GET_MASK(field));                                       \
   }
 
-#define ISA_MASKED_BOOL(field)                                                 \
-  [[nodiscard]] inline bool isa_is_##field(ISA_GET_INSTT(field) inst) {        \
-    return ((inst & ISA_GET_MASK(field)) != 0);                                \
+#define NEOGBA_ISA_MASKED_BOOL(field)                                          \
+  [[nodiscard]] inline bool isa_is_##field(NEOGBA_ISA_GET_INSTT(field) inst) { \
+    return ((inst & NEOGBA_ISA_GET_MASK(field)) != 0);                         \
   }                                                                            \
                                                                                \
-  [[nodiscard]] inline ISA_GET_INSTT(field)                                    \
-      isa_set_##field(ISA_GET_INSTT(field) inst, bool field##_value) {         \
-    return (inst & ~ISA_GET_MASK(field)) |                                     \
-           ((field##_value) ? (ISA_GET_MASK(field)) : 0);                      \
+  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
+      isa_set_##field(NEOGBA_ISA_GET_INSTT(field) inst, bool field##_value) {  \
+    return (inst & ~NEOGBA_ISA_GET_MASK(field)) |                              \
+           ((field##_value) ? (NEOGBA_ISA_GET_MASK(field)) : 0);               \
   }                                                                            \
                                                                                \
-  [[nodiscard]] inline ISA_GET_INSTT(field)                                    \
-      isa_set0_##field(ISA_GET_INSTT(field) inst) {                            \
-    return (inst & ~ISA_GET_MASK(field));                                      \
+  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
+      isa_set0_##field(NEOGBA_ISA_GET_INSTT(field) inst) {                     \
+    return (inst & ~NEOGBA_ISA_GET_MASK(field));                               \
   }                                                                            \
                                                                                \
-  [[nodiscard]] inline ISA_GET_INSTT(field)                                    \
-      isa_set1_##field(ISA_GET_INSTT(field) inst) {                            \
-    return (inst | ISA_GET_MASK(field));                                       \
+  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
+      isa_set1_##field(NEOGBA_ISA_GET_INSTT(field) inst) {                     \
+    return (inst | NEOGBA_ISA_GET_MASK(field));                                \
   }                                                                            \
                                                                                \
-  [[nodiscard]] inline ISA_GET_INSTT(field)                                    \
-      isa_toggle_##field(ISA_GET_INSTT(field) inst) {                          \
-    return /* xor */ (inst ^ ISA_GET_MASK(field));                             \
+  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
+      isa_toggle_##field(NEOGBA_ISA_GET_INSTT(field) inst) {                   \
+    return /* xor */ (inst ^ NEOGBA_ISA_GET_MASK(field));                      \
   }
 
-#define ISA_MASKED(field)                                                      \
-  [[nodiscard]] inline ISA_GET_RETT(field)                                     \
-      isa_get_##field(ISA_GET_INSTT(field) inst) {                             \
-    return static_cast<ISA_GET_RETT(field)>((inst & ISA_GET_MASK(field)));     \
+#define NEOGBA_ISA_MASKED(field)                                               \
+  [[nodiscard]] inline NEOGBA_ISA_GET_RETT(field)                              \
+      isa_get_##field(NEOGBA_ISA_GET_INSTT(field) inst) {                      \
+    return static_cast<NEOGBA_ISA_GET_RETT(field)>(                            \
+        (inst & NEOGBA_ISA_GET_MASK(field)));                                  \
   }                                                                            \
                                                                                \
-  [[nodiscard]] inline ISA_GET_INSTT(field) isa_set_##field(                   \
-      ISA_GET_INSTT(field) inst, ISA_GET_RETT(field) field##_value) {          \
-    return (inst & ~ISA_GET_MASK(field)) |                                     \
-           (((field##_value << ISA_GET_SHIFT(field)) & ISA_GET_MASK(field)));  \
+  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
+      isa_set_##field(NEOGBA_ISA_GET_INSTT(field) inst,                        \
+                      NEOGBA_ISA_GET_RETT(field) field##_value) {              \
+    return (inst & ~NEOGBA_ISA_GET_MASK(field)) |                              \
+           (((field##_value << NEOGBA_ISA_GET_SHIFT(field)) &                  \
+             NEOGBA_ISA_GET_MASK(field)));                                     \
   }
 
-#define ISA_SPLIT_OFFSET(field)                                                \
-  [[nodiscard]] inline ISA_GET2_RETT(field)                                    \
-      isa_get_##field(ISA_GET2_INSTT(field) inst) {                            \
-    return static_cast<ISA_GET2_RETT(field)>(                                  \
-        ((inst & ISA_GET2_MASK(field)) >> ISA_GET2_JOIN(field)) |              \
-        (inst & ISA_GET2_MSK2(field)));                                        \
+#define NEOGBA_ISA_SPLIT_OFFSET(field)                                         \
+  [[nodiscard]] inline NEOGBA_ISA_GET2_RETT(field)                             \
+      isa_get_##field(NEOGBA_ISA_GET2_INSTT(field) inst) {                     \
+    return static_cast<NEOGBA_ISA_GET2_RETT(field)>(                           \
+        ((inst & NEOGBA_ISA_GET2_MASK(field)) >>                               \
+         NEOGBA_ISA_GET2_JOIN(field)) |                                        \
+        (inst & NEOGBA_ISA_GET2_MSK2(field)));                                 \
   }                                                                            \
                                                                                \
-  [[nodiscard]] inline ISA_GET2_INSTT(field) isa_set_##field(                  \
-      ISA_GET2_INSTT(field) inst, ISA_GET2_RETT(field) field##_value) {        \
-    return (inst & ~(ISA_GET2_MASK(field) | ISA_GET2_MSK2(field))) |           \
-           (field##_value & ISA_GET2_MSK2(field)) |                            \
-           ((field##_value << ISA_GET2_JOIN(field)) & ISA_GET2_MASK(field));   \
+  [[nodiscard]] inline NEOGBA_ISA_GET2_INSTT(field)                            \
+      isa_set_##field(NEOGBA_ISA_GET2_INSTT(field) inst,                       \
+                      NEOGBA_ISA_GET2_RETT(field) field##_value) {             \
+    return (inst &                                                             \
+            ~(NEOGBA_ISA_GET2_MASK(field) | NEOGBA_ISA_GET2_MSK2(field))) |    \
+           (field##_value & NEOGBA_ISA_GET2_MSK2(field)) |                     \
+           ((field##_value << NEOGBA_ISA_GET2_JOIN(field)) &                   \
+            NEOGBA_ISA_GET2_MASK(field));                                      \
   }
+
+template <typename instruction_t, typename return_t, u8 n_shift,
+          u32 bit_mask = (1u << n_shift)>
+struct Isa_struct {
+  using inst = instruction_t;
+  using rett = return_t;
+  u8 shift = n_shift;
+};
 
 ///
 /// ARM
 ///
 
 #define ARM_COND u32, u8, 28, 0xf0000000u
-ISA_SHIFTED(ARM_COND)
+NEOGBA_ISA_SHIFTED(ARM_COND)
 
 #define ARM_COND_EQ 0000
 #define ARM_COND_NE 0001
@@ -138,11 +159,11 @@ ISA_SHIFTED(ARM_COND)
 #define ARM_FSR_RD /*      */ u32, u8, 12, (0xfu << 12)
 #define ARM_FSR_OPERAND2 /**/ u32, u16, 0, ((1u << 12) - 1)
 
-ISA_MASKED_SHIFTED(ARM_FSR_OPCODE);
-ISA_MASKED_BOOL(ARM_FSR_S);
-ISA_MASKED_SHIFTED(ARM_FSR_RN);
-ISA_MASKED_SHIFTED(ARM_FSR_RD);
-ISA_MASKED(ARM_FSR_OPERAND2);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_FSR_OPCODE);
+NEOGBA_ISA_MASKED_BOOL(ARM_FSR_S);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_FSR_RN);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_FSR_RD);
+NEOGBA_ISA_MASKED(ARM_FSR_OPERAND2);
 
 ///
 /// Multiply
@@ -156,12 +177,12 @@ ISA_MASKED(ARM_FSR_OPERAND2);
 #define ARM_MULTIPLY_RS /* */ u32, u8, 8, (0xfu << 8)
 #define ARM_MULTIPLY_RM /* */ u32, u8, 0, 0xfu
 
-ISA_MASKED_BOOL(ARM_MULTIPLY_A);
-ISA_MASKED_BOOL(ARM_MULTIPLY_S);
-ISA_MASKED_SHIFTED(ARM_MULTIPLY_RD);
-ISA_MASKED_SHIFTED(ARM_MULTIPLY_RN);
-ISA_MASKED_SHIFTED(ARM_MULTIPLY_RS);
-ISA_MASKED(ARM_MULTIPLY_RM);
+NEOGBA_ISA_MASKED_BOOL(ARM_MULTIPLY_A);
+NEOGBA_ISA_MASKED_BOOL(ARM_MULTIPLY_S);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_MULTIPLY_RD);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_MULTIPLY_RN);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_MULTIPLY_RS);
+NEOGBA_ISA_MASKED(ARM_MULTIPLY_RM);
 
 ///
 /// Multiply long
@@ -176,13 +197,13 @@ ISA_MASKED(ARM_MULTIPLY_RM);
 #define ARM_LONG_RN /*  */ ARM_MULTIPLY_RS
 #define ARM_LONG_RM /*  */ ARM_MULTIPLY_RM
 
-ISA_MASKED_BOOL(ARM_LONG_U);
-ISA_MASKED_BOOL(ARM_LONG_A);
-ISA_MASKED_BOOL(ARM_LONG_S);
-ISA_MASKED_SHIFTED(ARM_LONG_RDHI);
-ISA_MASKED_SHIFTED(ARM_LONG_RDLO);
-ISA_MASKED_SHIFTED(ARM_LONG_RN);
-ISA_MASKED(ARM_LONG_RM);
+NEOGBA_ISA_MASKED_BOOL(ARM_LONG_U);
+NEOGBA_ISA_MASKED_BOOL(ARM_LONG_A);
+NEOGBA_ISA_MASKED_BOOL(ARM_LONG_S);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_LONG_RDHI);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_LONG_RDLO);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_LONG_RN);
+NEOGBA_ISA_MASKED(ARM_LONG_RM);
 
 ///
 /// Single data swap
@@ -194,10 +215,10 @@ ISA_MASKED(ARM_LONG_RM);
 #define ARM_SWAP_RD /* */ ARM_FSR_RD
 #define ARM_SWAP_RM /* */ ARM_MULTIPLY_RM
 
-ISA_MASKED_BOOL(ARM_SWAP_B);
-ISA_MASKED_SHIFTED(ARM_SWAP_RN);
-ISA_MASKED_SHIFTED(ARM_SWAP_RD);
-ISA_MASKED(ARM_SWAP_RM);
+NEOGBA_ISA_MASKED_BOOL(ARM_SWAP_B);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_SWAP_RN);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_SWAP_RD);
+NEOGBA_ISA_MASKED(ARM_SWAP_RM);
 
 ///
 /// Branch and Exchange
@@ -206,7 +227,7 @@ ISA_MASKED(ARM_SWAP_RM);
 #define ARM_EXCHANGE_TEMPLATE 0x012fff10u
 #define ARM_EXCHANGE_RN /* */ ARM_MULTIPLY_RM
 
-ISA_MASKED(ARM_EXCHANGE_RN);
+NEOGBA_ISA_MASKED(ARM_EXCHANGE_RN);
 
 ///
 /// Halfword data transfer, register offset
@@ -223,15 +244,15 @@ ISA_MASKED(ARM_EXCHANGE_RN);
 #define ARM_HALFREG_H /*   */ u32, bool, 5, (1u << 5)
 #define ARM_HALFREG_RM /*  */ ARM_MULTIPLY_RM
 
-ISA_MASKED_BOOL(ARM_HALFREG_P);
-ISA_MASKED_BOOL(ARM_HALFREG_U);
-ISA_MASKED_BOOL(ARM_HALFREG_W);
-ISA_MASKED_BOOL(ARM_HALFREG_L);
-ISA_MASKED_SHIFTED(ARM_HALFREG_RN);
-ISA_MASKED_SHIFTED(ARM_HALFREG_RD);
-ISA_MASKED_BOOL(ARM_HALFREG_S);
-ISA_MASKED_BOOL(ARM_HALFREG_H);
-ISA_MASKED(ARM_HALFREG_RM);
+NEOGBA_ISA_MASKED_BOOL(ARM_HALFREG_P);
+NEOGBA_ISA_MASKED_BOOL(ARM_HALFREG_U);
+NEOGBA_ISA_MASKED_BOOL(ARM_HALFREG_W);
+NEOGBA_ISA_MASKED_BOOL(ARM_HALFREG_L);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_HALFREG_RN);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_HALFREG_RD);
+NEOGBA_ISA_MASKED_BOOL(ARM_HALFREG_S);
+NEOGBA_ISA_MASKED_BOOL(ARM_HALFREG_H);
+NEOGBA_ISA_MASKED(ARM_HALFREG_RM);
 
 ///
 /// Halfword data transfer, immediate offset
@@ -246,17 +267,18 @@ ISA_MASKED(ARM_HALFREG_RM);
 #define ARM_HALFIMM_RD /*      */ ARM_FSR_RD
 #define ARM_HALFIMM_S /*       */ ARM_HALFREG_S
 #define ARM_HALFIMM_H /*       */ ARM_HALFREG_H
-#define ARM_HALFIMM_OFFSET ARM_MULTIPLY_RS, ISA_GET_MASK(ARM_MULTIPLY_RM), 4
+#define ARM_HALFIMM_OFFSET                                                     \
+  ARM_MULTIPLY_RS, NEOGBA_ISA_GET_MASK(ARM_MULTIPLY_RM), 4
 
-ISA_MASKED_BOOL(ARM_HALFIMM_P);
-ISA_MASKED_BOOL(ARM_HALFIMM_U);
-ISA_MASKED_BOOL(ARM_HALFIMM_W);
-ISA_MASKED_BOOL(ARM_HALFIMM_L);
-ISA_MASKED_SHIFTED(ARM_HALFIMM_RN);
-ISA_MASKED_SHIFTED(ARM_HALFIMM_RD);
-ISA_SPLIT_OFFSET(ARM_HALFIMM_OFFSET);
-ISA_MASKED_BOOL(ARM_HALFIMM_S);
-ISA_MASKED_BOOL(ARM_HALFIMM_H);
+NEOGBA_ISA_MASKED_BOOL(ARM_HALFIMM_P);
+NEOGBA_ISA_MASKED_BOOL(ARM_HALFIMM_U);
+NEOGBA_ISA_MASKED_BOOL(ARM_HALFIMM_W);
+NEOGBA_ISA_MASKED_BOOL(ARM_HALFIMM_L);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_HALFIMM_RN);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_HALFIMM_RD);
+NEOGBA_ISA_SPLIT_OFFSET(ARM_HALFIMM_OFFSET);
+NEOGBA_ISA_MASKED_BOOL(ARM_HALFIMM_S);
+NEOGBA_ISA_MASKED_BOOL(ARM_HALFIMM_H);
 
 ///
 /// Single data transfer
@@ -272,14 +294,14 @@ ISA_MASKED_BOOL(ARM_HALFIMM_H);
 #define ARM_SINGLETRANS_RD /*      */ ARM_HALFIMM_RD
 #define ARM_SINGLETRANS_OFFSET /*  */ ARM_FSR_OPERAND2
 
-ISA_MASKED_BOOL(ARM_SINGLETRANS_P);
-ISA_MASKED_BOOL(ARM_SINGLETRANS_U);
-ISA_MASKED_BOOL(ARM_SINGLETRANS_B);
-ISA_MASKED_BOOL(ARM_SINGLETRANS_W);
-ISA_MASKED_BOOL(ARM_SINGLETRANS_L);
-ISA_MASKED_SHIFTED(ARM_SINGLETRANS_RN);
-ISA_MASKED_SHIFTED(ARM_SINGLETRANS_RD);
-ISA_MASKED(ARM_SINGLETRANS_OFFSET);
+NEOGBA_ISA_MASKED_BOOL(ARM_SINGLETRANS_P);
+NEOGBA_ISA_MASKED_BOOL(ARM_SINGLETRANS_U);
+NEOGBA_ISA_MASKED_BOOL(ARM_SINGLETRANS_B);
+NEOGBA_ISA_MASKED_BOOL(ARM_SINGLETRANS_W);
+NEOGBA_ISA_MASKED_BOOL(ARM_SINGLETRANS_L);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_SINGLETRANS_RN);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_SINGLETRANS_RD);
+NEOGBA_ISA_MASKED(ARM_SINGLETRANS_OFFSET);
 
 ///
 /// Undefined
@@ -300,13 +322,13 @@ ISA_MASKED(ARM_SINGLETRANS_OFFSET);
 #define ARM_BLOCKTRANS_RN /*          */ ARM_HALFIMM_RN
 #define ARM_BLOCKTRANS_REGISTERLIST /**/ u32, u16, 0, 0xffffu
 
-ISA_MASKED_BOOL(ARM_BLOCKTRANS_P);
-ISA_MASKED_BOOL(ARM_BLOCKTRANS_U);
-ISA_MASKED_BOOL(ARM_BLOCKTRANS_S);
-ISA_MASKED_BOOL(ARM_BLOCKTRANS_W);
-ISA_MASKED_BOOL(ARM_BLOCKTRANS_L);
-ISA_MASKED_SHIFTED(ARM_BLOCKTRANS_RN);
-ISA_MASKED(ARM_BLOCKTRANS_REGISTERLIST);
+NEOGBA_ISA_MASKED_BOOL(ARM_BLOCKTRANS_P);
+NEOGBA_ISA_MASKED_BOOL(ARM_BLOCKTRANS_U);
+NEOGBA_ISA_MASKED_BOOL(ARM_BLOCKTRANS_S);
+NEOGBA_ISA_MASKED_BOOL(ARM_BLOCKTRANS_W);
+NEOGBA_ISA_MASKED_BOOL(ARM_BLOCKTRANS_L);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_BLOCKTRANS_RN);
+NEOGBA_ISA_MASKED(ARM_BLOCKTRANS_REGISTERLIST);
 
 ///
 /// Branch
@@ -316,8 +338,8 @@ ISA_MASKED(ARM_BLOCKTRANS_REGISTERLIST);
 #define ARM_BRANCH_L /*       */ ARM_HALFIMM_P
 #define ARM_BRANCH_OFFSET /*  */ u32, u32, 0, 0xffffffu
 
-ISA_MASKED_BOOL(ARM_BRANCH_L);
-ISA_MASKED(ARM_BRANCH_OFFSET);
+NEOGBA_ISA_MASKED_BOOL(ARM_BRANCH_L);
+NEOGBA_ISA_MASKED(ARM_BRANCH_OFFSET);
 
 ///
 /// Coprocessor data transfer
@@ -334,15 +356,15 @@ ISA_MASKED(ARM_BRANCH_OFFSET);
 #define ARM_COPROCTRANS_CPSHARP ARM_MULTIPLY_RS
 #define ARM_COPROCTRANS_OFFSET u32, u8, 0, 0xffu
 
-ISA_MASKED_BOOL(ARM_COPROCTRANS_P);
-ISA_MASKED_BOOL(ARM_COPROCTRANS_U);
-ISA_MASKED_BOOL(ARM_COPROCTRANS_N);
-ISA_MASKED_BOOL(ARM_COPROCTRANS_W);
-ISA_MASKED_BOOL(ARM_COPROCTRANS_L);
-ISA_MASKED_SHIFTED(ARM_COPROCTRANS_RN);
-ISA_MASKED_SHIFTED(ARM_COPROCTRANS_CRD);
-ISA_MASKED_SHIFTED(ARM_COPROCTRANS_CPSHARP);
-ISA_MASKED(ARM_COPROCTRANS_OFFSET);
+NEOGBA_ISA_MASKED_BOOL(ARM_COPROCTRANS_P);
+NEOGBA_ISA_MASKED_BOOL(ARM_COPROCTRANS_U);
+NEOGBA_ISA_MASKED_BOOL(ARM_COPROCTRANS_N);
+NEOGBA_ISA_MASKED_BOOL(ARM_COPROCTRANS_W);
+NEOGBA_ISA_MASKED_BOOL(ARM_COPROCTRANS_L);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCTRANS_RN);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCTRANS_CRD);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCTRANS_CPSHARP);
+NEOGBA_ISA_MASKED(ARM_COPROCTRANS_OFFSET);
 
 ///
 /// Coprocessor data operation
@@ -356,12 +378,12 @@ ISA_MASKED(ARM_COPROCTRANS_OFFSET);
 #define ARM_COPROCOP_CP /*      */ u32, u8, 5, (0x7u << 5)
 #define ARM_COPROCOP_CRM /*     */ ARM_MULTIPLY_RM
 
-ISA_MASKED_SHIFTED(ARM_COPROCOP_CPOPC);
-ISA_MASKED_SHIFTED(ARM_COPROCOP_CRN);
-ISA_MASKED_SHIFTED(ARM_COPROCOP_CRD);
-ISA_MASKED_SHIFTED(ARM_COPROCOP_CPSHARP);
-ISA_MASKED_SHIFTED(ARM_COPROCOP_CP);
-ISA_MASKED(ARM_COPROCOP_CRM);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCOP_CPOPC);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCOP_CRN);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCOP_CRD);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCOP_CPSHARP);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCOP_CP);
+NEOGBA_ISA_MASKED(ARM_COPROCOP_CRM);
 
 ///
 /// Coprocessor register transfer
@@ -376,13 +398,13 @@ ISA_MASKED(ARM_COPROCOP_CRM);
 #define ARM_COPROCREGTRANS_CP /*      */ ARM_COPROCOP_CP
 #define ARM_COPROCREGTRANS_CRM /*     */ ARM_COPROCOP_CRM
 
-ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_CPOPC);
-ISA_MASKED_BOOL(ARM_COPROCREGTRANS_L);
-ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_CRN);
-ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_RD);
-ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_CPSHARP);
-ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_CP);
-ISA_MASKED(ARM_COPROCREGTRANS_CRM);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_CPOPC);
+NEOGBA_ISA_MASKED_BOOL(ARM_COPROCREGTRANS_L);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_CRN);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_RD);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_CPSHARP);
+NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_CP);
+NEOGBA_ISA_MASKED(ARM_COPROCREGTRANS_CRM);
 
 ///
 /// Software interrupt
@@ -391,7 +413,7 @@ ISA_MASKED(ARM_COPROCREGTRANS_CRM);
 #define ARM_SWINT_TEMPLATE 0x0f000000
 #define ARM_SWINT_SWI /**/ u32, u32, 0, 0xffffffu
 
-ISA_MASKED(ARM_SWINT_SWI);
+NEOGBA_ISA_MASKED(ARM_SWINT_SWI);
 
 ///
 /// Thumb
@@ -407,10 +429,10 @@ ISA_MASKED(ARM_SWINT_SWI);
 #define THUMB_01_RS /*      */ u16, u8, 3, (0x7u << 3)
 #define THUMB_01_RD /*      */ u16, u8, 0, 0x7u
 
-ISA_MASKED_SHIFTED(THUMB_01_OP);
-ISA_MASKED_SHIFTED(THUMB_01_OFFSET5);
-ISA_MASKED_SHIFTED(THUMB_01_RS);
-ISA_MASKED(THUMB_01_RD);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_01_OP);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_01_OFFSET5);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_01_RS);
+NEOGBA_ISA_MASKED(THUMB_01_RD);
 
 ///
 /// Format 02 - Add and substract
@@ -422,10 +444,10 @@ ISA_MASKED(THUMB_01_RD);
 #define THUMB_02_RS /*       */ THUMB_01_RS
 #define THUMB_02_RD /*       */ THUMB_01_RD
 
-ISA_MASKED_BOOL(THUMB_02_OP);
-ISA_MASKED_SHIFTED(THUMB_02_RNOFFSET3);
-ISA_MASKED_SHIFTED(THUMB_02_RS);
-ISA_MASKED(THUMB_02_RD);
+NEOGBA_ISA_MASKED_BOOL(THUMB_02_OP);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_02_RNOFFSET3);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_02_RS);
+NEOGBA_ISA_MASKED(THUMB_02_RD);
 
 ///
 /// Format 03 - Move, compare, add, and subtract immediate
@@ -436,9 +458,9 @@ ISA_MASKED(THUMB_02_RD);
 #define THUMB_03_RD /*      */ u16, u8, 8, (0x7u << 8)
 #define THUMB_03_OFFSET8 /* */ u16, u8, 0, 0xffu
 
-ISA_MASKED_SHIFTED(THUMB_03_OP);
-ISA_MASKED_SHIFTED(THUMB_03_RD);
-ISA_MASKED(THUMB_03_OFFSET8);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_03_OP);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_03_RD);
+NEOGBA_ISA_MASKED(THUMB_03_OFFSET8);
 
 ///
 /// Format 04 - ALU operation
@@ -449,9 +471,9 @@ ISA_MASKED(THUMB_03_OFFSET8);
 #define THUMB_04_RS /*      */ THUMB_01_RS
 #define THUMB_04_RD /*      */ THUMB_01_RD
 
-ISA_MASKED_SHIFTED(THUMB_04_OP);
-ISA_MASKED_SHIFTED(THUMB_04_RS);
-ISA_MASKED(THUMB_04_RD);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_04_OP);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_04_RS);
+NEOGBA_ISA_MASKED(THUMB_04_RD);
 
 ///
 /// Format 05 - High register operations and branch exchange
@@ -464,11 +486,11 @@ ISA_MASKED(THUMB_04_RD);
 #define THUMB_05_RSHS /*    */ THUMB_01_RS
 #define THUMB_05_RDHD /*    */ THUMB_01_RD
 
-ISA_MASKED_SHIFTED(THUMB_05_OP);
-ISA_MASKED_BOOL(THUMB_05_H1);
-ISA_MASKED_BOOL(THUMB_05_H2);
-ISA_MASKED_SHIFTED(THUMB_05_RSHS);
-ISA_MASKED(THUMB_05_RDHD);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_05_OP);
+NEOGBA_ISA_MASKED_BOOL(THUMB_05_H1);
+NEOGBA_ISA_MASKED_BOOL(THUMB_05_H2);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_05_RSHS);
+NEOGBA_ISA_MASKED(THUMB_05_RDHD);
 
 ///
 /// Format 06 - PC-relative load
@@ -478,8 +500,8 @@ ISA_MASKED(THUMB_05_RDHD);
 #define THUMB_06_RD /*      */ THUMB_03_RD
 #define THUMB_06_WORD8 /*   */ u16, u8, 0, 0xffu
 
-ISA_MASKED_SHIFTED(THUMB_06_RD);
-ISA_MASKED(THUMB_06_WORD8);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_06_RD);
+NEOGBA_ISA_MASKED(THUMB_06_WORD8);
 
 ///
 /// Format 07 - Load and store with relative offset
@@ -492,11 +514,11 @@ ISA_MASKED(THUMB_06_WORD8);
 #define THUMB_07_RB /* */ THUMB_01_RS
 #define THUMB_07_RD /* */ THUMB_01_RD
 
-ISA_MASKED_BOOL(THUMB_07_L);
-ISA_MASKED_BOOL(THUMB_07_B);
-ISA_MASKED_SHIFTED(THUMB_07_RO);
-ISA_MASKED_SHIFTED(THUMB_07_RB);
-ISA_MASKED(THUMB_07_RD);
+NEOGBA_ISA_MASKED_BOOL(THUMB_07_L);
+NEOGBA_ISA_MASKED_BOOL(THUMB_07_B);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_07_RO);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_07_RB);
+NEOGBA_ISA_MASKED(THUMB_07_RD);
 
 ///
 /// Format 08 - Load and store sign-extended byte and halfword
@@ -509,11 +531,11 @@ ISA_MASKED(THUMB_07_RD);
 #define THUMB_08_RB /* */ THUMB_07_RB
 #define THUMB_08_RD /* */ THUMB_07_RD
 
-ISA_MASKED_BOOL(THUMB_08_H);
-ISA_MASKED_BOOL(THUMB_08_S);
-ISA_MASKED_SHIFTED(THUMB_08_RO);
-ISA_MASKED_SHIFTED(THUMB_08_RB);
-ISA_MASKED(THUMB_08_RD);
+NEOGBA_ISA_MASKED_BOOL(THUMB_08_H);
+NEOGBA_ISA_MASKED_BOOL(THUMB_08_S);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_08_RO);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_08_RB);
+NEOGBA_ISA_MASKED(THUMB_08_RD);
 
 ///
 /// Format 09 - Load and store with immediate offset
@@ -526,11 +548,11 @@ ISA_MASKED(THUMB_08_RD);
 #define THUMB_09_RB /*      */ THUMB_01_RS
 #define THUMB_09_RD /*      */ THUMB_01_RD
 
-ISA_MASKED_BOOL(THUMB_09_B);
-ISA_MASKED_BOOL(THUMB_09_L);
-ISA_MASKED_SHIFTED(THUMB_09_OFFSET5);
-ISA_MASKED_SHIFTED(THUMB_09_RB);
-ISA_MASKED(THUMB_09_RD);
+NEOGBA_ISA_MASKED_BOOL(THUMB_09_B);
+NEOGBA_ISA_MASKED_BOOL(THUMB_09_L);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_09_OFFSET5);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_09_RB);
+NEOGBA_ISA_MASKED(THUMB_09_RD);
 
 ///
 /// Format 10 - Load and store halfword
@@ -542,10 +564,10 @@ ISA_MASKED(THUMB_09_RD);
 #define THUMB_10_RB /*      */ THUMB_01_RS
 #define THUMB_10_RD /*      */ THUMB_01_RD
 
-ISA_MASKED_BOOL(THUMB_10_L);
-ISA_MASKED_SHIFTED(THUMB_10_OFFSET5);
-ISA_MASKED_SHIFTED(THUMB_10_RB);
-ISA_MASKED(THUMB_10_RD);
+NEOGBA_ISA_MASKED_BOOL(THUMB_10_L);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_10_OFFSET5);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_10_RB);
+NEOGBA_ISA_MASKED(THUMB_10_RD);
 
 ///
 /// Format 11 - SP-relative load and store
@@ -556,9 +578,9 @@ ISA_MASKED(THUMB_10_RD);
 #define THUMB_11_RD /*      */ THUMB_06_RD
 #define THUMB_11_WORD8 /*   */ THUMB_06_WORD8
 
-ISA_MASKED_BOOL(THUMB_11_L);
-ISA_MASKED_SHIFTED(THUMB_11_RD);
-ISA_MASKED(THUMB_11_WORD8);
+NEOGBA_ISA_MASKED_BOOL(THUMB_11_L);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_11_RD);
+NEOGBA_ISA_MASKED(THUMB_11_WORD8);
 
 ///
 /// Format 12 - Load address
@@ -569,9 +591,9 @@ ISA_MASKED(THUMB_11_WORD8);
 #define THUMB_12_RD /*      */ THUMB_11_RD
 #define THUMB_12_WORD8 /*   */ THUMB_11_WORD8
 
-ISA_MASKED_BOOL(THUMB_12_SP);
-ISA_MASKED_SHIFTED(THUMB_12_RD);
-ISA_MASKED(THUMB_12_WORD8);
+NEOGBA_ISA_MASKED_BOOL(THUMB_12_SP);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_12_RD);
+NEOGBA_ISA_MASKED(THUMB_12_WORD8);
 
 ///
 /// Format 13 - Add offset to stack pointer
@@ -581,8 +603,8 @@ ISA_MASKED(THUMB_12_WORD8);
 #define THUMB_13_S /*       */ u16, bool, 7, (1u << 7)
 #define THUMB_13_SWORD7 /*  */ u16, u8, 0, 0x7fu
 
-ISA_MASKED_BOOL(THUMB_13_S);
-ISA_MASKED(THUMB_13_SWORD7);
+NEOGBA_ISA_MASKED_BOOL(THUMB_13_S);
+NEOGBA_ISA_MASKED(THUMB_13_SWORD7);
 
 ///
 /// Format 14 - Push and pop registers
@@ -593,9 +615,9 @@ ISA_MASKED(THUMB_13_SWORD7);
 #define THUMB_14_R /*       */ u16, u8, 8, (1u << 8)
 #define THUMB_14_RLIST /*   */ THUMB_11_WORD8
 
-ISA_MASKED_BOOL(THUMB_14_L);
-ISA_MASKED_SHIFTED(THUMB_14_R);
-ISA_MASKED(THUMB_14_RLIST);
+NEOGBA_ISA_MASKED_BOOL(THUMB_14_L);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_14_R);
+NEOGBA_ISA_MASKED(THUMB_14_RLIST);
 
 ///
 /// Format 15 - Multiple load and store
@@ -606,9 +628,9 @@ ISA_MASKED(THUMB_14_RLIST);
 #define THUMB_15_RB /*      */ THUMB_12_RD
 #define THUMB_15_RLIST /*   */ THUMB_12_WORD8
 
-ISA_MASKED_BOOL(THUMB_15_L);
-ISA_MASKED_SHIFTED(THUMB_15_RB);
-ISA_MASKED(THUMB_15_RLIST);
+NEOGBA_ISA_MASKED_BOOL(THUMB_15_L);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_15_RB);
+NEOGBA_ISA_MASKED(THUMB_15_RLIST);
 
 ///
 /// Format 16 - Conditional branch
@@ -618,8 +640,8 @@ ISA_MASKED(THUMB_15_RLIST);
 #define THUMB_16_COND /*    */ u16, u8, 8, (0xfu << 8)
 #define THUMB_16_SOFTSET8 /**/ THUMB_12_WORD8
 
-ISA_MASKED_SHIFTED(THUMB_16_COND);
-ISA_MASKED(THUMB_16_SOFTSET8);
+NEOGBA_ISA_MASKED_SHIFTED(THUMB_16_COND);
+NEOGBA_ISA_MASKED(THUMB_16_SOFTSET8);
 
 ///
 /// Format 17 - Software interrupt
@@ -628,7 +650,7 @@ ISA_MASKED(THUMB_16_SOFTSET8);
 #define THUMB_17_TEMPLATE /**/ 0xdf00u
 #define THUMB_17_VALUE8 /*  */ u16, u8, 0, 0xffu
 
-ISA_MASKED(THUMB_17_VALUE8);
+NEOGBA_ISA_MASKED(THUMB_17_VALUE8);
 
 ///
 /// Format 18 - Unconditional branch
@@ -637,7 +659,7 @@ ISA_MASKED(THUMB_17_VALUE8);
 #define THUMB_18_TEMPLATE 0xe000u
 #define THUMB_18_OFFSET11 u16, u16, 0, 0x7ffu
 
-ISA_MASKED(THUMB_18_OFFSET11);
+NEOGBA_ISA_MASKED(THUMB_18_OFFSET11);
 
 ///
 /// Format 19 - Long branch with link
@@ -647,5 +669,7 @@ ISA_MASKED(THUMB_18_OFFSET11);
 #define THUMB_19_H /*       */ THUMB_15_L
 #define THUMB_19_OFFSET /*  */ THUMB_18_OFFSET11
 
-ISA_MASKED_BOOL(THUMB_19_H);
-ISA_MASKED(THUMB_19_OFFSET);
+NEOGBA_ISA_MASKED_BOOL(THUMB_19_H);
+NEOGBA_ISA_MASKED(THUMB_19_OFFSET);
+
+} // namespace neogba
