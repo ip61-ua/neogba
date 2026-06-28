@@ -230,156 +230,76 @@ using ARM_SWINT_SWI = /**/ IsaField<u32, u32, 0, 0xffffffu>;
 /// Thumb
 
 /// Format 01 - Move shifted register
-#define THUMB_01_TEMPLATE /**/ 0x0000u
-#define THUMB_01_OP /*      */ u16, u8, 11, (0x3u << 11)
-#define THUMB_01_OFFSET5 /* */ u16, u8, 6, (0x1fu << 6)
-#define THUMB_01_RS /*      */ u16, u8, 3, (0x7u << 3)
-#define THUMB_01_RD /*      */ u16, u8, 0, 0x7u
+constexpr u16 THUMB_01_TEMPLATE{0x0000u};
+using THUMB_01_OP = /*             */ IsaFieldDelayed<u16, u8, 11, 0x3u>;
+using THUMB_01_OFFSET5 = /*        */ IsaFieldDelayed<u16, u8, 6, 0x1fu>;
+using THUMB_01_RS = /*             */ IsaFieldDelayed<u16, u8, 3, 0x7u>;
+using THUMB_01_RD = /*             */ IsaField<u16, u8, 0, 0x7u>;
 
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_01_OP);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_01_OFFSET5);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_01_RS);
-NEOGBA_ISA_MASKED(THUMB_01_RD);
-
-///
 /// Format 02 - Add and substract
-///
+constexpr u16 THUMB_02_TEMPLATE{0x1c00u};
+using THUMB_02_OP = /*             */ IsaFieldBool<u16, 9>;
+using THUMB_02_RNOFFSET3 = /*      */ IsaFieldDelayed<u16, u8, 6, 0x7u>;
+using THUMB_02_RS = /*             */ THUMB_01_RS;
+using THUMB_02_RD = /*             */ THUMB_01_RD;
 
-#define THUMB_02_TEMPLATE /* */ 0x1c00u
-#define THUMB_02_OP /*       */ u16, bool, 9, (1u << 9)
-#define THUMB_02_RNOFFSET3 /**/ u16, u8, 6, (0x7u << 6)
-#define THUMB_02_RS /*       */ THUMB_01_RS
-#define THUMB_02_RD /*       */ THUMB_01_RD
-
-NEOGBA_ISA_MASKED_BOOL(THUMB_02_OP);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_02_RNOFFSET3);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_02_RS);
-NEOGBA_ISA_MASKED(THUMB_02_RD);
-
-///
 /// Format 03 - Move, compare, add, and subtract immediate
-///
+constexpr u16 THUMB_03_TEMPLATE{0x2000u};
+using THUMB_03_OP = /*             */ THUMB_01_OP;
+using THUMB_03_RD = /*             */ IsaFieldDelayed<u16, u8, 8, 0x7u>;
+using THUMB_03_OFFSET8 = /*        */ IsaField<u16, u8, 0, 0xffu>;
 
-#define THUMB_03_TEMPLATE /**/ 0x2000u
-#define THUMB_03_OP /*      */ THUMB_01_OP
-#define THUMB_03_RD /*      */ u16, u8, 8, (0x7u << 8)
-#define THUMB_03_OFFSET8 /* */ u16, u8, 0, 0xffu
-
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_03_OP);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_03_RD);
-NEOGBA_ISA_MASKED(THUMB_03_OFFSET8);
-
-///
 /// Format 04 - ALU operation
-///
+constexpr u16 THUMB_04_TEMPLATE{0x4000u};
+using THUMB_04_OP = /*             */ IsaFieldDelayed<u16, u8, 6, 0xfu>;
+using THUMB_04_RS = /*             */ THUMB_01_RS;
+using THUMB_04_RD = /*             */ THUMB_01_RD;
 
-#define THUMB_04_TEMPLATE /**/ 0x4000u
-#define THUMB_04_OP /*      */ u16, u8, 6, (0xfu << 6)
-#define THUMB_04_RS /*      */ THUMB_01_RS
-#define THUMB_04_RD /*      */ THUMB_01_RD
-
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_04_OP);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_04_RS);
-NEOGBA_ISA_MASKED(THUMB_04_RD);
-
-///
 /// Format 05 - High register operations and branch exchange
-///
+constexpr u16 THUMB_05_TEMPLATE{0x4400u};
+using THUMB_05_OP = /*             */ IsaFieldDelayed<u16, u8, 8, 0x7u>;
+using THUMB_05_H1 = /*             */ IsaFieldBool<u16, 7>;
+using THUMB_05_H2 = /*             */ IsaFieldBool<u16, 6>;
+using THUMB_05_RSHS = /*           */ THUMB_01_RS;
+using THUMB_05_RDHD = /*           */ THUMB_01_RD;
 
-#define THUMB_05_TEMPLATE /**/ 0x4400u
-#define THUMB_05_OP /*      */ u16, u8, 8, (0x7u << 8)
-#define THUMB_05_H1 /*      */ u16, bool, 7, (1u << 7)
-#define THUMB_05_H2 /*      */ u16, bool, 6, (1u << 6)
-#define THUMB_05_RSHS /*    */ THUMB_01_RS
-#define THUMB_05_RDHD /*    */ THUMB_01_RD
-
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_05_OP);
-NEOGBA_ISA_MASKED_BOOL(THUMB_05_H1);
-NEOGBA_ISA_MASKED_BOOL(THUMB_05_H2);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_05_RSHS);
-NEOGBA_ISA_MASKED(THUMB_05_RDHD);
-
-///
 /// Format 06 - PC-relative load
-///
+constexpr u16 THUMB_06_TEMPLATE{0x4800u};
+using THUMB_06_RD = /*             */ THUMB_03_RD;
+using THUMB_06_WORD8 = /*          */ IsaField<u16, u8, 0, 0xffu>;
 
-#define THUMB_06_TEMPLATE /**/ 0x4800u
-#define THUMB_06_RD /*      */ THUMB_03_RD
-#define THUMB_06_WORD8 /*   */ u16, u8, 0, 0xffu
-
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_06_RD);
-NEOGBA_ISA_MASKED(THUMB_06_WORD8);
-
-///
 /// Format 07 - Load and store with relative offset
-///
+constexpr u16 THUMB_07_TEMPLATE{0x5000u};
+using THUMB_07_L = /*              */ IsaFieldBool<u16, 11>;
+using THUMB_07_B = /*              */ IsaFieldBool<u16, 10>;
+using THUMB_07_RO = /*             */ THUMB_02_RNOFFSET3;
+using THUMB_07_RB = /*             */ THUMB_01_RS;
+using THUMB_07_RD = /*             */ THUMB_01_RD;
 
-#define THUMB_07_TEMPLATE 0x5000u
-#define THUMB_07_L /*  */ u16, bool, 11, (1u << 11)
-#define THUMB_07_B /*  */ u16, bool, 10, (1u << 10)
-#define THUMB_07_RO /* */ THUMB_02_RNOFFSET3
-#define THUMB_07_RB /* */ THUMB_01_RS
-#define THUMB_07_RD /* */ THUMB_01_RD
-
-NEOGBA_ISA_MASKED_BOOL(THUMB_07_L);
-NEOGBA_ISA_MASKED_BOOL(THUMB_07_B);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_07_RO);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_07_RB);
-NEOGBA_ISA_MASKED(THUMB_07_RD);
-
-///
 /// Format 08 - Load and store sign-extended byte and halfword
-///
+constexpr u16 THUMB_08_TEMPLATE{0x5200u};
+using THUMB_08_H = /*              */ THUMB_07_L;
+using THUMB_08_S = /*              */ THUMB_07_B;
+using THUMB_08_RO = /*             */ THUMB_07_RO;
+using THUMB_08_RB = /*             */ THUMB_07_RB;
+using THUMB_08_RD = /*             */ THUMB_07_RD;
 
-#define THUMB_08_TEMPLATE 0x5200u
-#define THUMB_08_H /*  */ THUMB_07_L
-#define THUMB_08_S /*  */ THUMB_07_B
-#define THUMB_08_RO /* */ THUMB_07_RO
-#define THUMB_08_RB /* */ THUMB_07_RB
-#define THUMB_08_RD /* */ THUMB_07_RD
-
-NEOGBA_ISA_MASKED_BOOL(THUMB_08_H);
-NEOGBA_ISA_MASKED_BOOL(THUMB_08_S);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_08_RO);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_08_RB);
-NEOGBA_ISA_MASKED(THUMB_08_RD);
-
-///
 /// Format 09 - Load and store with immediate offset
-///
+constexpr u16 THUMB_09_TEMPLATE{0x6000u};
+using THUMB_09_B = /*              */ IsaFieldBool<u16, 12>;
+using THUMB_09_L = /*              */ THUMB_07_L;
+using THUMB_09_OFFSET5 = /*        */ THUMB_01_OFFSET5;
+using THUMB_09_RB = /*             */ THUMB_01_RS;
+using THUMB_09_RD = /*             */ THUMB_01_RD;
 
-#define THUMB_09_TEMPLATE /**/ 0x6000u
-#define THUMB_09_B /*       */ u16, bool, 12, (1u << 12)
-#define THUMB_09_L /*       */ THUMB_07_L
-#define THUMB_09_OFFSET5 /* */ THUMB_01_OFFSET5
-#define THUMB_09_RB /*      */ THUMB_01_RS
-#define THUMB_09_RD /*      */ THUMB_01_RD
-
-NEOGBA_ISA_MASKED_BOOL(THUMB_09_B);
-NEOGBA_ISA_MASKED_BOOL(THUMB_09_L);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_09_OFFSET5);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_09_RB);
-NEOGBA_ISA_MASKED(THUMB_09_RD);
-
-///
 /// Format 10 - Load and store halfword
-///
+constexpr u16 THUMB_10_TEMPLATE{0x8000u};
+using THUMB_10_L = /*              */ THUMB_09_L;
+using THUMB_10_OFFSET5 = /*        */ THUMB_01_OFFSET5;
+using THUMB_10_RB = /*             */ THUMB_01_RS;
+using THUMB_10_RD = /*             */ THUMB_01_RD;
 
-#define THUMB_10_TEMPLATE /**/ 0x8000u
-#define THUMB_10_L /*       */ THUMB_09_L
-#define THUMB_10_OFFSET5 /* */ THUMB_01_OFFSET5
-#define THUMB_10_RB /*      */ THUMB_01_RS
-#define THUMB_10_RD /*      */ THUMB_01_RD
-
-NEOGBA_ISA_MASKED_BOOL(THUMB_10_L);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_10_OFFSET5);
-NEOGBA_ISA_MASKED_SHIFTED(THUMB_10_RB);
-NEOGBA_ISA_MASKED(THUMB_10_RD);
-
-///
 /// Format 11 - SP-relative load and store
-///
-
 #define THUMB_11_TEMPLATE /**/ 0x9000u
 #define THUMB_11_L /*       */ THUMB_10_L
 #define THUMB_11_RD /*      */ THUMB_06_RD
