@@ -23,8 +23,7 @@ TEST(isa_test, should_change_only_arm_cond_field) {
   ASSERT_EQ(2, ISA_ARM_COND::get(ins));
 }
 
-TEST(isa_test,
-     should_right_when_building_and_changing_a_bit_fsr_instrucctions) {
+TEST(isa_test, should_right_when_building_and_changing_a_bit_fsr_instrucctions) {
   u32 ins = ISA_ARM_FSR_TEMPLATE;
   auto old = ins, old_mod = static_cast<u32>(old | ISA_ARM_FSR_S::mask);
 
@@ -69,8 +68,7 @@ TEST(isa_test, should_retrieve_right_bits_from_raw_arm_halfimm_instruction) {
   ASSERT_EQ(K_TEST_HALFIMM_INS_HALFIMM_RD, ISA_ARM_HALFIMM_RD::get(ins));
   ASSERT_EQ(K_TEST_HALFIMM_INS_HALFIMM_S, ISA_ARM_HALFIMM_S::get(ins));
   ASSERT_EQ(K_TEST_HALFIMM_INS_HALFIMM_H, ISA_ARM_HALFIMM_H::get(ins));
-  ASSERT_EQ(K_TEST_HALFIMM_INS_HALFIMM_OFFSET,
-            ISA_ARM_HALFIMM_OFFSET::get(ins));
+  ASSERT_EQ(K_TEST_HALFIMM_INS_HALFIMM_OFFSET, ISA_ARM_HALFIMM_OFFSET::get(ins));
 }
 
 TEST(isa_test, should_build_ri_bits_from_raw_arm_halfimm_instruction) {
@@ -90,8 +88,7 @@ TEST(isa_test, should_build_ri_bits_from_raw_arm_halfimm_instruction) {
   ASSERT_EQ(K_TEST_HALFIMM_INS, ins);
 }
 
-TEST(isa_test,
-     should_return_same_when_building_its_refered_to_the_same_range_of_bits) {
+TEST(isa_test, should_return_same_when_building_its_refered_to_the_same_range_of_bits) {
 
   auto i = ISA_ARM_LONG_TEMPLATE;
   auto v = 0xa;
