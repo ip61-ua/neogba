@@ -3,6 +3,8 @@
 #include <gtest/gtest.h>
 #include <memory>
 
+using namespace neogba;
+
 namespace {
 class cpu_test : public ::testing::Test {
 protected:
