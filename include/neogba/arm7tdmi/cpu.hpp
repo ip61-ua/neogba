@@ -9,6 +9,9 @@ namespace neogba {
       spsr_svc, /**/ r13_abt, r14_abt, spsr_abt, /**/ r13_irq, r14_irq, spsr_irq, /**/ r13_und,    \
       r14_und, spsr_und
 
+#define ARM7TDMI_REGISTERS_ACCESSIBLE                                                              \
+  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr
+
 #define ARM7TDMI_REGISTERS_USR                                                                     \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr, spsr
 #define ARM7TDMI_REGISTERS_FIQ                                                                     \
@@ -22,6 +25,8 @@ namespace neogba {
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_abt, pc, cpsr, spsr_abt
 #define ARM7TDMI_REGISTERS_UND                                                                     \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_und, r14_und, pc, cpsr, spsr_und
+
+enum arm_register : u8 { ARM7TDMI_REGISTERS_ALL };
 
 struct arm7tdmi {
   static constexpr u32
@@ -55,8 +60,6 @@ struct arm7tdmi {
                       REGISTERS_PRESET_SVC = 3, REGISTERS_PRESET_ABT = 4, REGISTERS_PRESET_UND = 5,
                       REGISTERS_PRESET_SYS = 0;
 
-  enum arm_register : u8 { ARM7TDMI_REGISTERS_ALL };
-
   static constexpr u8 N_ACTIVE_REGISTERS = 18, N_REGISTERS = 38;
   static constexpr u8 REGISTERS_PRESET[6][N_ACTIVE_REGISTERS] = {
       {ARM7TDMI_REGISTERS_USR}, {ARM7TDMI_REGISTERS_FIQ}, {ARM7TDMI_REGISTERS_IRQ},
@@ -86,6 +89,10 @@ struct arm7tdmi {
   inline void clear_cpsr(u32 mask) { registers[cpsr] &= ~mask; }
 
   inline void set_cpsr(u32 mask, u32 bits) { registers[cpsr] = (registers[cpsr] & ~mask) | bits; }
+
+  [[nodiscard]] inline u32 read_spsr() const { return read_active_register(spsr); }
+
+  inline void write_spsr(u32 new_spsr) { write_active_register(spsr, new_spsr); }
 
   [[nodiscard]] inline bool is_mode(u8 mode) const { return (registers[cpsr] & M) == mode; }
 
