@@ -1,5 +1,7 @@
 #pragma once
 #include "neogba/types.hpp"
+#include <concepts>
+#include <type_traits>
 
 namespace neogba {
 
@@ -117,16 +119,65 @@ namespace neogba {
   }
 
 template <typename instruction_t, typename return_t, u8 n_shift,
-          u32 bit_mask = (1u << n_shift)>
-struct Isa_struct {
-  using inst = instruction_t;
-  using rett = return_t;
-  u8 shift = n_shift;
+          instruction_t bit_mask>
+struct IsaField {
+  using ins_t = instruction_t;
+  using ret_t = return_t;
+  static constexpr u8 shift = n_shift;
+  static constexpr ins_t mask = bit_mask;
+
+  [[nodiscard]] static inline constexpr ret_t get(ins_t instruction) {
+    return static_cast<ret_t>(((instruction) & (mask)) >> shift);
+  }
+
+  [[nodiscard]] static inline constexpr ins_t set(ins_t instruction,
+                                                  ret_t value) {
+    return ((instruction) & (~mask)) | ((value << shift) & mask);
+  }
+};
+
+template <typename instruction_t, u8 n_shift>
+struct IsaFieldBool
+    : public IsaField<instruction_t, bool, n_shift, (1u << n_shift)> {
+  [[nodiscard]] static constexpr bool get(IsaFieldBool::ins_t instruction) {
+    return (instruction & IsaFieldBool::mask) != 0;
+  }
+
+  [[nodiscard]] static constexpr IsaFieldBool::ins_t
+  set(IsaFieldBool::ins_t instruction, bool value) {
+    return ((instruction) & (~IsaFieldBool::mask)) |
+           (value ? IsaFieldBool::mask : 0);
+  }
+
+  [[nodiscard]] static constexpr IsaFieldBool::ins_t
+  set0(IsaFieldBool::ins_t instruction) {
+    return instruction & ~IsaFieldBool::mask;
+  }
+
+  [[nodiscard]] static constexpr IsaFieldBool::inst
+  set1(IsaFieldBool::inst instruction) {
+    return instruction | IsaFieldBool::mask;
+  }
+
+  [[nodiscard]] static constexpr IsaFieldBool::inst
+  toggle(IsaFieldBool::inst instruction) {
+    return instruction ^ IsaFieldBool::mask;
+  }
+};
+
+template <typename instruction_t, typename return_t, u8 n_shift,
+          instruction_t bit_mask, instruction_t bit_mask2, u8 join_shift>
+struct IsaFieldSplitOffset
+    : IsaField<instruction_t, return_t, n_shift, bit_mask> {
+  static constexpr u8 join = join_shift;
+  static constexpr instruction_t mask2 = bit_mask2;
 };
 
 ///
 /// ARM
 ///
+
+using ARM_COND = IsaField<u32, u8, 28, 0xf0000000u>;
 
 #define ARM_COND u32, u8, 28, 0xf0000000u
 NEOGBA_ISA_SHIFTED(ARM_COND)
