@@ -4,8 +4,7 @@
 namespace neogba {
 
 namespace {
-template <typename instruction_t, typename return_t, u8 n_shift,
-          instruction_t bit_mask>
+template <typename instruction_t, typename return_t, u8 n_shift, instruction_t bit_mask>
 struct isa_field {
   using ins_t = instruction_t;
   using ret_t = return_t;
@@ -16,60 +15,51 @@ struct isa_field {
     return static_cast<ret_t>(((instruction) & (mask)) >> shift);
   }
 
-  [[nodiscard]] static inline constexpr ins_t set(ins_t instruction,
-                                                  ret_t value) {
+  [[nodiscard]] static inline constexpr ins_t set(ins_t instruction, ret_t value) {
     return ((instruction) & (~mask)) | ((value << shift) & mask);
   }
 };
 
-template <typename instruction_t, typename return_t, u8 n_shift,
-          instruction_t base_mask = 0xfu>
-struct isa_field_delayed
-    : isa_field<instruction_t, bool, n_shift, (base_mask << n_shift)> {};
+template <typename instruction_t, typename return_t, u8 n_shift, instruction_t base_mask = 0xfu>
+struct isa_field_delayed : isa_field<instruction_t, bool, n_shift, (base_mask << n_shift)> {};
 
 template <typename instruction_t, u8 n_shift>
-struct isa_field_bool
-    : isa_field<instruction_t, bool, n_shift, (1u << n_shift)> {
+struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)> {
   [[nodiscard]] static constexpr bool get(isa_field_bool::ins_t instruction) {
     return (instruction & isa_field_bool::mask) != 0;
   }
 
-  [[nodiscard]] static constexpr isa_field_bool::ins_t
-  set(isa_field_bool::ins_t instruction, bool value) {
-    return ((instruction) & (~isa_field_bool::mask)) |
-           (value ? isa_field_bool::mask : 0);
+  [[nodiscard]] static constexpr isa_field_bool::ins_t set(isa_field_bool::ins_t instruction,
+                                                           bool value) {
+    return ((instruction) & (~isa_field_bool::mask)) | (value ? isa_field_bool::mask : 0);
   }
 
-  [[nodiscard]] static constexpr isa_field_bool::ins_t
-  set0(isa_field_bool::ins_t instruction) {
+  [[nodiscard]] static constexpr isa_field_bool::ins_t set0(isa_field_bool::ins_t instruction) {
     return instruction & ~isa_field_bool::mask;
   }
 
-  [[nodiscard]] static constexpr isa_field_bool::ins_t
-  set1(isa_field_bool::ins_t instruction) {
+  [[nodiscard]] static constexpr isa_field_bool::ins_t set1(isa_field_bool::ins_t instruction) {
     return instruction | isa_field_bool::mask;
   }
 
-  [[nodiscard]] static constexpr isa_field_bool::ins_t
-  toggle(isa_field_bool::ins_t instruction) {
+  [[nodiscard]] static constexpr isa_field_bool::ins_t toggle(isa_field_bool::ins_t instruction) {
     return instruction ^ isa_field_bool::mask;
   }
 };
 
-template <typename instruction_t, typename return_t, u8 n_shift,
-          instruction_t bit_mask, instruction_t bit_mask2, u8 join_shift>
+template <typename instruction_t, typename return_t, u8 n_shift, instruction_t bit_mask,
+          instruction_t bit_mask2, u8 join_shift>
 struct isa_fieldSplit : isa_field<instruction_t, return_t, n_shift, bit_mask> {
   static constexpr u8 join = join_shift;
   static constexpr instruction_t mask2 = bit_mask2;
 
-  [[nodiscard]] static constexpr isa_fieldSplit::ret_t
-  get(isa_fieldSplit::ins_t instruction) {
-    return static_cast<isa_fieldSplit::ret_t>(
-        ((instruction & isa_fieldSplit::mask) >> join) | (instruction & mask2));
+  [[nodiscard]] static constexpr isa_fieldSplit::ret_t get(isa_fieldSplit::ins_t instruction) {
+    return static_cast<isa_fieldSplit::ret_t>(((instruction & isa_fieldSplit::mask) >> join) |
+                                              (instruction & mask2));
   }
 
-  [[nodiscard]] static constexpr isa_fieldSplit::ins_t
-  set(isa_fieldSplit::ins_t instruction, isa_fieldSplit::ret_t value) {
+  [[nodiscard]] static constexpr isa_fieldSplit::ins_t set(isa_fieldSplit::ins_t instruction,
+                                                           isa_fieldSplit::ret_t value) {
     auto val = static_cast<isa_fieldSplit::ins_t>(value);
     return (instruction & ~(isa_fieldSplit::mask | mask2)) | ((val) & (mask2)) |
            ((val << join) & isa_fieldSplit::mask);
@@ -80,23 +70,23 @@ struct isa_fieldSplit : isa_field<instruction_t, return_t, n_shift, bit_mask> {
 /// ARM
 using ISA_ARM_COND = isa_field_delayed<u32, u8, 28>;
 
-enum ARMConditions : u8 {
-  ISA_ARM_COND_EQ = 0b0000,
-  ISA_ARM_COND_NE = 0b0001,
-  ISA_ARM_COND_HSCS = 0b0010,
-  ISA_ARM_COND_LOCC = 0b0011,
-  ISA_ARM_COND_MI = 0b0100,
-  ISA_ARM_COND_PL = 0b0101,
-  ISA_ARM_COND_VS = 0b0110,
-  ISA_ARM_COND_VC = 0b0111,
-  ISA_ARM_COND_HI = 0b1000,
-  ISA_ARM_COND_LS = 0b1001,
-  ISA_ARM_COND_GE = 0b1010,
-  ISA_ARM_COND_LT = 0b1011,
-  ISA_ARM_COND_GT = 0b1100,
-  ISA_ARM_COND_LE = 0b1101,
-  ISA_ARM_COND_AL = 0b1110,
-  ISA_ARM_COND_NV = 0b1111,
+enum class arm_cond : u8 {
+  EQ = 0b0000,
+  NE = 0b0001,
+  HSCS = 0b0010,
+  LOCC = 0b0011,
+  MI = 0b0100,
+  PL = 0b0101,
+  VS = 0b0110,
+  VC = 0b0111,
+  HI = 0b1000,
+  LS = 0b1001,
+  GE = 0b1010,
+  LT = 0b1011,
+  GT = 0b1100,
+  LE = 0b1101,
+  AL = 0b1110,
+  NV = 0b1111,
 };
 
 /// Data processing and FSR transfer
@@ -160,8 +150,8 @@ using ISA_ARM_HALFIMM_RD = /*              */ ISA_ARM_FSR_RD;
 using ISA_ARM_HALFIMM_S = /*               */ ISA_ARM_HALFREG_S;
 using ISA_ARM_HALFIMM_H = /*               */ ISA_ARM_HALFREG_H;
 using ISA_ARM_HALFIMM_OFFSET =
-    isa_fieldSplit<u32, u8, ISA_ARM_MULTIPLY_RS::shift,
-                   ISA_ARM_MULTIPLY_RS::mask, ISA_ARM_MULTIPLY_RM::mask, 4>;
+    isa_fieldSplit<u32, u8, ISA_ARM_MULTIPLY_RS::shift, ISA_ARM_MULTIPLY_RS::mask,
+                   ISA_ARM_MULTIPLY_RM::mask, 4>;
 
 /// Single data transfer
 constexpr u32 ISA_ARM_SINGLETRANS_TEMPLATE{0x06000000u};
