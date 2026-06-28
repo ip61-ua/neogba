@@ -4,7 +4,7 @@
 
 using namespace neogba;
 
-void arm7tdmi::set_mode(cpsr_mode mode, bool update_cpsr) {
+void arm7tdmi::set_mode(u8 mode, bool update_cpsr) {
   u8 idx_lut = get_idx_registers_preset_by_mode(mode);
 
   std::memcpy(active_registers, REGISTERS_PRESET[idx_lut], N_ACTIVE_REGISTERS);
@@ -16,7 +16,7 @@ void arm7tdmi::set_mode(cpsr_mode mode, bool update_cpsr) {
 }
 
 bool arm7tdmi::ckeck_arm_condition(u32 instruction) const {
-  auto cond = static_cast<arm_cond>(ISA_ARM_COND::get(instruction));
+  auto cond = static_cast<arm_cond>(ISA_ARM_COND::get(instruction)); // lol
 
   switch (cond) {
   case COND_EQ:
@@ -60,6 +60,6 @@ void arm7tdmi::empty_registers() { std::memset(this->registers, 0, sizeof(regist
 void arm7tdmi::reset() {
   this->empty_registers();
   this->write_cpsr(I | F);
-  this->set_mode(SVC);
+  this->set_mode(MODE_SVC);
   this->write_pc(EXCEPTION_RESET);
 }
