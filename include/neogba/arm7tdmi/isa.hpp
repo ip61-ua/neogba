@@ -224,7 +224,7 @@ using ARM_COPROCREGTRANS_CP = /*       */ ARM_COPROCOP_CP;
 using ARM_COPROCREGTRANS_CRM = /*      */ ARM_COPROCOP_CRM;
 
 /// Software interrupt
-constexpr u32 ARM_SWINT_TEMPLATE{0x0f000000};
+constexpr u32 ARM_SWINT_TEMPLATE{0x0f000000u};
 using ARM_SWINT_SWI = /**/ IsaField<u32, u32, 0, 0xffffffu>;
 
 /// Thumb
