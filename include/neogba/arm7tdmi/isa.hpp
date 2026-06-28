@@ -3,6 +3,7 @@
 
 namespace neogba {
 
+namespace {
 template <typename instruction_t, typename return_t, u8 n_shift,
           instruction_t bit_mask>
 struct isa_field {
@@ -44,13 +45,13 @@ struct isa_field_bool
     return instruction & ~isa_field_bool::mask;
   }
 
-  [[nodiscard]] static constexpr isa_field_bool::inst
-  set1(isa_field_bool::inst instruction) {
+  [[nodiscard]] static constexpr isa_field_bool::ins_t
+  set1(isa_field_bool::ins_t instruction) {
     return instruction | isa_field_bool::mask;
   }
 
-  [[nodiscard]] static constexpr isa_field_bool::inst
-  toggle(isa_field_bool::inst instruction) {
+  [[nodiscard]] static constexpr isa_field_bool::ins_t
+  toggle(isa_field_bool::ins_t instruction) {
     return instruction ^ isa_field_bool::mask;
   }
 };
@@ -74,6 +75,7 @@ struct isa_fieldSplit : isa_field<instruction_t, return_t, n_shift, bit_mask> {
            ((val << join) & isa_fieldSplit::mask);
   }
 };
+} // namespace
 
 /// ARM
 using ISA_ARM_COND = isa_field_delayed<u32, u8, 28>;
