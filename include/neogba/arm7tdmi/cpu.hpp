@@ -88,10 +88,10 @@ struct arm7tdmi {
   u8 active_registers[N_ACTIVE_REGISTERS];
 
   [[nodiscard]] inline u32 read_active_register(u8 reg) const {
-    return this->registers[this->active_registers[reg]];
+    return registers[active_registers[reg]];
   }
   inline void write_active_register(u8 reg, u32 content) {
-    this->registers[this->active_registers[reg]] = content;
+    registers[active_registers[reg]] = content;
   }
 
   [[nodiscard]] inline u32 read_pc() const { return registers[pc]; }
