@@ -2,6 +2,14 @@
 -Isrc
 -Wall
 -Wextra
+-Wpedantic
+-Wshadow
+-Wold-style-cast
+-march=native
+-flto
+-O3
+-fsanitize=address
+-fsanitize=undefined
 -std=c++26
 -lgtest
 -lgtest_main

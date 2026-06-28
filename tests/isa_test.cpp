@@ -26,7 +26,7 @@ TEST(isa_test, should_change_only_arm_cond_field) {
 TEST(isa_test,
      should_right_when_building_and_changing_a_bit_fsr_instrucctions) {
   u32 ins = ISA_ARM_FSR_TEMPLATE;
-  auto old = ins, old_mod = (u32)(old | ISA_ARM_FSR_S::mask);
+  auto old = ins, old_mod = static_cast<u32>(old | ISA_ARM_FSR_S::mask);
 
   ins = ISA_ARM_FSR_S::set0(ins);
   ASSERT_EQ(old, ins);
