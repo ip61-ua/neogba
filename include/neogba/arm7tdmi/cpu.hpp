@@ -146,6 +146,8 @@ struct ARM7TDMI_CPU {
   static u8 get_idx_registers_lut_by_mode(u8 mode);
   void set_mode(u8 mode, bool update_cpsr = true);
 
+  [[nodiscard]] bool ckeck_arm_condition(u32 inst) const;
+
   void empty_registers();
   void reset();
 };

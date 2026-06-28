@@ -110,9 +110,22 @@
 #define ARM_COND u32, u8, 28, 0xf0000000u
 ISA_SHIFTED(ARM_COND)
 
-// con esto podemos hacer esto
-// auto a = isa_get_ARM_COND(0x0);
-// auto b = isa_set_ARM_COND(0x0, 0x2);
+#define ARM_COND_EQ 0000
+#define ARM_COND_NE 0001
+#define ARM_COND_HSCS 0010
+#define ARM_COND_LOCC 0011
+#define ARM_COND_MI 0100
+#define ARM_COND_PL 0101
+#define ARM_COND_VS 0110
+#define ARM_COND_VC 0111
+#define ARM_COND_HI 1000
+#define ARM_COND_LS 1001
+#define ARM_COND_GE 1010
+#define ARM_COND_LT 1011
+#define ARM_COND_GT 1100
+#define ARM_COND_LE 1101
+#define ARM_COND_AL 1110
+#define ARM_COND_NV 1111
 
 ///
 /// Data processing and FSR transfer

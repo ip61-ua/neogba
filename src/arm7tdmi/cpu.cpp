@@ -66,6 +66,42 @@ void ARM7TDMI_CPU::set_mode(u8 mode, bool update_cpsr) {
   this->registers[cpsr] |= mode & ARM7TDMI_CPU_MASK_MODE_BITS;
 }
 
+bool ARM7TDMI_CPU::ckeck_arm_condition(u32 inst) const {
+  auto cond = isa_get_ARM_COND(inst);
+
+  switch (cond) {
+
+  case ARM_COND_EQ:
+    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_ZERO, ARM7TDMI_CPU_MASK_ZERO);
+
+  case ARM_COND_NE:
+    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_ZERO, 0);
+
+  case ARM_COND_HSCS:
+    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_CARRY, ARM7TDMI_CPU_MASK_CARRY);
+
+  case ARM_COND_LOCC:
+    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_CARRY, 0);
+
+  case ARM_COND_PL:
+    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_NEGATIVE,
+                              ARM7TDMI_CPU_MASK_NEGATIVE);
+
+  case ARM_COND_MI:
+    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_NEGATIVE, 0);
+
+  case ARM_COND_VS:
+    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_NEGATIVE,
+                              ARM7TDMI_CPU_MASK_NEGATIVE);
+
+  case ARM_COND_VC:
+    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_NEGATIVE, 0);
+
+  default:
+    return false;
+  }
+}
+
 void ARM7TDMI_CPU::empty_registers() {
   std::memset(this->registers, 0, sizeof(registers));
 }
