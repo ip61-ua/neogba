@@ -23,6 +23,17 @@ struct arm7tdmi {
     M = 0x1fu
   };
 
+  enum class exception : u32 {
+    RESET = /*    */ 0x00000000,
+    UNDEFINS = /* */ 0x00000004,
+    SWINT = /*    */ 0x00000008,
+    PREFETABT = /**/ 0x0000000c,
+    DATAABT = /*  */ 0x00000010,
+    RESERVED = /* */ 0x00000014,
+    IRQ = /*      */ 0x00000018,
+    FIQ = /*      */ 0x0000001c
+  };
+
   enum class cpsr_mode : u8 {
     USR = 0b10000,
     FIQ = 0b10001,
@@ -43,18 +54,7 @@ struct arm7tdmi {
     SYS = 0,
   };
 
-  enum class exception : u32 {
-    RESET = /*    */ 0x00000000,
-    UNDEFINS = /* */ 0x00000004,
-    SWINT = /*    */ 0x00000008,
-    PREFETABT = /**/ 0x0000000c,
-    DATAABT = /*  */ 0x00000010,
-    RESERVED = /* */ 0x00000014,
-    IRQ = /*      */ 0x00000018,
-    FIQ = /*      */ 0x0000001c
-  };
-
-  enum arm7tdmi_register : u8 {
+  enum arm_register : u8 {
     // clang-format off
       r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr, spsr,
       r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, spsr_fiq,
@@ -93,8 +93,10 @@ struct arm7tdmi {
   void set_cpsr_bits(u32 mask, u32 bits);
 
   [[nodiscard]] bool is_mode(cpsr_mode mode) const;
-  static u8 get_idx_registers_lut_by_mode(cpsr_mode mode);
   void set_mode(cpsr_mode mode, bool update_cpsr = true);
+
+  static u8 get_idx_registers_preset_by_mode(cpsr_mode mode);
+  static constexpr u8* get_registers_preset(registers_preset_idx mode);
 
   [[nodiscard]] bool ckeck_arm_condition(u32 inst) const;
 
