@@ -37,6 +37,30 @@ protected:
 
 } // namespace
 
+TEST_F(cpu_test, get_idx_registers_preset_by_mode_should_say_right_when_providing_modes) {
+
+  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_USR,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_USR));
+
+  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_FIQ,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_FIQ));
+
+  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_IRQ,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_IRQ));
+
+  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_SVC,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_SVC));
+
+  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_ABT,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_ABT));
+
+  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_UND,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_UND));
+
+  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_SYS,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_SYS));
+}
+
 TEST_F(cpu_test, set_mode_should_update_cpsr_and_report_correct_mode) {
   for (auto mode : {arm7tdmi::MODE_USR, arm7tdmi::MODE_FIQ, arm7tdmi::MODE_IRQ, arm7tdmi::MODE_SVC,
                     arm7tdmi::MODE_ABT, arm7tdmi::MODE_UND, arm7tdmi::MODE_SYS}) {
