@@ -206,22 +206,22 @@ using ARM_COPROCTRANS_OFFSET = /*      */ IsaField<u32, u8, 0, 0xffu>;
 
 /// Coprocessor data operation
 constexpr u32 ARM_COPROCOP_TEMPLATE{0x0e000000u};
-using ARM_COPROCOP_CPOPC = /*   */ IsaFieldDelayed<u32, u8, 21>;
-using ARM_COPROCOP_CRN = /*     */ ARM_HALFIMM_RN;
-using ARM_COPROCOP_CRD = /*     */ ARM_FSR_RD;
-using ARM_COPROCOP_CPSHARP = /* */ ARM_MULTIPLY_RS;
-using ARM_COPROCOP_CP = /*      */ IsaFieldDelayed<u32, u8, 5, 0x7u>;
-using ARM_COPROCOP_CRM = /*     */ ARM_MULTIPLY_RM;
+using ARM_COPROCOP_CPOPC = /*          */ IsaFieldDelayed<u32, u8, 21>;
+using ARM_COPROCOP_CRN = /*            */ ARM_HALFIMM_RN;
+using ARM_COPROCOP_CRD = /*            */ ARM_FSR_RD;
+using ARM_COPROCOP_CPSHARP = /*        */ ARM_MULTIPLY_RS;
+using ARM_COPROCOP_CP = /*             */ IsaFieldDelayed<u32, u8, 5, 0x7u>;
+using ARM_COPROCOP_CRM = /*            */ ARM_MULTIPLY_RM;
 
 /// Coprocessor register transfer
-constexpr u32 ARM_COPROCREGTRANS_TEMPLATE /**/ {0x0e000010u};
-using ARM_COPROCREGTRANS_CPOPC = /*   */ IsaFieldDelayed<u32, u8, 21, 0x7u>;
-using ARM_COPROCREGTRANS_L = /*       */ ARM_SINGLETRANS_L;
-using ARM_COPROCREGTRANS_CRN = /*     */ ARM_COPROCOP_CRN;
-using ARM_COPROCREGTRANS_RD = /*      */ ARM_COPROCOP_CRD;
-using ARM_COPROCREGTRANS_CPSHARP = /* */ ARM_COPROCOP_CPSHARP;
-using ARM_COPROCREGTRANS_CP = /*      */ ARM_COPROCOP_CP;
-using ARM_COPROCREGTRANS_CRM = /*     */ ARM_COPROCOP_CRM;
+constexpr u32 ARM_COPROCREGTRANS_TEMPLATE{0x0e000010u};
+using ARM_COPROCREGTRANS_CPOPC = /*    */ IsaFieldDelayed<u32, u8, 21, 0x7u>;
+using ARM_COPROCREGTRANS_L = /*        */ ARM_SINGLETRANS_L;
+using ARM_COPROCREGTRANS_CRN = /*      */ ARM_COPROCOP_CRN;
+using ARM_COPROCREGTRANS_RD = /*       */ ARM_COPROCOP_CRD;
+using ARM_COPROCREGTRANS_CPSHARP = /*  */ ARM_COPROCOP_CPSHARP;
+using ARM_COPROCREGTRANS_CP = /*       */ ARM_COPROCOP_CP;
+using ARM_COPROCREGTRANS_CRM = /*      */ ARM_COPROCOP_CRM;
 
 /// Software interrupt
 constexpr u32 ARM_SWINT_TEMPLATE{0x0f000000};
