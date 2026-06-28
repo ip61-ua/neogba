@@ -3,6 +3,12 @@
 
 namespace neogba {
 
+#define ARM7TDMI_REGISTERS_ALL                                                                     \
+  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr, spsr, /**/ r8_fiq,    \
+      r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, spsr_fiq, /**/ r13_svc, r14_svc,        \
+      spsr_svc, /**/ r13_abt, r14_abt, spsr_abt, /**/ r13_irq, r14_irq, spsr_irq, /**/ r13_und,    \
+      r14_und, spsr_und
+
 #define ARM7TDMI_REGISTERS_USR                                                                     \
   r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr, spsr
 #define ARM7TDMI_REGISTERS_FIQ                                                                     \
@@ -37,15 +43,15 @@ struct arm7tdmi {
     M = 0x1fu
   };
 
-  enum class exception : u32 {
-    RESET = /*    */ 0x00000000,
-    UNDEFINS = /* */ 0x00000004,
-    SWINT = /*    */ 0x00000008,
-    PREFETABT = /**/ 0x0000000c,
-    DATAABT = /*  */ 0x00000010,
-    RESERVED = /* */ 0x00000014,
-    IRQ = /*      */ 0x00000018,
-    FIQ = /*      */ 0x0000001c
+  enum exception : u32 {
+    EXCEPTION_RESET = /*    */ 0x00000000,
+    EXCEPTION_UNDEFINS = /* */ 0x00000004,
+    EXCEPTION_SWINT = /*    */ 0x00000008,
+    EXCEPTION_PREFETABT = /**/ 0x0000000c,
+    EXCEPTION_DATAABT = /*  */ 0x00000010,
+    EXCEPTION_RESERVED = /* */ 0x00000014,
+    EXCEPTION_IRQ = /*      */ 0x00000018,
+    EXCEPTION_FIQ = /*      */ 0x0000001c
   };
 
   enum cpsr_mode : u8 {
@@ -58,26 +64,17 @@ struct arm7tdmi {
     SYS = 0b11111,
   };
 
-  enum class registers_preset_idx : u8 {
-    USR = 0,
-    FIQ = 1,
-    IRQ = 2,
-    SVC = 3,
-    ABT = 4,
-    UND = 5,
-    SYS = 0,
+  enum registers_preset_idx : u8 {
+    REGISTERS_PRESET_USR = 0,
+    REGISTERS_PRESET_FIQ = 1,
+    REGISTERS_PRESET_IRQ = 2,
+    REGISTERS_PRESET_SVC = 3,
+    REGISTERS_PRESET_ABT = 4,
+    REGISTERS_PRESET_UND = 5,
+    REGISTERS_PRESET_SYS = 0,
   };
 
-  enum arm_register : u8 {
-    // clang-format off
-      r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr, spsr,
-      r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, spsr_fiq,
-      r13_svc, r14_svc, spsr_svc,
-      r13_abt, r14_abt, spsr_abt,
-      r13_irq, r14_irq, spsr_irq,
-      r13_und, r14_und, spsr_und,
-    // clang-format on
-  };
+  enum arm_register : u8 { ARM7TDMI_REGISTERS_ALL };
 
   static constexpr u8 N_ACTIVE_REGISTERS = 18, N_REGISTERS = 38;
   static constexpr u8 REGISTERS_PRESET[6][N_ACTIVE_REGISTERS] = {
@@ -104,12 +101,15 @@ struct arm7tdmi {
     return (registers[cpsr] & mask) == bits;
   }
   inline void clear_cpsr(u32 mask) { registers[cpsr] &= ~mask; }
-  void set_cpsr(u32 mask, u32 bits);
+  inline void set_cpsr(u32 mask, u32 bits) { registers[cpsr] = (registers[cpsr] & ~mask) | bits; }
 
   [[nodiscard]] inline bool is_mode(cpsr_mode mode) const { return (registers[cpsr] & M) == mode; }
   void set_mode(cpsr_mode mode, bool update_cpsr = true);
 
-  static u8 get_idx_registers_preset_by_mode(cpsr_mode mode);
+  inline static registers_preset_idx get_idx_registers_preset_by_mode(cpsr_mode mode) {
+    return (mode != SYS) ? static_cast<registers_preset_idx>((mode & 0b11) + ((mode & 0b1100) >> 2))
+                         : (REGISTERS_PRESET_SYS);
+  }
   [[nodiscard]] bool ckeck_arm_condition(u32 inst) const;
 
   void empty_registers();
