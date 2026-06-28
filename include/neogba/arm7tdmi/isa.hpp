@@ -1,122 +1,9 @@
 #pragma once
 #include "neogba/types.hpp"
-#include <concepts>
-#include <type_traits>
 
 namespace neogba {
 
-#define /* */ NEOGBA_ISA_UNPACK_INSTT(inst, ret, shift, mask) inst
-#define /*  */ NEOGBA_ISA_UNPACK_RETT(inst, ret, shift, mask) ret
-#define /* */ NEOGBA_ISA_UNPACK_SHIFT(inst, ret, shift, mask) shift
-#define /*  */ NEOGBA_ISA_UNPACK_MASK(inst, ret, shift, mask) mask
-
-#define NEOGBA_ISA_UNPACK_OFF_INSTT(inst, ret, shift, mask, mask2, join) inst
-#define NEOGBA_ISA_UNPACK_OFF_RETT(inst, ret, shift, mask, mask2, join) ret
-#define NEOGBA_ISA_UNPACK_OFF_SHIFT(inst, ret, shift, mask, mask2, join) shift
-#define NEOGBA_ISA_UNPACK_OFF_MASK(inst, ret, shift, mask, mask2, join) mask
-#define NEOGBA_ISA_UNPACK_OFF_MSK2(inst, ret, shift, mask, mask2, join) mask2
-#define NEOGBA_ISA_UNPACK_OFF_JOIN(inst, ret, shift, mask, mask2, join) join
-
-#define NEOGBA_ISA_GET_INSTT(...) /* */ NEOGBA_ISA_UNPACK_INSTT(__VA_ARGS__)
-#define NEOGBA_ISA_GET_RETT(...) /*  */ NEOGBA_ISA_UNPACK_RETT(__VA_ARGS__)
-#define NEOGBA_ISA_GET_SHIFT(...) /* */ NEOGBA_ISA_UNPACK_SHIFT(__VA_ARGS__)
-#define NEOGBA_ISA_GET_MASK(...) /*  */ NEOGBA_ISA_UNPACK_MASK(__VA_ARGS__)
-
-#define NEOGBA_ISA_GET2_INSTT(...) NEOGBA_ISA_UNPACK_OFF_INSTT(__VA_ARGS__)
-#define NEOGBA_ISA_GET2_RETT(...) NEOGBA_ISA_UNPACK_OFF_RETT(__VA_ARGS__)
-#define NEOGBA_ISA_GET2_SHIFT(...) NEOGBA_ISA_UNPACK_OFF_SHIFT(__VA_ARGS__)
-#define NEOGBA_ISA_GET2_MASK(...) NEOGBA_ISA_UNPACK_OFF_MASK(__VA_ARGS__)
-#define NEOGBA_ISA_GET2_MSK2(...) NEOGBA_ISA_UNPACK_OFF_MSK2(__VA_ARGS__)
-#define NEOGBA_ISA_GET2_JOIN(...) NEOGBA_ISA_UNPACK_OFF_JOIN(__VA_ARGS__)
-
-#define NEOGBA_ISA_SHIFTED(field)                                              \
-  [[nodiscard]] inline NEOGBA_ISA_GET_RETT(field)                              \
-      isa_get_##field(NEOGBA_ISA_GET_INSTT(field) inst) {                      \
-    return static_cast<NEOGBA_ISA_GET_RETT(field)>(                            \
-        inst >> NEOGBA_ISA_GET_SHIFT(field));                                  \
-  }                                                                            \
-                                                                               \
-  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
-      isa_set_##field(NEOGBA_ISA_GET_INSTT(field) inst,                        \
-                      NEOGBA_ISA_GET_RETT(field) field##_value) {              \
-    return (inst & ~NEOGBA_ISA_GET_MASK(field)) |                              \
-           (field##_value << NEOGBA_ISA_GET_SHIFT(field));                     \
-  }
-
-#define NEOGBA_ISA_MASKED_SHIFTED(field)                                       \
-  [[nodiscard]] inline NEOGBA_ISA_GET_RETT(field)                              \
-      isa_get_##field(NEOGBA_ISA_GET_INSTT(field) inst) {                      \
-    return static_cast<NEOGBA_ISA_GET_RETT(field)>(                            \
-        (inst & NEOGBA_ISA_GET_MASK(field)) >> NEOGBA_ISA_GET_SHIFT(field));   \
-  }                                                                            \
-                                                                               \
-  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
-      isa_set_##field(NEOGBA_ISA_GET_INSTT(field) inst,                        \
-                      NEOGBA_ISA_GET_RETT(field) field##_value) {              \
-    return (inst & ~NEOGBA_ISA_GET_MASK(field)) |                              \
-           ((field##_value << NEOGBA_ISA_GET_SHIFT(field)) &                   \
-            NEOGBA_ISA_GET_MASK(field));                                       \
-  }
-
-#define NEOGBA_ISA_MASKED_BOOL(field)                                          \
-  [[nodiscard]] inline bool isa_is_##field(NEOGBA_ISA_GET_INSTT(field) inst) { \
-    return ((inst & NEOGBA_ISA_GET_MASK(field)) != 0);                         \
-  }                                                                            \
-                                                                               \
-  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
-      isa_set_##field(NEOGBA_ISA_GET_INSTT(field) inst, bool field##_value) {  \
-    return (inst & ~NEOGBA_ISA_GET_MASK(field)) |                              \
-           ((field##_value) ? (NEOGBA_ISA_GET_MASK(field)) : 0);               \
-  }                                                                            \
-                                                                               \
-  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
-      isa_set0_##field(NEOGBA_ISA_GET_INSTT(field) inst) {                     \
-    return (inst & ~NEOGBA_ISA_GET_MASK(field));                               \
-  }                                                                            \
-                                                                               \
-  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
-      isa_set1_##field(NEOGBA_ISA_GET_INSTT(field) inst) {                     \
-    return (inst | NEOGBA_ISA_GET_MASK(field));                                \
-  }                                                                            \
-                                                                               \
-  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
-      isa_toggle_##field(NEOGBA_ISA_GET_INSTT(field) inst) {                   \
-    return /* xor */ (inst ^ NEOGBA_ISA_GET_MASK(field));                      \
-  }
-
-#define NEOGBA_ISA_MASKED(field)                                               \
-  [[nodiscard]] inline NEOGBA_ISA_GET_RETT(field)                              \
-      isa_get_##field(NEOGBA_ISA_GET_INSTT(field) inst) {                      \
-    return static_cast<NEOGBA_ISA_GET_RETT(field)>(                            \
-        (inst & NEOGBA_ISA_GET_MASK(field)));                                  \
-  }                                                                            \
-                                                                               \
-  [[nodiscard]] inline NEOGBA_ISA_GET_INSTT(field)                             \
-      isa_set_##field(NEOGBA_ISA_GET_INSTT(field) inst,                        \
-                      NEOGBA_ISA_GET_RETT(field) field##_value) {              \
-    return (inst & ~NEOGBA_ISA_GET_MASK(field)) |                              \
-           (((field##_value << NEOGBA_ISA_GET_SHIFT(field)) &                  \
-             NEOGBA_ISA_GET_MASK(field)));                                     \
-  }
-
-#define NEOGBA_ISA_SPLIT_OFFSET(field)                                         \
-  [[nodiscard]] inline NEOGBA_ISA_GET2_RETT(field)                             \
-      isa_get_##field(NEOGBA_ISA_GET2_INSTT(field) inst) {                     \
-    return static_cast<NEOGBA_ISA_GET2_RETT(field)>(                           \
-        ((inst & NEOGBA_ISA_GET2_MASK(field)) >>                               \
-         NEOGBA_ISA_GET2_JOIN(field)) |                                        \
-        (inst & NEOGBA_ISA_GET2_MSK2(field)));                                 \
-  }                                                                            \
-                                                                               \
-  [[nodiscard]] inline NEOGBA_ISA_GET2_INSTT(field)                            \
-      isa_set_##field(NEOGBA_ISA_GET2_INSTT(field) inst,                       \
-                      NEOGBA_ISA_GET2_RETT(field) field##_value) {             \
-    return (inst &                                                             \
-            ~(NEOGBA_ISA_GET2_MASK(field) | NEOGBA_ISA_GET2_MSK2(field))) |    \
-           (field##_value & NEOGBA_ISA_GET2_MSK2(field)) |                     \
-           ((field##_value << NEOGBA_ISA_GET2_JOIN(field)) &                   \
-            NEOGBA_ISA_GET2_MASK(field));                                      \
-  }
+namespace {
 
 template <typename instruction_t, typename return_t, u8 n_shift,
           instruction_t bit_mask>
@@ -136,9 +23,13 @@ struct IsaField {
   }
 };
 
+template <typename instruction_t, typename return_t, u8 n_shift,
+          instruction_t base_mask = 0xfu>
+struct IsaFieldDelayed
+    : IsaField<instruction_t, bool, n_shift, (base_mask << n_shift)> {};
+
 template <typename instruction_t, u8 n_shift>
-struct IsaFieldBool
-    : public IsaField<instruction_t, bool, n_shift, (1u << n_shift)> {
+struct IsaFieldBool : IsaField<instruction_t, bool, n_shift, (1u << n_shift)> {
   [[nodiscard]] static constexpr bool get(IsaFieldBool::ins_t instruction) {
     return (instruction & IsaFieldBool::mask) != 0;
   }
@@ -167,20 +58,30 @@ struct IsaFieldBool
 
 template <typename instruction_t, typename return_t, u8 n_shift,
           instruction_t bit_mask, instruction_t bit_mask2, u8 join_shift>
-struct IsaFieldSplitOffset
-    : IsaField<instruction_t, return_t, n_shift, bit_mask> {
+struct IsaFieldSplit : IsaField<instruction_t, return_t, n_shift, bit_mask> {
   static constexpr u8 join = join_shift;
   static constexpr instruction_t mask2 = bit_mask2;
+
+  [[nodiscard]] static constexpr IsaFieldSplit::ret_t
+  get(IsaFieldSplit::ins_t instruction) {
+    return static_cast<IsaFieldSplit::ret_t>(
+        ((instruction & IsaFieldSplit::mask) >> join) | (instruction & mask2));
+  }
+
+  [[nodiscard]] static constexpr IsaFieldSplit::ins_t
+  set(IsaFieldSplit::ins_t instruction, IsaFieldSplit::ret_t value) {
+    auto val = static_cast<IsaFieldSplit::ins_t>(value);
+    return (instruction & ~(IsaFieldSplit::mask | mask2)) | ((val) & (mask2)) |
+           ((val << join) & IsaFieldSplit::mask);
+  }
 };
+} // namespace
 
 ///
 /// ARM
 ///
 
-using ARM_COND = IsaField<u32, u8, 28, 0xf0000000u>;
-
-#define ARM_COND u32, u8, 28, 0xf0000000u
-NEOGBA_ISA_SHIFTED(ARM_COND)
+using ISA_ARM_COND = IsaField<u32, u8, 28, 0xf0000000u>;
 
 #define ARM_COND_EQ 0000
 #define ARM_COND_NE 0001
@@ -204,17 +105,11 @@ NEOGBA_ISA_SHIFTED(ARM_COND)
 ///
 
 #define ARM_FSR_TEMPLATE /**/ 0x02000000u
-#define ARM_FSR_OPCODE /*  */ u32, u8, 21, (0xfu << 21)
-#define ARM_FSR_S /*       */ u32, bool, 20, (1u << 20)
-#define ARM_FSR_RN /*      */ u32, u8, 16, (0xfu << 16)
-#define ARM_FSR_RD /*      */ u32, u8, 12, (0xfu << 12)
-#define ARM_FSR_OPERAND2 /**/ u32, u16, 0, ((1u << 12) - 1)
-
-NEOGBA_ISA_MASKED_SHIFTED(ARM_FSR_OPCODE);
-NEOGBA_ISA_MASKED_BOOL(ARM_FSR_S);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_FSR_RN);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_FSR_RD);
-NEOGBA_ISA_MASKED(ARM_FSR_OPERAND2);
+using ARM_FSR_OPCODE = /*  */ IsaFieldDelayed<u32, u8, 21>;
+using ARM_FSR_S = /*       */ IsaFieldBool<u32, 20>;
+using ARM_FSR_RN = /*      */ IsaFieldDelayed<u32, u8, 16>;
+using ARM_FSR_RD = /*      */ IsaFieldDelayed<u32, u8, 12>;
+using ARM_FSR_OPERAND2 = /**/ IsaField<u32, u16, 0, ((1u << 12) - 1)>;
 
 ///
 /// Multiply
