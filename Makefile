@@ -1,6 +1,7 @@
 CXX = clang++
-CXXFLAGS = -Wall -Wextra -std=c++26 -Iinclude -Isrc
-TEST_LDFLAGS = -lgtest -lgtest_main -pthread -g
+CXXFLAGS = -std=c++26 -Iinclude -Isrc -Wall -Wextra -Wpedantic -Wshadow -Wold-style-cast -march=native -fsanitize=address -fsanitize=undefined 
+
+TEST_LDFLAGS = -lgtest -lgtest_main -pthread
 
 TARGET = build/neogba
 TEST_TARGET = build/test_runner
@@ -9,7 +10,7 @@ SRCS = $(shell find src -name '*.cpp')
 TEST_SRCS = $(shell find tests -name '*.cpp')
 SRCS_NO_MAIN = $(filter-out src/main.cpp, $(SRCS))
 
-.PHONY: all build run test clean
+.PHONY: all build run test clean 
 
 all: run
 
