@@ -59,7 +59,7 @@ void arm7tdmi::empty_registers() { std::memset(this->registers, 0, sizeof(regist
 
 void arm7tdmi::reset() {
   this->empty_registers();
-  this->write_cpsr(ARM7TDMI_CPU_MASK_IRQDISABLE | ARM7TDMI_CPU_MASK_FIQDISABLE);
-  this->set_mode(ARM7TDMI_CPU_MODE_SVC);
-  this->write_pc(ARM7TDMI_CPU_EXCEPTION_RESET);
+  this->write_cpsr(I | F);
+  this->set_mode(SVC);
+  this->write_pc(EXCEPTION_RESET);
 }

@@ -87,32 +87,39 @@ struct arm7tdmi {
   [[nodiscard]] inline u32 read_active_register(u8 reg) const {
     return registers[active_registers[reg]];
   }
-  inline void write_active_register(u8 reg, u32 content) {
-    registers[active_registers[reg]] = content;
-  }
+
+  inline void write_active_register(u8 reg, u32 value) { registers[active_registers[reg]] = value; }
 
   [[nodiscard]] inline u32 read_pc() const { return registers[pc]; }
+
   inline void write_pc(u32 new_pc) { registers[pc] = new_pc; }
 
   [[nodiscard]] inline u32 read_cpsr() const { return registers[cpsr]; }
+
   inline void write_cpsr(u32 new_cpsr) { registers[cpsr] = new_cpsr; }
 
   [[nodiscard]] inline bool is_cpsr(u32 mask, u32 bits) const {
     return (registers[cpsr] & mask) == bits;
   }
+
   inline void clear_cpsr(u32 mask) { registers[cpsr] &= ~mask; }
+
   inline void set_cpsr(u32 mask, u32 bits) { registers[cpsr] = (registers[cpsr] & ~mask) | bits; }
 
   [[nodiscard]] inline bool is_mode(cpsr_mode mode) const { return (registers[cpsr] & M) == mode; }
+
   void set_mode(cpsr_mode mode, bool update_cpsr = true);
 
-  inline static registers_preset_idx get_idx_registers_preset_by_mode(cpsr_mode mode) {
+  [[nodiscard]] inline static registers_preset_idx
+  get_idx_registers_preset_by_mode(cpsr_mode mode) {
     return (mode != SYS) ? static_cast<registers_preset_idx>((mode & 0b11) + ((mode & 0b1100) >> 2))
                          : (REGISTERS_PRESET_SYS);
   }
+
   [[nodiscard]] bool ckeck_arm_condition(u32 instruction) const;
 
   void empty_registers();
+
   void reset();
 };
 
