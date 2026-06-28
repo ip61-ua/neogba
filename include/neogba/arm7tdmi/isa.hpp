@@ -77,298 +77,159 @@ struct IsaFieldSplit : IsaField<instruction_t, return_t, n_shift, bit_mask> {
 };
 } // namespace
 
-///
 /// ARM
-///
+using ISA_ARM_COND = IsaFieldDelayed<u32, u8, 28>;
 
-using ISA_ARM_COND = IsaField<u32, u8, 28, 0xf0000000u>;
+enum ARMConditions : u8 {
+  EQ = 0b0000,
+  NE = 0b0001,
+  HSCS = 0b0010,
+  LOCC = 0b0011,
+  MI = 0b0100,
+  PL = 0b0101,
+  VS = 0b0110,
+  VC = 0b0111,
+  HI = 0b1000,
+  LS = 0b1001,
+  GE = 0b1010,
+  LT = 0b1011,
+  GT = 0b1100,
+  LE = 0b1101,
+  AL = 0b1110,
+  NV = 0b1111,
+};
 
-#define ARM_COND_EQ 0000
-#define ARM_COND_NE 0001
-#define ARM_COND_HSCS 0010
-#define ARM_COND_LOCC 0011
-#define ARM_COND_MI 0100
-#define ARM_COND_PL 0101
-#define ARM_COND_VS 0110
-#define ARM_COND_VC 0111
-#define ARM_COND_HI 1000
-#define ARM_COND_LS 1001
-#define ARM_COND_GE 1010
-#define ARM_COND_LT 1011
-#define ARM_COND_GT 1100
-#define ARM_COND_LE 1101
-#define ARM_COND_AL 1110
-#define ARM_COND_NV 1111
-
-///
 /// Data processing and FSR transfer
-///
+constexpr u32 ARM_FSR_TEMPLATE{0x02000000u};
+using ARM_FSR_OPCODE = /*        */ IsaFieldDelayed<u32, u8, 21>;
+using ARM_FSR_S = /*             */ IsaFieldBool<u32, 20>;
+using ARM_FSR_RN = /*            */ IsaFieldDelayed<u32, u8, 16>;
+using ARM_FSR_RD = /*            */ IsaFieldDelayed<u32, u8, 12>;
+using ARM_FSR_OPERAND2 = /*      */ IsaField<u32, u16, 0, ((1u << 12) - 1)>;
 
-#define ARM_FSR_TEMPLATE /**/ 0x02000000u
-using ARM_FSR_OPCODE = /*  */ IsaFieldDelayed<u32, u8, 21>;
-using ARM_FSR_S = /*       */ IsaFieldBool<u32, 20>;
-using ARM_FSR_RN = /*      */ IsaFieldDelayed<u32, u8, 16>;
-using ARM_FSR_RD = /*      */ IsaFieldDelayed<u32, u8, 12>;
-using ARM_FSR_OPERAND2 = /**/ IsaField<u32, u16, 0, ((1u << 12) - 1)>;
-
-///
 /// Multiply
-///
+constexpr u32 ARM_MULTIPLY_TEMPLATE{0x00000090u};
+using ARM_MULTIPLY_A = /*              */ IsaFieldBool<u32, 21>;
+using ARM_MULTIPLY_S = /*              */ ARM_FSR_S;
+using ARM_MULTIPLY_RD = /*             */ ARM_FSR_RN;
+using ARM_MULTIPLY_RN = /*             */ ARM_FSR_RD;
+using ARM_MULTIPLY_RS = /*             */ IsaFieldDelayed<u32, u8, 8>;
+using ARM_MULTIPLY_RM = /*             */ IsaFieldDelayed<u32, u8, 0>;
 
-#define ARM_MULTIPLY_TEMPLATE 0x00000090u
-#define ARM_MULTIPLY_A /*  */ u32, bool, 21, (1u << 21)
-#define ARM_MULTIPLY_S /*  */ ARM_FSR_S
-#define ARM_MULTIPLY_RD /* */ ARM_FSR_RN
-#define ARM_MULTIPLY_RN /* */ ARM_FSR_RD
-#define ARM_MULTIPLY_RS /* */ u32, u8, 8, (0xfu << 8)
-#define ARM_MULTIPLY_RM /* */ u32, u8, 0, 0xfu
-
-NEOGBA_ISA_MASKED_BOOL(ARM_MULTIPLY_A);
-NEOGBA_ISA_MASKED_BOOL(ARM_MULTIPLY_S);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_MULTIPLY_RD);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_MULTIPLY_RN);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_MULTIPLY_RS);
-NEOGBA_ISA_MASKED(ARM_MULTIPLY_RM);
-
-///
 /// Multiply long
-///
+constexpr u32 ARM_LONG_TEMPLATE{0x00800090u};
+using ARM_LONG_U = /*                  */ IsaFieldBool<u32, 22>;
+using ARM_LONG_A = /*                  */ ARM_MULTIPLY_A;
+using ARM_LONG_S = /*                  */ ARM_MULTIPLY_S;
+using ARM_LONG_RDHI = /*               */ ARM_MULTIPLY_RD;
+using ARM_LONG_RDLO = /*               */ ARM_MULTIPLY_RN;
+using ARM_LONG_RN = /*                 */ ARM_MULTIPLY_RS;
+using ARM_LONG_RM = /*                 */ ARM_MULTIPLY_RM;
 
-#define ARM_LONG_TEMPLATE 0x00800090
-#define ARM_LONG_U /*   */ u32, bool, 22, (1u << 22)
-#define ARM_LONG_A /*   */ ARM_MULTIPLY_A
-#define ARM_LONG_S /*   */ ARM_MULTIPLY_S
-#define ARM_LONG_RDHI /**/ ARM_MULTIPLY_RD
-#define ARM_LONG_RDLO /**/ ARM_MULTIPLY_RN
-#define ARM_LONG_RN /*  */ ARM_MULTIPLY_RS
-#define ARM_LONG_RM /*  */ ARM_MULTIPLY_RM
-
-NEOGBA_ISA_MASKED_BOOL(ARM_LONG_U);
-NEOGBA_ISA_MASKED_BOOL(ARM_LONG_A);
-NEOGBA_ISA_MASKED_BOOL(ARM_LONG_S);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_LONG_RDHI);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_LONG_RDLO);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_LONG_RN);
-NEOGBA_ISA_MASKED(ARM_LONG_RM);
-
-///
 /// Single data swap
-///
+constexpr u32 ARM_SWAP_TEMPLATE{0x01000090u};
+using ARM_SWAP_B = /*                  */ ARM_LONG_U;
+using ARM_SWAP_RN = /*                 */ ARM_FSR_RN;
+using ARM_SWAP_RD = /*                 */ ARM_FSR_RD;
+using ARM_SWAP_RM = /*                 */ ARM_MULTIPLY_RM;
 
-#define ARM_SWAP_TEMPLATE 0x01000090u
-#define ARM_SWAP_B /*  */ ARM_LONG_U
-#define ARM_SWAP_RN /* */ ARM_FSR_RN
-#define ARM_SWAP_RD /* */ ARM_FSR_RD
-#define ARM_SWAP_RM /* */ ARM_MULTIPLY_RM
-
-NEOGBA_ISA_MASKED_BOOL(ARM_SWAP_B);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_SWAP_RN);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_SWAP_RD);
-NEOGBA_ISA_MASKED(ARM_SWAP_RM);
-
-///
 /// Branch and Exchange
-///
+constexpr u32 ARM_EXCHANGE_TEMPLATE{0x012fff10u};
+using ARM_EXCHANGE_RN = ARM_MULTIPLY_RM;
 
-#define ARM_EXCHANGE_TEMPLATE 0x012fff10u
-#define ARM_EXCHANGE_RN /* */ ARM_MULTIPLY_RM
-
-NEOGBA_ISA_MASKED(ARM_EXCHANGE_RN);
-
-///
 /// Halfword data transfer, register offset
-///
+constexpr u32 ARM_HALFREG_TEMPLATE{0x00000090u};
+using ARM_HALFREG_P = /*               */ IsaFieldBool<u32, 24>;
+using ARM_HALFREG_U = /*               */ IsaFieldBool<u32, 23>;
+using ARM_HALFREG_W = /*               */ ARM_MULTIPLY_A;
+using ARM_HALFREG_L = /*               */ ARM_FSR_S;
+using ARM_HALFREG_RN = /*              */ ARM_FSR_RN;
+using ARM_HALFREG_RD = /*              */ ARM_FSR_RD;
+using ARM_HALFREG_S = /*               */ IsaFieldBool<u32, 6>;
+using ARM_HALFREG_H = /*               */ IsaFieldBool<u32, 5>;
+using ARM_HALFREG_RM = /*              */ ARM_MULTIPLY_RM;
 
-#define ARM_HALFREG_TEMPLATE 0x00000090u
-#define ARM_HALFREG_P /*   */ u32, bool, 24, (1u << 24)
-#define ARM_HALFREG_U /*   */ u32, bool, 23, (1u << 23)
-#define ARM_HALFREG_W /*   */ ARM_MULTIPLY_A
-#define ARM_HALFREG_L /*   */ ARM_FSR_S
-#define ARM_HALFREG_RN /*  */ ARM_FSR_RN
-#define ARM_HALFREG_RD /*  */ ARM_FSR_RD
-#define ARM_HALFREG_S /*   */ u32, bool, 6, (1u << 6)
-#define ARM_HALFREG_H /*   */ u32, bool, 5, (1u << 5)
-#define ARM_HALFREG_RM /*  */ ARM_MULTIPLY_RM
-
-NEOGBA_ISA_MASKED_BOOL(ARM_HALFREG_P);
-NEOGBA_ISA_MASKED_BOOL(ARM_HALFREG_U);
-NEOGBA_ISA_MASKED_BOOL(ARM_HALFREG_W);
-NEOGBA_ISA_MASKED_BOOL(ARM_HALFREG_L);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_HALFREG_RN);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_HALFREG_RD);
-NEOGBA_ISA_MASKED_BOOL(ARM_HALFREG_S);
-NEOGBA_ISA_MASKED_BOOL(ARM_HALFREG_H);
-NEOGBA_ISA_MASKED(ARM_HALFREG_RM);
-
-///
 /// Halfword data transfer, immediate offset
-///
+constexpr u32 ARM_HALFIMM_TEMPLATE{0x00400090u};
+using ARM_HALFIMM_P = /*               */ ARM_HALFREG_P;
+using ARM_HALFIMM_U = /*               */ ARM_HALFREG_U;
+using ARM_HALFIMM_W = /*               */ ARM_MULTIPLY_A;
+using ARM_HALFIMM_L = /*               */ ARM_FSR_S;
+using ARM_HALFIMM_RN = /*              */ ARM_FSR_RN;
+using ARM_HALFIMM_RD = /*              */ ARM_FSR_RD;
+using ARM_HALFIMM_S = /*               */ ARM_HALFREG_S;
+using ARM_HALFIMM_H = /*               */ ARM_HALFREG_H;
+using ARM_HALFIMM_OFFSET =
+    IsaFieldSplit<u32, u8, ARM_MULTIPLY_RS::shift, ARM_MULTIPLY_RS::mask,
+                  ARM_MULTIPLY_RM::mask, 4>;
 
-#define ARM_HALFIMM_TEMPLATE /**/ 0x00400090u
-#define ARM_HALFIMM_P /*       */ ARM_HALFREG_P
-#define ARM_HALFIMM_U /*       */ ARM_HALFREG_U
-#define ARM_HALFIMM_W /*       */ ARM_MULTIPLY_A
-#define ARM_HALFIMM_L /*       */ ARM_FSR_S
-#define ARM_HALFIMM_RN /*      */ ARM_FSR_RN
-#define ARM_HALFIMM_RD /*      */ ARM_FSR_RD
-#define ARM_HALFIMM_S /*       */ ARM_HALFREG_S
-#define ARM_HALFIMM_H /*       */ ARM_HALFREG_H
-#define ARM_HALFIMM_OFFSET                                                     \
-  ARM_MULTIPLY_RS, NEOGBA_ISA_GET_MASK(ARM_MULTIPLY_RM), 4
-
-NEOGBA_ISA_MASKED_BOOL(ARM_HALFIMM_P);
-NEOGBA_ISA_MASKED_BOOL(ARM_HALFIMM_U);
-NEOGBA_ISA_MASKED_BOOL(ARM_HALFIMM_W);
-NEOGBA_ISA_MASKED_BOOL(ARM_HALFIMM_L);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_HALFIMM_RN);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_HALFIMM_RD);
-NEOGBA_ISA_SPLIT_OFFSET(ARM_HALFIMM_OFFSET);
-NEOGBA_ISA_MASKED_BOOL(ARM_HALFIMM_S);
-NEOGBA_ISA_MASKED_BOOL(ARM_HALFIMM_H);
-
-///
 /// Single data transfer
-///
+constexpr u32 ARM_SINGLETRANS_TEMPLATE{0x06000000u};
+using ARM_SINGLETRANS_P = /*           */ ARM_HALFIMM_P;
+using ARM_SINGLETRANS_U = /*           */ ARM_HALFIMM_U;
+using ARM_SINGLETRANS_B = /*           */ ARM_SWAP_B;
+using ARM_SINGLETRANS_W = /*           */ ARM_HALFIMM_W;
+using ARM_SINGLETRANS_L = /*           */ ARM_HALFIMM_L;
+using ARM_SINGLETRANS_RN = /*          */ ARM_HALFIMM_RN;
+using ARM_SINGLETRANS_RD = /*          */ ARM_HALFIMM_RD;
+using ARM_SINGLETRANS_OFFSET = /*      */ ARM_FSR_OPERAND2;
 
-#define ARM_SINGLETRANS_TEMPLATE /**/ 0x06000000u
-#define ARM_SINGLETRANS_P /*       */ ARM_HALFIMM_P
-#define ARM_SINGLETRANS_U /*       */ ARM_HALFIMM_U
-#define ARM_SINGLETRANS_B /*       */ ARM_SWAP_B
-#define ARM_SINGLETRANS_W /*       */ ARM_HALFIMM_W
-#define ARM_SINGLETRANS_L /*       */ ARM_HALFIMM_L
-#define ARM_SINGLETRANS_RN /*      */ ARM_HALFIMM_RN
-#define ARM_SINGLETRANS_RD /*      */ ARM_HALFIMM_RD
-#define ARM_SINGLETRANS_OFFSET /*  */ ARM_FSR_OPERAND2
-
-NEOGBA_ISA_MASKED_BOOL(ARM_SINGLETRANS_P);
-NEOGBA_ISA_MASKED_BOOL(ARM_SINGLETRANS_U);
-NEOGBA_ISA_MASKED_BOOL(ARM_SINGLETRANS_B);
-NEOGBA_ISA_MASKED_BOOL(ARM_SINGLETRANS_W);
-NEOGBA_ISA_MASKED_BOOL(ARM_SINGLETRANS_L);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_SINGLETRANS_RN);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_SINGLETRANS_RD);
-NEOGBA_ISA_MASKED(ARM_SINGLETRANS_OFFSET);
-
-///
 /// Undefined
-///
+constexpr u32 ARM_UNDEFINED_TEMPLATE{0x06000010u};
 
-#define ARM_UNDEFINED_TEMPLATE 0x06000010u
-
-///
 /// Block data transfer
-///
+constexpr u32 ARM_BLOCKTRANS_TEMPLATE{0x09000000u};
+using ARM_BLOCKTRANS_P = /*            */ ARM_HALFIMM_P;
+using ARM_BLOCKTRANS_U = /*            */ ARM_HALFIMM_U;
+using ARM_BLOCKTRANS_S = /*            */ ARM_SWAP_B;
+using ARM_BLOCKTRANS_W = /*            */ ARM_HALFIMM_W;
+using ARM_BLOCKTRANS_L = /*            */ ARM_HALFIMM_L;
+using ARM_BLOCKTRANS_RN = /*           */ ARM_HALFIMM_RN;
+using ARM_BLOCKTRANS_REGISTERLIST = /* */ IsaField<u32, u16, 0, 0xffffu>;
 
-#define ARM_BLOCKTRANS_TEMPLATE /*    */ 0x09000000u
-#define ARM_BLOCKTRANS_P /*           */ ARM_HALFIMM_P
-#define ARM_BLOCKTRANS_U /*           */ ARM_HALFIMM_U
-#define ARM_BLOCKTRANS_S /*           */ ARM_SWAP_B
-#define ARM_BLOCKTRANS_W /*           */ ARM_HALFIMM_W
-#define ARM_BLOCKTRANS_L /*           */ ARM_HALFIMM_L
-#define ARM_BLOCKTRANS_RN /*          */ ARM_HALFIMM_RN
-#define ARM_BLOCKTRANS_REGISTERLIST /**/ u32, u16, 0, 0xffffu
-
-NEOGBA_ISA_MASKED_BOOL(ARM_BLOCKTRANS_P);
-NEOGBA_ISA_MASKED_BOOL(ARM_BLOCKTRANS_U);
-NEOGBA_ISA_MASKED_BOOL(ARM_BLOCKTRANS_S);
-NEOGBA_ISA_MASKED_BOOL(ARM_BLOCKTRANS_W);
-NEOGBA_ISA_MASKED_BOOL(ARM_BLOCKTRANS_L);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_BLOCKTRANS_RN);
-NEOGBA_ISA_MASKED(ARM_BLOCKTRANS_REGISTERLIST);
-
-///
 /// Branch
-///
+constexpr u32 ARM_BRANCH_TEMPLATE{0x0a000000u};
+using ARM_BRANCH_L = /*                */ ARM_HALFIMM_P;
+using ARM_BRANCH_OFFSET = /*           */ IsaField<u32, u32, 0, 0xffffffu>;
 
-#define ARM_BRANCH_TEMPLATE /**/ 0x0a000000u
-#define ARM_BRANCH_L /*       */ ARM_HALFIMM_P
-#define ARM_BRANCH_OFFSET /*  */ u32, u32, 0, 0xffffffu
-
-NEOGBA_ISA_MASKED_BOOL(ARM_BRANCH_L);
-NEOGBA_ISA_MASKED(ARM_BRANCH_OFFSET);
-
-///
 /// Coprocessor data transfer
-///
+constexpr u32 ARM_COPROCTRANS_P_TEMPLATE{0x0b000000u};
+using ARM_COPROCTRANS_P = /*           */ ARM_HALFIMM_P;
+using ARM_COPROCTRANS_U = /*           */ ARM_HALFIMM_U;
+using ARM_COPROCTRANS_N = /*           */ ARM_SWAP_B;
+using ARM_COPROCTRANS_W = /*           */ ARM_HALFIMM_W;
+using ARM_COPROCTRANS_L = /*           */ ARM_HALFIMM_L;
+using ARM_COPROCTRANS_RN = /*          */ ARM_HALFIMM_RN;
+using ARM_COPROCTRANS_CRD = /*         */ ARM_FSR_RD;
+using ARM_COPROCTRANS_CPSHARP = /*     */ ARM_MULTIPLY_RS;
+using ARM_COPROCTRANS_OFFSET = /*      */ IsaField<u32, u8, 0, 0xffu>;
 
-#define ARM_COPROCTRANS_P_TEMPLATE 0x0b000000u
-#define ARM_COPROCTRANS_P ARM_HALFIMM_P
-#define ARM_COPROCTRANS_U ARM_HALFIMM_U
-#define ARM_COPROCTRANS_N ARM_SWAP_B
-#define ARM_COPROCTRANS_W ARM_HALFIMM_W
-#define ARM_COPROCTRANS_L ARM_HALFIMM_L
-#define ARM_COPROCTRANS_RN ARM_HALFIMM_RN
-#define ARM_COPROCTRANS_CRD ARM_FSR_RD
-#define ARM_COPROCTRANS_CPSHARP ARM_MULTIPLY_RS
-#define ARM_COPROCTRANS_OFFSET u32, u8, 0, 0xffu
-
-NEOGBA_ISA_MASKED_BOOL(ARM_COPROCTRANS_P);
-NEOGBA_ISA_MASKED_BOOL(ARM_COPROCTRANS_U);
-NEOGBA_ISA_MASKED_BOOL(ARM_COPROCTRANS_N);
-NEOGBA_ISA_MASKED_BOOL(ARM_COPROCTRANS_W);
-NEOGBA_ISA_MASKED_BOOL(ARM_COPROCTRANS_L);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCTRANS_RN);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCTRANS_CRD);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCTRANS_CPSHARP);
-NEOGBA_ISA_MASKED(ARM_COPROCTRANS_OFFSET);
-
-///
 /// Coprocessor data operation
-///
+constexpr u32 ARM_COPROCOP_TEMPLATE{0x0e000000u};
+using ARM_COPROCOP_CPOPC = /*   */ IsaFieldDelayed<u32, u8, 21>;
+using ARM_COPROCOP_CRN = /*     */ ARM_HALFIMM_RN;
+using ARM_COPROCOP_CRD = /*     */ ARM_FSR_RD;
+using ARM_COPROCOP_CPSHARP = /* */ ARM_MULTIPLY_RS;
+using ARM_COPROCOP_CP = /*      */ IsaFieldDelayed<u32, u8, 5, 0x7u>;
+using ARM_COPROCOP_CRM = /*     */ ARM_MULTIPLY_RM;
 
-#define ARM_COPROCOP_TEMPLATE /**/ 0x0e000000u
-#define ARM_COPROCOP_CPOPC /*   */ u32, u8, 21, (0xfu << 21)
-#define ARM_COPROCOP_CRN /*     */ ARM_HALFIMM_RN
-#define ARM_COPROCOP_CRD /*     */ ARM_FSR_RD
-#define ARM_COPROCOP_CPSHARP /* */ ARM_MULTIPLY_RS
-#define ARM_COPROCOP_CP /*      */ u32, u8, 5, (0x7u << 5)
-#define ARM_COPROCOP_CRM /*     */ ARM_MULTIPLY_RM
-
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCOP_CPOPC);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCOP_CRN);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCOP_CRD);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCOP_CPSHARP);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCOP_CP);
-NEOGBA_ISA_MASKED(ARM_COPROCOP_CRM);
-
-///
 /// Coprocessor register transfer
-///
+constexpr u32 ARM_COPROCREGTRANS_TEMPLATE /**/ {0x0e000010u};
+using ARM_COPROCREGTRANS_CPOPC = /*   */ IsaFieldDelayed<u32, u8, 21, 0x7u>;
+using ARM_COPROCREGTRANS_L = /*       */ ARM_SINGLETRANS_L;
+using ARM_COPROCREGTRANS_CRN = /*     */ ARM_COPROCOP_CRN;
+using ARM_COPROCREGTRANS_RD = /*      */ ARM_COPROCOP_CRD;
+using ARM_COPROCREGTRANS_CPSHARP = /* */ ARM_COPROCOP_CPSHARP;
+using ARM_COPROCREGTRANS_CP = /*      */ ARM_COPROCOP_CP;
+using ARM_COPROCREGTRANS_CRM = /*     */ ARM_COPROCOP_CRM;
 
-#define ARM_COPROCREGTRANS_TEMPLATE /**/ 0x0e000010u
-#define ARM_COPROCREGTRANS_CPOPC /*   */ u32, u8, 21, (0x7u << 21)
-#define ARM_COPROCREGTRANS_L /*       */ ARM_SINGLETRANS_L
-#define ARM_COPROCREGTRANS_CRN /*     */ ARM_COPROCOP_CRN
-#define ARM_COPROCREGTRANS_RD /*      */ ARM_COPROCOP_CRD
-#define ARM_COPROCREGTRANS_CPSHARP /* */ ARM_COPROCOP_CPSHARP
-#define ARM_COPROCREGTRANS_CP /*      */ ARM_COPROCOP_CP
-#define ARM_COPROCREGTRANS_CRM /*     */ ARM_COPROCOP_CRM
-
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_CPOPC);
-NEOGBA_ISA_MASKED_BOOL(ARM_COPROCREGTRANS_L);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_CRN);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_RD);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_CPSHARP);
-NEOGBA_ISA_MASKED_SHIFTED(ARM_COPROCREGTRANS_CP);
-NEOGBA_ISA_MASKED(ARM_COPROCREGTRANS_CRM);
-
-///
 /// Software interrupt
-///
+constexpr u32 ARM_SWINT_TEMPLATE{0x0f000000};
+using ARM_SWINT_SWI = /**/ IsaField<u32, u32, 0, 0xffffffu>;
 
-#define ARM_SWINT_TEMPLATE 0x0f000000
-#define ARM_SWINT_SWI /**/ u32, u32, 0, 0xffffffu
-
-NEOGBA_ISA_MASKED(ARM_SWINT_SWI);
-
-///
 /// Thumb
-///
 
-///
 /// Format 01 - Move shifted register
-///
-
 #define THUMB_01_TEMPLATE /**/ 0x0000u
 #define THUMB_01_OP /*      */ u16, u8, 11, (0x3u << 11)
 #define THUMB_01_OFFSET5 /* */ u16, u8, 6, (0x1fu << 6)
