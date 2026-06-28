@@ -110,7 +110,7 @@ struct arm7tdmi {
     return (mode != SYS) ? static_cast<registers_preset_idx>((mode & 0b11) + ((mode & 0b1100) >> 2))
                          : (REGISTERS_PRESET_SYS);
   }
-  [[nodiscard]] bool ckeck_arm_condition(u32 inst) const;
+  [[nodiscard]] bool ckeck_arm_condition(u32 instruction) const;
 
   void empty_registers();
   void reset();

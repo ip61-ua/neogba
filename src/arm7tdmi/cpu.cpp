@@ -5,50 +5,55 @@
 using namespace neogba;
 
 void arm7tdmi::set_mode(cpsr_mode mode, bool update_cpsr) {
-  u8 idx_lut = 0; // get_idx_registers_lut_by_mode(mode);
+  u8 idx_lut = get_idx_registers_preset_by_mode(mode);
 
-  std::memcpy(active_registers, REGISTERS_LUT[idx_lut], ARM7TDMI_CPU_REGISTERS_ACTIVE);
+  std::memcpy(active_registers, REGISTERS_PRESET[idx_lut], N_ACTIVE_REGISTERS);
 
   if (!update_cpsr)
     return;
 
-  this->registers[cpsr] &= ~ARM7TDMI_CPU_MASK_MODE_BITS;
-  this->registers[cpsr] |= mode & ARM7TDMI_CPU_MASK_MODE_BITS;
+  set_cpsr(M, mode);
 }
 
-bool arm7tdmi::ckeck_arm_condition(u32 inst) const {
-  auto cond = isa_get_ARM_COND(inst);
+bool arm7tdmi::ckeck_arm_condition(u32 instruction) const {
+  auto cond = static_cast<arm_cond>(ISA_ARM_COND::get(instruction));
 
   switch (cond) {
-
-  case ARM_COND_EQ:
-    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_ZERO, ARM7TDMI_CPU_MASK_ZERO);
-
-  case ARM_COND_NE:
-    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_ZERO, 0);
-
-  case ARM_COND_HSCS:
-    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_CARRY, ARM7TDMI_CPU_MASK_CARRY);
-
-  case ARM_COND_LOCC:
-    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_CARRY, 0);
-
-  case ARM_COND_PL:
-    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_NEGATIVE, ARM7TDMI_CPU_MASK_NEGATIVE);
-
-  case ARM_COND_MI:
-    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_NEGATIVE, 0);
-
-  case ARM_COND_VS:
-    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_NEGATIVE, ARM7TDMI_CPU_MASK_NEGATIVE);
-
-  case ARM_COND_VC:
-    return this->is_cpsr_bits(ARM7TDMI_CPU_MASK_NEGATIVE, 0);
-
+  case COND_EQ:
+    return is_cpsr(Z, Z);
+  case COND_NE:
+    return is_cpsr(Z, 0);
+  case COND_HSCS:
+    return is_cpsr(C, C);
+  case COND_LOCC:
+    return is_cpsr(C, 0);
+  case COND_MI:
+    return is_cpsr(N, N);
+  case COND_PL:
+    return is_cpsr(N, 0);
+  case COND_VS:
+    return is_cpsr(V, V);
+  case COND_VC:
+    return is_cpsr(V, 0);
+  case COND_HI:
+    return is_cpsr(C | Z, C);
+  case COND_LS:
+    return is_cpsr(C, 0) || is_cpsr(Z, Z);
+  case COND_GE:
+    return is_cpsr(N, N) == is_cpsr(V, V);
+  case COND_LT:
+    return is_cpsr(N, N) != is_cpsr(V, V);
+  case COND_GT:
+    return is_cpsr(Z, 0) && (is_cpsr(N, N) == is_cpsr(V, V));
+  case COND_LE:
+    return is_cpsr(Z, Z) || (is_cpsr(N, N) != is_cpsr(V, V));
+  case COND_AL:
+    return true;
+  case COND_NV:
   default:
     return false;
-  }
-}
+  };
+};
 
 void arm7tdmi::empty_registers() { std::memset(this->registers, 0, sizeof(registers)); }
 
