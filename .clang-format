@@ -6,6 +6,5 @@ TabWidth: 2
 UseTab: Never
 SortIncludes: true
 ColumnLimit: 100
-AllowShortFunctionsOnASingleLine: Empty
 PointerAlignment: Left
 BreakBeforeBraces: Attach
