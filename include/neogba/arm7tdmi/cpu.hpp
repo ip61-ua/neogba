@@ -42,10 +42,10 @@ struct arm7tdmi {
       /// @brief Mode Bits (M)
       M = 0x1fu;
 
-  static constexpr u32 EXCEPTION_RESET = /*    */ 0x00000000, EXCEPTION_UNDEFINS = /* */ 0x00000004,
-                       EXCEPTION_SWINT = /*    */ 0x00000008, EXCEPTION_PREFETABT = /**/ 0x0000000c,
-                       EXCEPTION_DATAABT = /*  */ 0x00000010, EXCEPTION_RESERVED = /* */ 0x00000014,
-                       EXCEPTION_IRQ = /*      */ 0x00000018, EXCEPTION_FIQ = /*      */ 0x0000001c;
+  static constexpr u32 EXCEPTION_RESET = /*   */ 0x00000000, EXCEPTION_UNDEFINS = /*  */ 0x00000004,
+                       EXCEPTION_SWINT = /*   */ 0x00000008, EXCEPTION_PREFETABT = /* */ 0x0000000c,
+                       EXCEPTION_DATAABT = /* */ 0x00000010, EXCEPTION_RESERVED = /*  */ 0x00000014,
+                       EXCEPTION_IRQ = /*     */ 0x00000018, EXCEPTION_FIQ = /*       */ 0x0000001c;
 
   static constexpr u8 MODE_USR = 0b10000, MODE_FIQ = 0b10001, MODE_IRQ = 0b10010,
                       MODE_SVC = 0b10011, MODE_ABT = 0b10111, MODE_UND = 0b11011,
