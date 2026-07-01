@@ -10,6 +10,9 @@ La GBA tiene dos chips pero solo haremos uno porque es el se usa para juegos de 
 Inicialmente, empecé haciendo un \enquote{prototipo} en c++ idiomático que \enquote{lograba} sumar dos números. Pero no me convencía del todo escribir todo tan idomático porque se hacía bola y reinicié el proyecto. La idea del proyecto es ir implementando por partes y con pruebas. Para esto utilizaremos el gtest como framework. A la hora de volver a realizar la implementación he decido empezar por la CPU ARM7TDMI, pues resulta en el núcleo fundamente que tiene esta videoconsola. La decisión de realizar este componente primero reside en un motivo lógico de cómo ir estructurando los diferentes componentes. (¿Qué va primero el sistema operativo o las aplicaciones para este?). Pese a que pueda ser lógico pudiese ser útil adoptar otro punto de vista en el empecemos por las aplicaciones en lugar del sistema operativo. Similiar a como sucedió la combinación GNU/Linux, donde GNU tenía hecho el conjunto de utilidades para ser usadas antes pero no el núcleo y en paralelo el kernel Linux ya estaba hecho.  
 
 que contar:
+- motivación y objetivos.
+- cómo edito, cómo documento, repo git, documentación.
+- marco teórico: (gba, contexto), c++ (testing, editor, framework, biblioteca)
 - c-style c++ implica limitarse -> pero idomatico hard -> transicion poco.
 - decidí implementar extractores y constructores de instrucciones según docs.
 - primero con macros pero endeble. luego templates mejor -> tests iban más rápido.
