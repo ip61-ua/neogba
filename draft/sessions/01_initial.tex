@@ -1,0 +1,17 @@
+\section{1 de Julio}
+\label{sec:1-de-julio}
+
+En estos párrafos voy comentar que hay hecho hasta ahora en el proyecto. El objetivo es construir un emulador que sea capaz de ejecutar algo de GBA. La idea inicial de hacer este trabajo se esboza más considerablemente a inicios del 2026, en plena época de exámenes finales como un punto de partida para responder a la pregunta de ¿y qué hago después de estos examenes? o atacar a los pensamientos del estilo: ¡Qué viene el TFG!. Años anteriores ya tenía una muy muy y mucho vaga idea de querer hacer un emulador. Me parece una pieza del software moderno muy única en sus objetivos. Algo que parece que vaya incluso en contra de lo que pida hoy en día. Quizás hubiera sido más fácil (ojo, o más complejo) haber optado por hacer una página web, entrenar una ia (o llm), crear unos materiales, un estudio sobre algún acontecimiento de interés. Sin embargo, desde antes considero que emulación es un terrno fangoso que se prefiere evitar. Siempre me ha parecido muy curioso poder ejecutar programas compatibles de una máquina en otra que sean incompatibles. Realmente, llegar a esa situación es complejo, porque implica conocer al detalle el funcionamiento de una máquina. Y más si tenemos en cuenta que la documentación de esa máquina a la que pretendemos emular sea opcaco o inexistente. Esto conlleva a tratar al sistema objetivo de emular como una caja negra y por ello a aplicar técnicas de ingiería inversa. La emulación es un aspecto que suele estar relacionado a la retrocomputación y en concreto a los videojuego porque promueven la preservación de obras eficazmente. La emulación también suele ser usada para pruebas y depueración de aplicaciones y productos. Es por este objeto que los fabricantes de hardware son los primeros interesados en proporcionar las facilidades a sus interesados en que su software funciona bien. Los kits de desarrollo porporcionan unidades de pruebas y/o emuladores/simuladores para dichas pruebas. Por ejemplo: kits de desarrollo, android studio... Otros usos a los que se suele dar la emulación o un concepto muy similar es: resetta 2 (programa de traducción de mac de intel a arm), wine (x86 windows en x86 linux).
+
+Me he documentado y descargado manuales de arm, documentación no ofcial e investigado proyectos.
+La GBA tiene dos chips pero solo haremos uno porque es el se usa para juegos de gba, el otro es solo para gb.
+
+Inicialmente, empecé haciendo un \enquote{prototipo} en c++ idiomático que \enquote{lograba} sumar dos números. Pero no me convencía del todo escribir todo tan idomático porque se hacía bola y reinicié el proyecto. La idea del proyecto es ir implementando por partes y con pruebas. Para esto utilizaremos el gtest como framework. 
+
+He empezado a implementar la CPU del ARM7TDMI en c++, pero muy al estilo de c y usando macros por lo cómodas que resultan.
+
+
+%%% Local Variables:
+%%% mode: LaTeX
+%%% TeX-master: "../main"
+%%% End:
