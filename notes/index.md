@@ -89,6 +89,7 @@ La página godbolt lo pone sencillo para la inspección del ensablador pudiendo 
 	- Asignación o fill.
 	- complicación en los test -> resuelta con un for mejor.
 	- ahora ocupa un registro menos (es fíctício el spsr, por que no está en usr ni sys)
-	- reducción de tamaño en uno -> mejor provecho de espacio 
+	- reducción de tamaño en uno -> mejor provecho de espacio
+	- tarda más con std::array (pasando de 8 a 11 segundos) -> preguntar
   
 - Añadir métodos de lectura y escritura de calquier registro. (mu facil)
