@@ -22,12 +22,35 @@ La idea de hacer un emulador siempre ha estado ahí desde que he empezado a usar
 
 El objetivo último de este trabajo es aprender. No es el de competir frente a programas ya bien establecidos y con años de experiencia en este ámbito. Sino el planteamiento de este TFG como un reto. No busco reinventar la rueda sino conocerla más a fondo en este símil.
 
+# Estado del arte
+
+En contrucción... ¿Qué contar aquí?
+
+- la arquitectura chip-8 es muy típica para prácticar emulación.
+- la gba se presta a educación -> fundamentos -> ensamblador.
+- mgba, libreto, https://emulation.gametechwiki.com/index.php/Game_Boy_Advance_emulators y licencias.
+- legalidad -> roms, recrear, preservación, piratería.
+- caso de uso -> depuración, pruebas, enseñanza.
+
 # Metodología
 
 Vamos a utilizar git como gestor de versiones del proyecto y github como alojamiento del proyecto. Aplicándose también para la memoria. De forma que el tutor pueda acceder cómodamente al trabajo realizado. La memoria es una plantilla de TFG recomendada por la EPS que emplea latex y su compilación a PDF es realizada a través de github actions, localmente o por una imagen Docker que incluye lo necesario para su compilación.
 
 Voy a utilizar el editor de texto GNU Emacs para la programación en c++ así como para la documentación en latex y anotaciones en markdown con sus debidos paquetes para extender funcionalidades a este programa. A la hora de implementar cierta funcionalidad lo haré teniendo de un lado un archivo para ir anotando los pequeños avances que realice durante la sesión. Tengo configurado el editor de tal forma que fuese lo menos necesario salir de este para la realización de mis tareas. De forma que mientras programo puedo escuchar la radio de música, visualizar con un filtro del tema que uso la documentación en PDF a implementar, utilizar un frontend para manejar repositorios git, programar en c++, compilo el programa y pasarle las pruebas mientras hago anotaciones en markdown. Esto es genial para minimizar la fricción del uso y unificarlo utilizando atajos de teclado similares sin salir de la aplicaciones.
 
+Al cabo de varias notas acumuladas, se pasa a la memoria donde se reordeordena y se corrigen faltan. Además de expandir o simplificar el texto según sea el caso y añadir referencias, formato...
+
+El flujo de trabajo para la implementación del emulador consiste en: primero, determinar qué implementar; segundo investigar las especificaciones y restricciones que puedan afectar; tercero, implementar versión naive y experimentación; en cuarto lugar, escribir pruebas para automatizar y garantizar un mínimo funcionamiento y búsqueda de errores; y por útimo, refactoriazar y optimizar. Mientras tanto ir anotando los apartados que considero de revelante interés para la memoria tales como una explicación lo qué he hecho, comparativas entre diferentes versiones, justificación de la aplicación de buenas prácticas. Es siempre preferible escribir test porque automatizan la labor de comprobación del programa sin tener una versión completa del mismo. No obstante, para una mayor profundidad en la inspección del funcinamiento del programa, se recurre al frontend depurador a través de línea de comandos para el acotamiento de fallos.
+
+El código fuente del emulador está escrito en el estándar C++26. A través del uso clangd podemos recibir en el editor de preferencia ayuda y sugerencias estáticas sobre nuestro código. Útil para la prevención de errores. Para las pruebas automatizadas, el proyecto hace uso del framework Google Test. Se ha preferido una simple construcción del proyecto con reglas escritas directamente para make inicialmente con tal de tener ya algo que se pueda ejecutar y probar desde el día uno. En un futuro con tal de extender su portabilidad, se podría implantar un metagenerador de proyectos para ajustarse mejor a la realidad de la programación en C++. 
+
+A la hora de subir los cambios del emulador, el mensaje de confirmación de git será en inglés y prefijado con una abreviatura del tipo de cambio efectuado (refactorización, nuevas funcionalidades, documentación, arreglos...). 
+
+# Implementación
+
+## Trabajo previo
+
+Antes de realizar el 
 
 Guión
 - c-style c++ implica limitarse -> pero idomatico hard -> transicion poco.
