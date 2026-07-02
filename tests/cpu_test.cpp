@@ -151,7 +151,7 @@ TEST_F(cpu_test, checks_if_the_entire_chunk_of_registers_are_equal) {
 
     cpu->set_mode(mode, false);
 
-    for (auto b = 0; b < spsr; b++) {
+    for (auto b = 0; b < arm7tdmi::spsr; b++) {
       cpu->write_active_register(b, ++j);
     }
 
@@ -161,7 +161,7 @@ TEST_F(cpu_test, checks_if_the_entire_chunk_of_registers_are_equal) {
     cpu->write_spsr(-j);
 
     auto activ = cpu->REGISTERS_PRESET[cpu->get_idx_registers_preset_by_mode(mode)];
-    ASSERT_EQ(expected[activ[spsr]], cpu->read_spsr());
+    ASSERT_EQ(expected[activ[arm7tdmi::spsr]], cpu->read_spsr());
   }
 
   ASSERT_EQ(expected, cpu->registers);

@@ -22,8 +22,6 @@ enum arm7tdmi_registers : u8 {
 
 };
 
-static constexpr u8 spsr = 17;
-
 struct arm7tdmi {
   static constexpr u32
       /// @brief Negative (N)
@@ -56,7 +54,9 @@ struct arm7tdmi {
                       REGISTERS_PRESET_SVC = 3, REGISTERS_PRESET_ABT = 4, REGISTERS_PRESET_UND = 5,
                       REGISTERS_PRESET_SYS = 0;
 
-  static constexpr u8 N_ACTIVE_REGISTERS = 18, N_REGISTERS = 38;
+  static constexpr u8 N_ACTIVE_REGISTERS = 18, N_REGISTERS = 37;
+
+  static constexpr u8 spsr = 17;
 
   static constexpr std::array<u8, N_ACTIVE_REGISTERS> REGISTERS_USR{
       {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr}},
