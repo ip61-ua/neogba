@@ -93,6 +93,6 @@ La página godbolt lo pone sencillo para la inspección del ensablador pudiendo 
 	- tarda más con std::array (pasando de 8 a 11 segundos)
     - no puede ser porque array es 0-cost abstraction
 	- lo que está pasando es que tarda por que gtest tiene una impresora al comparar arrays que lo ralentiza.
-	- si los test son muy lentos, considerar valorar esto assert_true == o recuperar el método de memcmp que había antes par comparar
+	- si los test son muy lentos, considerar valorar esto assert_true == o recuperar el método de memcmp que había antes par comparar.
 
 - Añadir métodos de lectura y escritura de calquier registro. (mu facil)
