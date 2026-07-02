@@ -81,7 +81,14 @@ La página godbolt lo pone sencillo para la inspección del ensablador pudiendo 
 # 2 de julio 
 
 ¿qué voy a hacer?
-- quitar macros por std::arrays en las instrucciones.
+- quitar macros por std::arrays en las instrucciones. (hecho)
   - Por el mismo motivo de siempre, #STOPMACROS.
   - pueden ser evaluadas en tiempo de compilación. 
-- Añadir métodos de lectura y escritura de calquier registro. 
+  - CAMBIOS:
+    - Manejo de memoria más simple, sin necesidad de copiar
+	- Asignación o fill.
+	- complicación en los test -> resuelta con un for mejor.
+	- ahora ocupa un registro menos (es fíctício el spsr, por que no está en usr ni sys)
+	- reducción de tamaño en uno -> mejor provecho de espacio 
+  
+- Añadir métodos de lectura y escritura de calquier registro. (mu facil)
