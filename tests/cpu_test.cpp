@@ -102,48 +102,48 @@ TEST_F(cpu_test, cpsr_read_write_should_modify_correct_physical_register) {
 TEST_F(cpu_test, checks_if_the_entire_chunk_of_registers_are_equal) {
   std::array<u32, arm7tdmi::N_REGISTERS> expected;
 
-  expected[neogba::r0] = 103;
-  expected[neogba::r1] = 104;
-  expected[neogba::r2] = 105;
-  expected[neogba::r3] = 106;
-  expected[neogba::r4] = 107;
-  expected[neogba::r5] = 108;
-  expected[neogba::r6] = 109;
-  expected[neogba::r7] = 110;
-  expected[neogba::r8] = 111;
-  expected[neogba::r9] = 112;
-  expected[neogba::r10] = 113;
-  expected[neogba::r11] = 114;
-  expected[neogba::r12] = 115;
-  expected[neogba::r13] = 116;
-  expected[neogba::r14] = 117;
-  expected[neogba::pc] = 118;
-  expected[neogba::cpsr] = 119;
+  expected[r0] = 103;
+  expected[r1] = 104;
+  expected[r2] = 105;
+  expected[r3] = 106;
+  expected[r4] = 107;
+  expected[r5] = 108;
+  expected[r6] = 109;
+  expected[r7] = 110;
+  expected[r8] = 111;
+  expected[r9] = 112;
+  expected[r10] = 113;
+  expected[r11] = 114;
+  expected[r12] = 115;
+  expected[r13] = 116;
+  expected[r14] = 117;
+  expected[pc] = 118;
+  expected[cpsr] = 119;
 
-  expected[neogba::r8_fiq] = 26;
-  expected[neogba::r9_fiq] = 27;
-  expected[neogba::r10_fiq] = 28;
-  expected[neogba::r11_fiq] = 29;
-  expected[neogba::r12_fiq] = 30;
-  expected[neogba::r13_fiq] = 31;
-  expected[neogba::r14_fiq] = 32;
-  expected[neogba::spsr_fiq] = static_cast<u32>(-34);
+  expected[r8_fiq] = 26;
+  expected[r9_fiq] = 27;
+  expected[r10_fiq] = 28;
+  expected[r11_fiq] = 29;
+  expected[r12_fiq] = 30;
+  expected[r13_fiq] = 31;
+  expected[r14_fiq] = 32;
+  expected[spsr_fiq] = static_cast<u32>(-34);
 
-  expected[neogba::r13_irq] = 48;
-  expected[neogba::r14_irq] = 49;
-  expected[neogba::spsr_irq] = static_cast<u32>(-51);
+  expected[r13_irq] = 48;
+  expected[r14_irq] = 49;
+  expected[spsr_irq] = static_cast<u32>(-51);
 
-  expected[neogba::r13_svc] = 65;
-  expected[neogba::r14_svc] = 66;
-  expected[neogba::spsr_svc] = static_cast<u32>(-68);
+  expected[r13_svc] = 65;
+  expected[r14_svc] = 66;
+  expected[spsr_svc] = static_cast<u32>(-68);
 
-  expected[neogba::r13_abt] = 82;
-  expected[neogba::r14_abt] = 83;
-  expected[neogba::spsr_abt] = static_cast<u32>(-85);
+  expected[r13_abt] = 82;
+  expected[r14_abt] = 83;
+  expected[spsr_abt] = static_cast<u32>(-85);
 
-  expected[neogba::r13_und] = 99;
-  expected[neogba::r14_und] = 100;
-  expected[neogba::spsr_und] = static_cast<u32>(-102);
+  expected[r13_und] = 99;
+  expected[r14_und] = 100;
+  expected[spsr_und] = static_cast<u32>(-102);
 
   u32 j = 0;
   for (auto mode : {arm7tdmi::MODE_USR, arm7tdmi::MODE_FIQ, arm7tdmi::MODE_IRQ, arm7tdmi::MODE_SVC,
@@ -151,7 +151,7 @@ TEST_F(cpu_test, checks_if_the_entire_chunk_of_registers_are_equal) {
 
     cpu->set_mode(mode, false);
 
-    for (auto b : arm7tdmi::REGISTERS_USR) {
+    for (auto b = 0; b < spsr; b++) {
       cpu->write_active_register(b, ++j);
     }
 
