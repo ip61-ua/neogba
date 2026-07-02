@@ -1,13 +1,12 @@
 #include "neogba/arm7tdmi/cpu.hpp"
 #include "neogba/arm7tdmi/isa.hpp"
-#include <cstring>
 
 using namespace neogba;
 
 void arm7tdmi::set_mode(u8 mode, bool update_cpsr) {
   u8 idx_lut = get_idx_registers_preset_by_mode(mode);
 
-  std::memcpy(active_registers, REGISTERS_PRESET[idx_lut], N_ACTIVE_REGISTERS);
+  active_registers = REGISTERS_PRESET[idx_lut];
 
   if (!update_cpsr)
     return;
@@ -55,7 +54,7 @@ bool arm7tdmi::ckeck_arm_condition(u32 instruction) const {
   };
 };
 
-void arm7tdmi::empty_registers() { std::memset(this->registers, 0, sizeof(registers)); }
+void arm7tdmi::empty_registers() { this->registers.fill(0); }
 
 void arm7tdmi::reset() {
   this->empty_registers();

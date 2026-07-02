@@ -46,6 +46,8 @@ El código fuente del emulador está escrito en el estándar C++26. A través de
 
 A la hora de subir los cambios del emulador, el mensaje de confirmación de git será en inglés y prefijado con una abreviatura del tipo de cambio efectuado (refactorización, nuevas funcionalidades, documentación, arreglos...). 
 
+Para la comunicación con el tutor se hace uso de reuniones presenciales, mensajería por correo electrónico, y asignación de fechas por Google Calendar.
+
 # Implementación
 
 ## Trabajo previo
@@ -75,3 +77,11 @@ Luego de realizar los cambios, me puse a analizar el método que hace cambia de 
 El método a analizar estaba implementado por medio de un bloque switch y para caso un return del índice de la lista activa por la que cambiar. Pese a que pueda ser una buena idea, realmente el binario obtenido de un compilador u otro. Pudiendo resultar en una especie de LUT o condicionales consecutivas. Para ambas compativas y usando el -O3, GCC ha detectado un patrón y ha transformado el bloque switch tabla de búsqueda a difrencia que clang que dada con una tabla de satos. La versión obtenida por GCC tiene solo un salto condicional. La refactorización que se propone es aprovecharse de la operación de bits para construir el índice de forma que se suma tomando los dos primeros y los dos siguientes desplazados a la derecha a 2. Pero antes si el modo de sistema solicitado es el de sistema devolver inmediato directamente. En consecuencia, logramos una versión con menos restricciones en la es más suceptible a ser mejorada por el compilador. GCC emplea una instrucción cmove encarga en sobreescribir el resultado con 1 si la comparación es igual a 31 (0b11111).
 
 La página godbolt lo pone sencillo para la inspección del ensablador pudiendo combinar flags, compilador y máquina objetivo. Este tipo de prácticas resultan siempre interesantes tratar puesto que cambios simple pueden mejorar la eficiencia del programa. Además notar los cambios en el binario producido por cada campilador y/o cambio en el sistema.
+
+# 2 de julio 
+
+¿qué voy a hacer?
+- quitar macros por std::arrays en las instrucciones.
+  - Por el mismo motivo de siempre, #STOPMACROS.
+  - pueden ser evaluadas en tiempo de compilación. 
+- Añadir métodos de lectura y escritura de calquier registro. 

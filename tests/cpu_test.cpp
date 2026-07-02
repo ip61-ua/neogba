@@ -1,5 +1,4 @@
 #include "neogba/arm7tdmi/cpu.hpp"
-#include <cstring>
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -20,19 +19,6 @@ protected:
   }
 
   void TearDown() override {}
-
-  void equals_registers(u32 expected[], bool optimized = true, bool verbose = true) {
-    if (optimized) {
-      ASSERT_EQ(0, std::memcmp(expected, cpu->registers, arm7tdmi::N_REGISTERS * sizeof(u32)));
-    } else {
-      for (auto i = 0; i < arm7tdmi::N_REGISTERS; i++) {
-        if (verbose)
-          std::cout << i << " " << expected[i] << " " << cpu->registers[i] << "\n";
-
-        ASSERT_EQ(expected[i], cpu->registers[i]);
-      }
-    }
-  }
 };
 
 } // namespace
@@ -114,7 +100,7 @@ TEST_F(cpu_test, cpsr_read_write_should_modify_correct_physical_register) {
 }
 
 TEST_F(cpu_test, checks_if_the_entire_chunk_of_registers_are_equal) {
-  u32 expected[arm7tdmi::N_REGISTERS] = {};
+  std::array<u32, arm7tdmi::N_REGISTERS> expected;
 
   expected[neogba::r0] = 103;
   expected[neogba::r1] = 104;
@@ -133,7 +119,6 @@ TEST_F(cpu_test, checks_if_the_entire_chunk_of_registers_are_equal) {
   expected[neogba::r14] = 117;
   expected[neogba::pc] = 118;
   expected[neogba::cpsr] = 119;
-  expected[neogba::spsr] = 0;
 
   expected[neogba::r8_fiq] = 26;
   expected[neogba::r9_fiq] = 27;
@@ -166,7 +151,7 @@ TEST_F(cpu_test, checks_if_the_entire_chunk_of_registers_are_equal) {
 
     cpu->set_mode(mode, false);
 
-    for (auto b : {ARM7TDMI_REGISTERS_ACCESSIBLE}) {
+    for (auto b : arm7tdmi::REGISTERS_USR) {
       cpu->write_active_register(b, ++j);
     }
 
@@ -178,5 +163,6 @@ TEST_F(cpu_test, checks_if_the_entire_chunk_of_registers_are_equal) {
     auto activ = cpu->REGISTERS_PRESET[cpu->get_idx_registers_preset_by_mode(mode)];
     ASSERT_EQ(expected[activ[spsr]], cpu->read_spsr());
   }
-  equals_registers(expected);
+
+  ASSERT_EQ(expected, cpu->registers);
 }

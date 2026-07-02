@@ -1,32 +1,28 @@
 #pragma once
 #include "neogba/types.hpp"
+#include <array>
 
 namespace neogba {
 
-#define ARM7TDMI_REGISTERS_ALL                                                                     \
-  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr, spsr, /**/ r8_fiq,    \
-      r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, spsr_fiq, /**/ r13_svc, r14_svc,        \
-      spsr_svc, /**/ r13_abt, r14_abt, spsr_abt, /**/ r13_irq, r14_irq, spsr_irq, /**/ r13_und,    \
-      r14_und, spsr_und
+enum arm7tdmi_registers : u8 {
 
-#define ARM7TDMI_REGISTERS_ACCESSIBLE                                                              \
-  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr
+  // clang-format off
+    r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr,
+    /**/
+    r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, spsr_fiq,
+    /**/
+    r13_svc, r14_svc, spsr_svc,
+    /**/ 
+    r13_abt, r14_abt, spsr_abt,
+    /**/ 
+    r13_irq, r14_irq, spsr_irq,
+    /**/ 
+    r13_und, r14_und, spsr_und
+  // clang-format on
 
-#define ARM7TDMI_REGISTERS_USR                                                                     \
-  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr, spsr
-#define ARM7TDMI_REGISTERS_FIQ                                                                     \
-  r0, r1, r2, r3, r4, r5, r6, r7, r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, pc, \
-      cpsr, spsr_fiq
-#define ARM7TDMI_REGISTERS_IRQ                                                                     \
-  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_irq, r14_irq, pc, cpsr, spsr_irq
-#define ARM7TDMI_REGISTERS_SVC                                                                     \
-  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_svc, r14_svc, pc, cpsr, spsr_svc
-#define ARM7TDMI_REGISTERS_ABT                                                                     \
-  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_abt, pc, cpsr, spsr_abt
-#define ARM7TDMI_REGISTERS_UND                                                                     \
-  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_und, r14_und, pc, cpsr, spsr_und
+};
 
-enum arm_register : u8 { ARM7TDMI_REGISTERS_ALL };
+static constexpr u8 spsr = 17;
 
 struct arm7tdmi {
   static constexpr u32
@@ -61,12 +57,34 @@ struct arm7tdmi {
                       REGISTERS_PRESET_SYS = 0;
 
   static constexpr u8 N_ACTIVE_REGISTERS = 18, N_REGISTERS = 38;
-  static constexpr u8 REGISTERS_PRESET[6][N_ACTIVE_REGISTERS] = {
-      {ARM7TDMI_REGISTERS_USR}, {ARM7TDMI_REGISTERS_FIQ}, {ARM7TDMI_REGISTERS_IRQ},
-      {ARM7TDMI_REGISTERS_SVC}, {ARM7TDMI_REGISTERS_ABT}, {ARM7TDMI_REGISTERS_UND}};
 
-  u32 registers[N_REGISTERS];
-  u8 active_registers[N_ACTIVE_REGISTERS];
+  static constexpr std::array<u8, N_ACTIVE_REGISTERS> REGISTERS_USR{
+      {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr}},
+      REGISTERS_FIQ{{r0, r1, r2, r3, r4, r5, r6, r7, r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq,
+                     r13_fiq, r14_fiq, pc, cpsr, spsr_fiq}},
+      REGISTERS_IRQ{{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_irq, r14_irq, pc,
+                     cpsr, spsr_irq}},
+      REGISTERS_SVC{{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_svc, r14_svc, pc,
+                     cpsr, spsr_svc}},
+      REGISTERS_ABT{{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_abt, pc,
+                     cpsr, spsr_abt}},
+      REGISTERS_UND{{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_und, r14_und, pc,
+                     cpsr, spsr_und}};
+
+  static constexpr std::array<std::array<u8, N_ACTIVE_REGISTERS>, 6> REGISTERS_PRESET{
+      {{REGISTERS_USR},
+       {REGISTERS_FIQ},
+       {REGISTERS_IRQ},
+       {REGISTERS_SVC},
+       {REGISTERS_ABT},
+       {REGISTERS_UND}}};
+
+  std::array<u32, N_REGISTERS> registers;
+  std::array<u8, N_ACTIVE_REGISTERS> active_registers;
+
+  [[nodiscard]] inline u32 read_raw_register(u8 reg) const { return registers[reg]; }
+
+  inline void write_raw_register(u8 reg, u32 value) { registers[reg] = value; }
 
   [[nodiscard]] inline u32 read_active_register(u8 reg) const {
     return registers[active_registers[reg]];
