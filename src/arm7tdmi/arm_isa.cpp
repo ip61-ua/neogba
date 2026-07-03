@@ -1,9 +1,6 @@
 #include "neogba/arm7tdmi/arm_isa.hpp"
-#include "neogba/arm7tdmi/isa.hpp"
 
-using namespace neogba;
-
-inline void arm_AND(arm7tdmi& cpu, u32 inst) {
+void neogba::arm_AND(arm7tdmi* cpu, u32 inst) {
   u32 shift_amount, imm, rm, operable_operand2{};
 
   u8 rn_idx{ISA_ARM_FSR_RN::get(inst)};
@@ -27,11 +24,11 @@ inline void arm_AND(arm7tdmi& cpu, u32 inst) {
 
     // operand2 is a register with shift.
 
-    rm = cpu.read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst));
+    rm = cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst));
     shift_type = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(inst);
     four = ISA_ARM_FSR_OPERAND2_4::get(inst);
 
-    shift_amount = four ? cpu.read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst))
+    shift_amount = four ? cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst))
                         : ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
 
     is_special_case = !four && shift_amount == 0;
@@ -69,7 +66,7 @@ inline void arm_AND(arm7tdmi& cpu, u32 inst) {
     case ROR:
       if (is_special_case) {
         // RRX: Rotate 1 bit and include Cin.
-        if (cpu.is_cpsr(arm7tdmi::C, arm7tdmi::C))
+        if (cpu->is_cpsr(arm7tdmi::C, arm7tdmi::C))
           operable_operand2 = 0x80000000;
 
         operable_operand2 |= (rm >> 1);
@@ -82,23 +79,7 @@ inline void arm_AND(arm7tdmi& cpu, u32 inst) {
     }
   }
 
-  u32 res = cpu.read_active_register(rn_idx) & operable_operand2;
+  u32 res = cpu->read_active_register(rn_idx) & operable_operand2;
 
-  cpu.write_active_register(rd_idx, res);
+  cpu->write_active_register(rd_idx, res);
 }
-
-inline void arm_EOR(arm7tdmi& cpu, u32 inst);
-inline void arm_SUB(arm7tdmi& cpu, u32 inst);
-inline void arm_RSB(arm7tdmi& cpu, u32 inst);
-inline void arm_ADD(arm7tdmi& cpu, u32 inst);
-inline void arm_ADC(arm7tdmi& cpu, u32 inst);
-inline void arm_SBC(arm7tdmi& cpu, u32 inst);
-inline void arm_RSC(arm7tdmi& cpu, u32 inst);
-inline void arm_TST(arm7tdmi& cpu, u32 inst);
-inline void arm_TEQ(arm7tdmi& cpu, u32 inst);
-inline void arm_CMP(arm7tdmi& cpu, u32 inst);
-inline void arm_CMN(arm7tdmi& cpu, u32 inst);
-inline void arm_ORR(arm7tdmi& cpu, u32 inst);
-inline void arm_MOV(arm7tdmi& cpu, u32 inst);
-inline void arm_BIC(arm7tdmi& cpu, u32 inst);
-inline void arm_MVN(arm7tdmi& cpu, u32 inst);
