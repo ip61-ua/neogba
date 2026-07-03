@@ -133,4 +133,11 @@ La página godbolt lo pone sencillo para la inspección del ensablador pudiendo 
 	- he tenido que añadir más extractores
 	- Operand2 es muy complicado pero es común a todos los data procesing por igual
 	- me pongo a hacer una prueba
+	- tanto tiempo programando tengo la cabeza como un platillo y no me doy cuenta de que hay que inicializar registro lol.
+	- la funcion amr_and funciona pero creo que como vamos a trabajar con lut vamos a necesitar con muchas versiones de modo que quitaremos ifs y ramas incesesarias y utilicemos ifs.
+	- la custión aquí es como hacerlo "modular". Según he estado investigando el equipo de mgba lo que hace es construir por partes usando macros. Digamos hay una versión con al S activa y otra sin activar, otra usando el campo operand2 que toca directamente.
+	- Este es idóneo al que provecharse. No obstante, hay partes que dependen de como haya ido la anterior. 
+	- Recordar que la idea es crear alto rendimiento para hacerlo más realista.
+	- Creo que es posible hacer algo así en c++ idomático. En donde realmente lo cambia es en sí el manejo de la operación en sí. (Bueno aunque operand2 tiene su telita) pero es un proceso muy mecánico que siempre será el mismo y lo más importane que tendrá el mismo resultado, sacar un número de operand2 del que podemos operar. Aunque hay caveats porque si el flag s está activo implica actualizar el registro en base a lo ocurrido en la ejecución.
+	
   - He cambiado el obtenedor de conjuntos de registros de usar una condicional a usar la operación módulo.
