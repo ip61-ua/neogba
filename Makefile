@@ -23,7 +23,7 @@ run: build
 
 test: $(TEST_SRCS) $(SRCS_NO_MAIN)
 	@mkdir -p build
-	$(CXX) $(CXXFLAGS) -o $(TEST_TARGET) $(TEST_SRCS) $(SRCS_NO_MAIN) $(TEST_LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $(TEST_TARGET) $(TEST_SRCS) $(SRCS_NO_MAIN) $(TEST_LDFLAGS) -g
 	./$(TEST_TARGET)
 
 clean:
