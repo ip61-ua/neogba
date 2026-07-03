@@ -4,18 +4,22 @@
 using namespace neogba;
 
 inline void arm_AND(arm7tdmi& cpu, u32 inst) {
-  auto rn = ISA_ARM_FSR_RN::get(inst);
-  auto rd = ISA_ARM_FSR_RD::get(inst);
-  auto i = ISA_ARM_FSR_I::get(inst);
+  u32 shift_amount, imm, rm, operable_operand2{};
 
-  u32 operable_operand2{};
+  u8 rn_idx{ISA_ARM_FSR_RN::get(inst)};
+  u8 rd_idx{ISA_ARM_FSR_RD::get(inst)};
+  u8 shift_type;
+
+  bool i{ISA_ARM_FSR_I::get(inst)};
+  [[maybe_unused]] bool s{ISA_ARM_FSR_S::get(inst)};
+  bool four, is_special_case;
 
   if (i) {
 
     // operand2 is immediate value with shift.
 
-    u32 shift_amount = 2 * ISA_ARM_FSR_OPERAND2_ROTATE::get(inst);
-    u32 imm = ISA_ARM_FSR_OPERAND2_IMM::get(inst);
+    shift_amount = 2 * ISA_ARM_FSR_OPERAND2_ROTATE::get(inst);
+    imm = ISA_ARM_FSR_OPERAND2_IMM::get(inst);
 
     operable_operand2 =
         (shift_amount == 0) ? imm : ((imm >> shift_amount) | (imm << (32 - shift_amount)));
@@ -23,14 +27,14 @@ inline void arm_AND(arm7tdmi& cpu, u32 inst) {
 
     // operand2 is a register with shift.
 
-    auto rm = cpu.read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst));
-    auto shift_type = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(inst);
-    auto four = ISA_ARM_FSR_OPERAND2_4::get(inst);
+    rm = cpu.read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst));
+    shift_type = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(inst);
+    four = ISA_ARM_FSR_OPERAND2_4::get(inst);
 
-    u32 shift_amount = four ? cpu.read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst))
-                            : ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
+    shift_amount = four ? cpu.read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst))
+                        : ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
 
-    bool is_special_case = !four && shift_amount == 0;
+    is_special_case = !four && shift_amount == 0;
 
     switch (shift_type) {
 
@@ -78,7 +82,9 @@ inline void arm_AND(arm7tdmi& cpu, u32 inst) {
     }
   }
 
-  cpu.write_active_register(rd, cpu.read_active_register(rn) & operable_operand2);
+  u32 res = cpu.read_active_register(rn_idx) & operable_operand2;
+
+  cpu.write_active_register(rd_idx, res);
 }
 
 inline void arm_EOR(arm7tdmi& cpu, u32 inst);
