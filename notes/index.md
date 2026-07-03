@@ -96,3 +96,38 @@ La página godbolt lo pone sencillo para la inspección del ensablador pudiendo 
 	- si los test son muy lentos, considerar valorar esto assert_true == o recuperar el método de memcmp que había antes par comparar.
 
 - Añadir métodos de lectura y escritura de calquier registro. (mu facil)
+
+# 3 de julio
+
+¿qué voy a hacer?
+- me he pasado a un ordenador de torre con debian donde puedo seguir trabanjando con mi metodología con el añadido de verlo en pantalla grande para los errores de c++ (lol).
+- implementar instrucciones aritméticas.
+  - ADC Add with carry Rd := Rn + Op2 + Carry
+  - ADD Add Rd := Rn + Op2
+  - AND AND Rd := Rn & Op2 
+  - BIC Bit Clear Rd := Rn & ~ Op2 
+  - CMN Compare Negative CPSR flags := Rn + Op2
+  - CMP Compare CPSR flags := Rn - Op2
+  - EOR Exclusive OR Rd := (Rn AND NOT Op2) OR (op2 AND NOT Rn)
+  - MOV Move register or constant Rd : = Op2
+  - MVN Move negative register Rd := 0xFFFFFFFF EOR Op2
+  - ORR OR Rd := Rn OR Op2 
+  - RSB Reverse Subtract Rd := Op2 - Rn 
+  - RSC Reverse Subtract with Carry Rd := Op2 - Rn - 1 + Carry 
+  - SBC Subtract with Carry Rd := Rn - Op2 - 1 + Carry
+  - SUB Subtract Rd := Rn - Op2
+  - TEQ Test bitwise equality CPSR flags := Rn EOR Op2 
+  - TST Test bits CPSR flags := Rn AND Op2
+
+  - ESTOY ENCRONTRANDO DISCREPANCIAS EN LA DOCUMENTACIÓN
+  - me he puesto a hacer and
+  - he decidido añadir un bit i en fsr.
+  - https://iitd-plos.github.io/col718/ref/arm-instructionset.pdf
+  - complicación porque hay que anidar mucho o muchas funciones repetidas.
+  - lo voy a hacer full naive que posteriormente usar templates o algo para mejorar el código. 
+  - operand2 tiene dos formas de operar en función del bit i
+    - o es un registro con shift (tipo de shift determinado)
+	- o un inmediato rotado por dos
+	- por lo tanto operand2 como tal no existe
+	- hay casos especiales
+	- he tenido que añadir más extractores
