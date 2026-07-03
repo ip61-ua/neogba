@@ -5,7 +5,7 @@ void neogba::arm_AND(arm7tdmi* cpu, u32 inst) {
 
   u8 rn_idx{ISA_ARM_FSR_RN::get(inst)};
   u8 rd_idx{ISA_ARM_FSR_RD::get(inst)};
-  u8 shift_type;
+  u8 shift_type, rm_idx;
 
   bool i{ISA_ARM_FSR_I::get(inst)};
   [[maybe_unused]] bool s{ISA_ARM_FSR_S::get(inst)};
@@ -24,7 +24,8 @@ void neogba::arm_AND(arm7tdmi* cpu, u32 inst) {
 
     // operand2 is a register with shift.
 
-    rm = cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst));
+    rm_idx = ISA_ARM_FSR_OPERAND2_RM::get(inst);
+    rm = cpu->read_active_register(rm_idx);
     shift_type = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(inst);
     four = ISA_ARM_FSR_OPERAND2_4::get(inst);
 
