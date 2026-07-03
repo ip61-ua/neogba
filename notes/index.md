@@ -139,5 +139,5 @@ La página godbolt lo pone sencillo para la inspección del ensablador pudiendo 
 	- Este es idóneo al que provecharse. No obstante, hay partes que dependen de como haya ido la anterior. 
 	- Recordar que la idea es crear alto rendimiento para hacerlo más realista.
 	- Creo que es posible hacer algo así en c++ idomático. En donde realmente lo cambia es en sí el manejo de la operación en sí. (Bueno aunque operand2 tiene su telita) pero es un proceso muy mecánico que siempre será el mismo y lo más importane que tendrá el mismo resultado, sacar un número de operand2 del que podemos operar. Aunque hay caveats porque si el flag s está activo implica actualizar el registro en base a lo ocurrido en la ejecución.
-	
+    - por qué he puesto fuera las instrucciones? por no engrasar tanto a la estructura del arm7tdmi	
   - He cambiado el obtenedor de conjuntos de registros de usar una condicional a usar la operación módulo.

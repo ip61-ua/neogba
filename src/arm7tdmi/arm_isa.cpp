@@ -83,4 +83,8 @@ void neogba::arm_AND(arm7tdmi* cpu, u32 inst) {
   u32 res = cpu->read_active_register(rn_idx) & operable_operand2;
 
   cpu->write_active_register(rd_idx, res);
+
+  if (s)
+    cpu->set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V,
+                  (res == 0 ? arm7tdmi::Z : 0) | (((res & 0x8000000) != 0) ? arm7tdmi::N : 0));
 }
