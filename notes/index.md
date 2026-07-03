@@ -131,3 +131,6 @@ La página godbolt lo pone sencillo para la inspección del ensablador pudiendo 
 	- por lo tanto operand2 como tal no existe
 	- hay casos especiales
 	- he tenido que añadir más extractores
+	- Operand2 es muy complicado pero es común a todos los data procesing por igual
+	- me pongo a hacer una prueba
+  - He cambiado el obtenedor de conjuntos de registros de usar una condicional a usar la operación módulo.
