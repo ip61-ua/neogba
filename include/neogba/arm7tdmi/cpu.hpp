@@ -25,34 +25,33 @@ enum arm7tdmi_registers : u8 {
 struct arm7tdmi {
   static constexpr u32
       /// @brief Negative (N)
-      N = 1u << 31,
+      N{1u << 31},
       /// @brief Zero (Z)
-      Z = 1u << 30,
+      Z{1u << 30},
       /// @brief Carry (C)
-      C = 1u << 29,
+      C{1u << 29},
       /// @brief Overflow (V)
-      V = 1u << 28,
+      V{1u << 28},
       /// @brief IRQ Disable (I)
-      I = 1u << 7,
+      I{1u << 7},
       /// @brief FIQ Disable (F)
-      F = 1u << 6,
+      F{1u << 6},
       /// @brief Thumb State (T)
-      T = 1u << 5,
+      T{1u << 5},
       /// @brief Mode Bits (M)
-      M = 0x1fu;
+      M{0x1fu};
 
-  static constexpr u32 EXCEPTION_RESET = /*   */ 0x00000000, EXCEPTION_UNDEFINS = /*  */ 0x00000004,
-                       EXCEPTION_SWINT = /*   */ 0x00000008, EXCEPTION_PREFETABT = /* */ 0x0000000c,
-                       EXCEPTION_DATAABT = /* */ 0x00000010, EXCEPTION_RESERVED = /*  */ 0x00000014,
-                       EXCEPTION_IRQ = /*     */ 0x00000018, EXCEPTION_FIQ = /*       */ 0x0000001c;
+  static constexpr u32 EXCEPTION_RESET /*   */ {0x00000000}, EXCEPTION_UNDEFINS /*  */ {0x00000004},
+      EXCEPTION_SWINT /*   */ {0x00000008}, EXCEPTION_PREFETABT /* */ {0x0000000c},
+      EXCEPTION_DATAABT /* */ {0x00000010}, EXCEPTION_RESERVED /*  */ {0x00000014},
+      EXCEPTION_IRQ /*     */ {0x00000018}, EXCEPTION_FIQ /*       */ {0x0000001c};
 
-  static constexpr u8 MODE_USR = 0b10000, MODE_FIQ = 0b10001, MODE_IRQ = 0b10010,
-                      MODE_SVC = 0b10011, MODE_ABT = 0b10111, MODE_UND = 0b11011,
-                      MODE_SYS = 0b11111;
+  static constexpr u8 MODE_USR{0b10000}, MODE_FIQ{0b10001}, MODE_IRQ{0b10010}, MODE_SVC{0b10011},
+      MODE_ABT{0b10111}, MODE_UND{0b11011}, MODE_SYS{0b11111};
 
-  static constexpr u8 REGISTERS_PRESET_USR = 0, REGISTERS_PRESET_FIQ = 1, REGISTERS_PRESET_IRQ = 2,
-                      REGISTERS_PRESET_SVC = 3, REGISTERS_PRESET_ABT = 4, REGISTERS_PRESET_UND = 5,
-                      REGISTERS_PRESET_SYS = 0;
+  static constexpr u8 REGISTERS_PRESET_USR{0}, REGISTERS_PRESET_FIQ{1}, REGISTERS_PRESET_IRQ{2},
+      REGISTERS_PRESET_SVC{3}, REGISTERS_PRESET_ABT{4}, REGISTERS_PRESET_UND{5},
+      REGISTERS_PRESET_SYS{0};
 
   static constexpr u8 N_ACTIVE_REGISTERS = 18, N_REGISTERS = 37;
 
@@ -117,7 +116,7 @@ struct arm7tdmi {
   void set_mode(u8 mode, bool update_cpsr = true);
 
   [[nodiscard]] inline static u8 get_idx_registers_preset_by_mode(u8 mode) {
-    return (mode != MODE_SYS) ? ((mode & 0b11) + ((mode & 0b1100) >> 2)) : (REGISTERS_PRESET_SYS);
+    return ((mode & 0b11) + ((mode & 0b1100) >> 2)) % 6;
   }
 
   [[nodiscard]] bool ckeck_arm_condition(u32 instruction) const;
