@@ -4,7 +4,7 @@
 namespace neogba {
 
 namespace {
-template <typename instruction_t, typename return_t, u8 n_shift, instruction_t bit_mask>
+template <typename instruction_t, typename return_t, u8 n_shift, instruction_t bit_mask = 0xfu>
 struct isa_field {
   using ins_t = instruction_t;
   using ret_t = return_t;
@@ -90,12 +90,47 @@ enum arm_cond : u8 {
 using ISA_ARM_COND = isa_field_delayed<u32, u8, 28>;
 
 /// Data processing and FSR transfer
+enum arm_fsr_opcode : u8 {
+  AND = 0b0000,
+  EOR = 0b0001,
+  SUB = 0b0010,
+  RSB = 0b0011,
+  ADD = 0b0100,
+  ADC = 0b0101,
+  SBC = 0b0110,
+  RSC = 0b0111,
+  TST = 0b1000,
+  TEQ = 0b1001,
+  CMP = 0b1010,
+  CMN = 0b1011,
+  ORR = 0b1100,
+  MOV = 0b1101,
+  BIC = 0b1110,
+  MVN = 0b1111,
+};
+
+enum arm_shift_type : u8 {
+  LSL = 0b00,
+  LSR = 0b01,
+  ASR = 0b10,
+  ROR = 0b11,
+};
+
 constexpr u32 ISA_ARM_FSR_TEMPLATE{0x02000000u};
-using ISA_ARM_FSR_OPCODE = /*     */ isa_field_delayed<u32, u8, 21>;
-using ISA_ARM_FSR_S = /*          */ isa_field_bool<u32, 20>;
-using ISA_ARM_FSR_RN = /*         */ isa_field_delayed<u32, u8, 16>;
-using ISA_ARM_FSR_RD = /*         */ isa_field_delayed<u32, u8, 12>;
-using ISA_ARM_FSR_OPERAND2 = /*   */ isa_field<u32, u16, 0, ((1u << 12) - 1)>;
+using ISA_ARM_FSR_I = /*                   */ isa_field_bool<u32, 25>;
+using ISA_ARM_FSR_OPCODE = /*              */ isa_field_delayed<u32, u8, 21>;
+using ISA_ARM_FSR_S = /*                   */ isa_field_bool<u32, 20>;
+using ISA_ARM_FSR_RN = /*                  */ isa_field_delayed<u32, u8, 16>;
+using ISA_ARM_FSR_RD = /*                  */ isa_field_delayed<u32, u8, 12>;
+using ISA_ARM_FSR_OPERAND2 = /*            */ isa_field<u32, u16, 0, ((1u << 12) - 1)>;
+using ISA_ARM_FSR_OPERAND2_SHIFT = /*      */ isa_field_delayed<u32, u16, 4, 0xffu>;
+using ISA_ARM_FSR_OPERAND2_4 = /*          */ isa_field_bool<u32, 4>;
+using ISA_ARM_FSR_OPERAND2_SHIFT_TYPE = /* */ isa_field_delayed<u32, u8, 5, 0x3u>;
+using ISA_ARM_FSR_OPERAND2_SHIFT_AMOU = /* */ isa_field_delayed<u32, u8, 7, 0x1fu>;
+using ISA_ARM_FSR_OPERAND2_RS = /*         */ isa_field_delayed<u32, u8, 8>;
+using ISA_ARM_FSR_OPERAND2_RM = /*         */ isa_field<u32, u8, 0>;
+using ISA_ARM_FSR_OPERAND2_ROTATE = /*     */ ISA_ARM_FSR_OPERAND2_RS;
+using ISA_ARM_FSR_OPERAND2_IMM = /*        */ isa_field<u32, u8, 0, 0xffu>;
 
 /// Multiply
 constexpr u32 ISA_ARM_MULTIPLY_TEMPLATE{0x00000090u};
