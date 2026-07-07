@@ -1,14 +1,12 @@
 #include "neogba/arm7tdmi/arm_isa.hpp"
 
-void neogba::arm_AND(arm7tdmi* cpu, u32 inst) {
-  u32 shift_amount, imm, rm, operable_operand2{};
+using namespace neogba;
 
-  u8 rn_idx{ISA_ARM_FSR_RN::get(inst)};
-  u8 rd_idx{ISA_ARM_FSR_RD::get(inst)};
+neogba::arm_operand2_result neogba::arm_operand2_compute(arm7tdmi* cpu, u32 inst) {
+  u32 shift_amount, imm, rm, operable_operand2{};
   u8 shift_type, rm_idx;
 
   bool i{ISA_ARM_FSR_I::get(inst)};
-  [[maybe_unused]] bool s{ISA_ARM_FSR_S::get(inst)};
   bool four, is_special_case;
 
   if (i) {
@@ -80,7 +78,20 @@ void neogba::arm_AND(arm7tdmi* cpu, u32 inst) {
     }
   }
 
-  u32 res = cpu->read_active_register(rn_idx) & operable_operand2;
+  return {shift_amount, operable_operand2};
+}
+
+void neogba::arm_AND(arm7tdmi* cpu, u32 inst) {
+  // u32 operable_operand2{};
+
+  u8 rn_idx{ISA_ARM_FSR_RN::get(inst)};
+  u8 rd_idx{ISA_ARM_FSR_RD::get(inst)};
+
+  [[maybe_unused]] bool s{ISA_ARM_FSR_S::get(inst)};
+
+  auto result{neogba::arm_operand2_compute(cpu, inst)};
+
+  u32 res = cpu->read_active_register(rn_idx) & result.operable_operand2;
 
   cpu->write_active_register(rd_idx, res);
 

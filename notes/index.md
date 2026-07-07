@@ -141,3 +141,219 @@ La página godbolt lo pone sencillo para la inspección del ensablador pudiendo 
 	- Creo que es posible hacer algo así en c++ idomático. En donde realmente lo cambia es en sí el manejo de la operación en sí. (Bueno aunque operand2 tiene su telita) pero es un proceso muy mecánico que siempre será el mismo y lo más importane que tendrá el mismo resultado, sacar un número de operand2 del que podemos operar. Aunque hay caveats porque si el flag s está activo implica actualizar el registro en base a lo ocurrido en la ejecución.
     - por qué he puesto fuera las instrucciones? por no engrasar tanto a la estructura del arm7tdmi	
   - He cambiado el obtenedor de conjuntos de registros de usar una condicional a usar la operación módulo.
+
+# 7 de julio
+
+- La mayor penalización en un emulador es el if.
+- La idea cómo construir la LUT es hacerla de tal forma que eliminemos lógica condicional y la remplacemos por la lógica aritmética.
+- En bruto, nuestro objetivo es eliminar el típico código if (true) algo.
+- Algunas de las opciones barajadas:
+  0. Dejarlo con las condicionales. -> Penalización extrema
+  1. Escribir a mano todas las combinaciones. Lo cual da bastante puede dar pie a errores tipográfico y código poco de reusable.
+  2. Algún mecanismo de metaporgación de plantilla. No me cuadra ninguna cabida de implementación por su rigidez. Este es la solcuión utilizada en mgba con macros bajo c. Lo cual resulta bastante práctico y flexible a prestarse a este tipo de situaciones.
+  
+  el código inicial es 
+  
+  ``` c++
+  
+void neogba::arm_AND(arm7tdmi* cpu, u32 inst) {
+  u32 shift_amount, imm, rm, operable_operand2{};
+
+  u8 rn_idx{ISA_ARM_FSR_RN::get(inst)};
+  u8 rd_idx{ISA_ARM_FSR_RD::get(inst)};
+  u8 shift_type, rm_idx;
+
+  bool i{ISA_ARM_FSR_I::get(inst)};
+  [[maybe_unused]] bool s{ISA_ARM_FSR_S::get(inst)};
+  bool four, is_special_case;
+
+  if (i) {
+
+    // operand2 is immediate value with shift.
+
+    shift_amount = 2 * ISA_ARM_FSR_OPERAND2_ROTATE::get(inst);
+    imm = ISA_ARM_FSR_OPERAND2_IMM::get(inst);
+
+    operable_operand2 =
+        (shift_amount == 0) ? imm : ((imm >> shift_amount) | (imm << (32 - shift_amount)));
+  } else {
+
+    // operand2 is a register with shift.
+
+    rm_idx = ISA_ARM_FSR_OPERAND2_RM::get(inst);
+    rm = cpu->read_active_register(rm_idx);
+    shift_type = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(inst);
+    four = ISA_ARM_FSR_OPERAND2_4::get(inst);
+
+    shift_amount = four ? cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst))
+                        : ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
+
+    is_special_case = !four && shift_amount == 0;
+
+    switch (shift_type) {
+
+    case LSL:
+      if (is_special_case) {
+        operable_operand2 = rm; // LSL #0
+      } else {
+        operable_operand2 = (shift_amount >= 32) ? 0 : (rm << shift_amount);
+      }
+      break;
+
+    case LSR:
+      if (is_special_case)
+        shift_amount = 32; // LSR #0
+
+      operable_operand2 = (shift_amount >= 32) ? 0 : (rm >> shift_amount);
+      break;
+
+    case ASR:
+      if (is_special_case)
+        shift_amount = 32; // ASR #0
+
+      if (shift_amount >= 32) {
+        // Shifting ge 32, a. if and negative -> ffff, b. if and postive -> 0s
+        operable_operand2 = (rm & 0x80000000) ? 0xffffffff : 0;
+      } else {
+        // Preserve sign bit with i32
+        operable_operand2 = static_cast<u32>(static_cast<int32_t>(rm) >> shift_amount);
+      }
+      break;
+
+    case ROR:
+      if (is_special_case) {
+        // RRX: Rotate 1 bit and include Cin.
+        if (cpu->is_cpsr(arm7tdmi::C, arm7tdmi::C))
+          operable_operand2 = 0x80000000;
+
+        operable_operand2 |= (rm >> 1);
+      } else {
+        shift_amount %= 32; // 32 = 64 -> rotate 0 bits
+        operable_operand2 =
+            (shift_amount == 0) ? rm : ((rm >> shift_amount) | (rm << (32 - shift_amount)));
+      }
+      break;
+    }
+  }
+
+  u32 res = cpu->read_active_register(rn_idx) & operable_operand2;
+
+  cpu->write_active_register(rd_idx, res);
+
+  if (s)
+    cpu->set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V,
+                  (res == 0 ? arm7tdmi::Z : 0) | (((res & 0x8000000) != 0) ? arm7tdmi::N : 0));
+}
+  ```
+
+Y la idea es ir modularizarla. 
+
+- La primera refactorización consistirá en homogenizar el cómputo de operand2 puesto será una cuestión recurrente en operaciones de este tipo. 
+  - Para esto vamos llevarnos a funcionalidad aparte. Al estar todo junto, como típica replicación, debemos refactorizar para ver qué trasladar.
+  - Ahora queda mucho más claro que hay que pasar por computar operand2 obligatoriamente.
+  
+  ``` c++
+  #include "neogba/arm7tdmi/arm_isa.hpp"
+
+using namespace neogba;
+
+neogba::arm_operand2_result neogba::arm_operand2_compute(arm7tdmi* cpu, u32 inst) {
+  u32 shift_amount, imm, rm, operable_operand2{};
+  u8 shift_type, rm_idx;
+
+  bool i{ISA_ARM_FSR_I::get(inst)};
+  bool four, is_special_case;
+
+  if (i) {
+
+    // operand2 is immediate value with shift.
+
+    shift_amount = 2 * ISA_ARM_FSR_OPERAND2_ROTATE::get(inst);
+    imm = ISA_ARM_FSR_OPERAND2_IMM::get(inst);
+
+    operable_operand2 =
+        (shift_amount == 0) ? imm : ((imm >> shift_amount) | (imm << (32 - shift_amount)));
+  } else {
+
+    // operand2 is a register with shift.
+
+    rm_idx = ISA_ARM_FSR_OPERAND2_RM::get(inst);
+    rm = cpu->read_active_register(rm_idx);
+    shift_type = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(inst);
+    four = ISA_ARM_FSR_OPERAND2_4::get(inst);
+
+    shift_amount = four ? cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst))
+                        : ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
+
+    is_special_case = !four && shift_amount == 0;
+
+    switch (shift_type) {
+
+    case LSL:
+      if (is_special_case) {
+        operable_operand2 = rm; // LSL #0
+      } else {
+        operable_operand2 = (shift_amount >= 32) ? 0 : (rm << shift_amount);
+      }
+      break;
+
+    case LSR:
+      if (is_special_case)
+        shift_amount = 32; // LSR #0
+
+      operable_operand2 = (shift_amount >= 32) ? 0 : (rm >> shift_amount);
+      break;
+
+    case ASR:
+      if (is_special_case)
+        shift_amount = 32; // ASR #0
+
+      if (shift_amount >= 32) {
+        // Shifting ge 32, a. if and negative -> ffff, b. if and postive -> 0s
+        operable_operand2 = (rm & 0x80000000) ? 0xffffffff : 0;
+      } else {
+        // Preserve sign bit with i32
+        operable_operand2 = static_cast<u32>(static_cast<int32_t>(rm) >> shift_amount);
+      }
+      break;
+
+    case ROR:
+      if (is_special_case) {
+        // RRX: Rotate 1 bit and include Cin.
+        if (cpu->is_cpsr(arm7tdmi::C, arm7tdmi::C))
+          operable_operand2 = 0x80000000;
+
+        operable_operand2 |= (rm >> 1);
+      } else {
+        shift_amount %= 32; // 32 = 64 -> rotate 0 bits
+        operable_operand2 =
+            (shift_amount == 0) ? rm : ((rm >> shift_amount) | (rm << (32 - shift_amount)));
+      }
+      break;
+    }
+  }
+
+  return {shift_amount, operable_operand2};
+}
+
+void neogba::arm_AND(arm7tdmi* cpu, u32 inst) {
+  // u32 operable_operand2{};
+
+  u8 rn_idx{ISA_ARM_FSR_RN::get(inst)};
+  u8 rd_idx{ISA_ARM_FSR_RD::get(inst)};
+
+  [[maybe_unused]] bool s{ISA_ARM_FSR_S::get(inst)};
+
+  auto result{neogba::arm_operand2_compute(cpu, inst)};
+
+  u32 res = cpu->read_active_register(rn_idx) & result.operable_operand2;
+
+  cpu->write_active_register(rd_idx, res);
+
+  if (s)
+    cpu->set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V,
+                  (res == 0 ? arm7tdmi::Z : 0) | (((res & 0x8000000) != 0) ? arm7tdmi::N : 0));
+}
+  ```
+
+  - con esto en mente, lo que podemos hacer es otra optimización al código de obtención del valor a operar de operand2, es crear una pequeña tabla lut cogiendo y tomando valores de interés. En otras palabras lo 

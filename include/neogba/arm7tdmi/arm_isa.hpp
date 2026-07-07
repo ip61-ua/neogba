@@ -5,6 +5,11 @@
 
 namespace neogba {
 
+struct arm_operand2_result {
+  u32 shift_amount, operable_operand2;
+};
+
+arm_operand2_result arm_operand2_compute(arm7tdmi* cpu, u32 inst);
 void arm_AND(arm7tdmi* cpu, u32 inst);
 // void arm_EOR(arm7tdmi* cpu, u32 inst);
 // void arm_SUB(arm7tdmi* cpu, u32 inst);
