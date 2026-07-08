@@ -53,7 +53,7 @@ public:
   constexpr return_t run(std::size_t idx, auto... params) const { return get(idx)(params...); }
 
   constexpr void fill(std::size_t idx, store_t what) { storage[norm_idx(idx)] = what; }
-  constexpr std::size_t fill(std::size_t idx_base, store_t what, std::size_t mask) {
+  constexpr std::size_t fill(std::size_t idx_base, std::size_t mask, store_t what) {
     std::size_t b{norm_idx(idx_base)}, m{norm_idx(mask)};
     put(b, what);
     return 1 + fill_recursive(b, m, what, true) + fill_recursive(b, m, what, false);
