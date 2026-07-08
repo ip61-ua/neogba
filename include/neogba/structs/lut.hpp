@@ -3,8 +3,7 @@
 
 template <std::size_t max_lenght, typename store_t = void*, typename idx_t = neogba::u8,
           typename return_t = void>
-struct lut {
-private:
+class lut {
   std::array<store_t, max_lenght> storage;
 
 public:
