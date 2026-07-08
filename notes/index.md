@@ -462,3 +462,8 @@ public:
   - Vale, me estoy liando. Vamos a hacer naive en caso recursivo branch para ir pasando los test y optimizando. O no porque a quién le importa si es solo una vez.
   - vale ya se lo que estaba pasando y es que el test estaba mal. No seguía la signatura bien. He simplificado lógica.
   - ES MUY IMPORTANTE DEPURAR ANTES QUE HACER PRINTS.
+  - mE HE PUESTO AHORA con intentar añadir funciones a la lut. Por que esto es lo deseable, definir un conjunto de operaciones finitas que puedan ser llamadas con similar signatura.
+  - A la hora de utilizar funciones el lenguaje emplea todo un sistema moderno funcional. Creamos signatura de función con using.
+  - Los lambdas con funciones anónimas y en la actualidad el estándar del c++ da demasiadas oportunidades para usarlas incluso en plantillas.
+  - Para garantizar que las pruebas vamos a utilizar lambas que alteres variables del test. Lo cierto es que hay varios tipos de lambdas. Una es preservando con capturas referencias locales de ámbito, pero ello pierde ser una función típica. Es decir deja de ser un puntero crudo como sí pasa en c.
+  - interesa hacer un test fácil, comprobar que realmente se ha llamado. Y esto es más típico de mocks en donde comprobamos de forma unitaria a llamada a una dependencia externa falsificando su comportamiento y retorno para registrar que tal llamada sí fue efectiva. sin embargo, vamos a hacer algo más simple y es comprobar que unos valores externos hayan sido modificados. 
