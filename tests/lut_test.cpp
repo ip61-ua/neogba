@@ -21,12 +21,19 @@ TEST(lut_test, fill_recursive_and_ensure_whats_stored) {
 
   u8 mascara = 0b0010011, id_base = 0b1100110;
   int a = 42;
+  std::array<int, 1 << 8> arr;
+
+  arr[0b1100110] = a;
+  arr[0b1100111] = a;
+  arr[0b1100101] = a;
+  arr[0b1100100] = a;
+  arr[0b1110111] = a;
+  arr[0b1110101] = a;
+  arr[0b1110110] = a;
+  arr[0b1110100] = a;
 
   auto n = my_lut.fill(id_base, mascara, a);
 
   ASSERT_EQ(8, n);
-
-  for (auto b :
-       {0b1100110, 0b1100111, 0b1100101, 0b1100100, 0b1110111, 0b1110101, 0b1110110, 0b1110100})
-    ASSERT_EQ(a, my_lut.get(b));
+  ASSERT_EQ(arr, my_lut.get_wrapper());
 }
