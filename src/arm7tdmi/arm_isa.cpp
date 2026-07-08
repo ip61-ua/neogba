@@ -4,9 +4,7 @@ using namespace neogba;
 
 neogba::arm_operand2_result neogba::arm_operand2_compute(arm7tdmi* cpu, u32 inst) {
   u32 shift_amount, imm, rm, operable_operand2{};
-  u8 shift_type, rm_idx;
-
-  bool i{ISA_ARM_FSR_I::get(inst)};
+  u8 shift_type, rm_idx, i{ISA_ARM_FSR_I::get_raw(inst)};
   bool four, is_special_case;
 
   if (i) {

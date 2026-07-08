@@ -356,4 +356,41 @@ void neogba::arm_AND(arm7tdmi* cpu, u32 inst) {
 }
   ```
 
-  - con esto en mente, lo que podemos hacer es otra optimización al código de obtención del valor a operar de operand2, es crear una pequeña tabla lut cogiendo y tomando valores de interés. En otras palabras lo 
+  - con esto en mente, lo que podemos hacer es otra optimización al código de obtención del valor a operar de operand2, es crear una pequeña tabla lut cogiendo y tomando valores de interés. En otras palabras, vamos a aprovecharnos de la abstracción de los extractores para realocar a nuestra conveniencia e interés un código personalizado que sirva a modo de índice para ubicar la operación concreta a realizar. Esto es plausible debido a la muy definida funcionalidad y acotada combinación. Para he esto he hecho explícito un método para devolver u8 en los extractores del estilo isa_bool.
+  - NO NO LO VEO.
+  
+  
+8 de julio
+
+Creo que es necesaria la abstracción de lut. Mucho hablar teoricamente y pero poca prácticticidad.
+
+``` c++
+
+template <std::size_t max_lenght, typename store_t = void*, typename idx_t = neogba::u8,
+          typename return_t = void>
+struct lut {
+private:
+  std::array<store_t, max_lenght> storage;
+
+public:
+  virtual std::size_t norm_idx(idx_t idx) const;
+
+  store_t get(idx_t idx) const;
+  return_t run(idx_t idx, ...) const;
+
+  void put(idx_t idx, store_t what);
+  void fill(idx_t idx_base, store_t what, idx_t mask);
+
+  void erase(idx_t idx);
+
+  bool is_empty() const;
+  bool is_empty(idx_t idx) const;
+
+  std::size_t length() const;
+  std::size_t count_stored(store_t what) const;
+};
+
+```
+
+
+

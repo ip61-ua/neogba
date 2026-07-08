@@ -29,6 +29,10 @@ struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)>
     return (instruction & isa_field_bool::mask) != 0;
   }
 
+  [[nodiscard]] static constexpr u8 get_raw(isa_field_bool::ins_t instruction) {
+    return instruction & isa_field_bool::mask >> n_shift;
+  }
+
   [[nodiscard]] static constexpr isa_field_bool::ins_t set(isa_field_bool::ins_t instruction,
                                                            bool value) {
     return ((instruction) & (~isa_field_bool::mask)) | (value ? isa_field_bool::mask : 0);
