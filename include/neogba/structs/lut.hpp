@@ -1,12 +1,13 @@
 #include "neogba/types.hpp"
 #include <array>
+#include <bitset>
 #include <cstddef>
+#include <cstdio>
+#include <iostream>
 
 namespace neogba {
 
-template <std::size_t max_length, typename store_t = void*, typename idx_t = u8,
-          typename return_t = void>
-class lut {
+template <std::size_t max_length, typename store_t = void*, typename return_t = void> class lut {
 private:
   std::array<store_t, max_length> storage{};
   constexpr void put(std::size_t raw_idx, store_t what) { storage[raw_idx] = what; }
@@ -23,10 +24,20 @@ private:
       return fill_recursive(base, mask, what, high, ++bit);
 
     // caso recursivo branch
-    std::size_t bit_mask{1u << bit};
-    bool bit_set{(base & bit_mask) != 0};
-    u8 count{static_cast<u8>(high != bit_set)};
-    base ^= (static_cast<std::size_t>(count) << bit);
+    std::size_t a_bit_mask{1u << bit};
+    bool is_base_zero{((base) & (a_bit_mask)) == 0};
+    u8 count{0};
+
+    if (!(high ^ is_base_zero)) {
+      count = 1;
+      base ^= a_bit_mask;
+
+      put(base, what);
+    }
+
+    for (auto k = bit; k > 0; k--)
+      std::cout << "  ";
+    std::cout << bit << " " << (high ? "high" : "low ") << " " << std::bitset<8>(base) << "\n";
 
     ++bit;
 
@@ -35,14 +46,14 @@ private:
   }
 
 public:
-  constexpr virtual std::size_t norm_idx(idx_t idx) const { return static_cast<std::size_t>(idx); }
+  constexpr virtual std::size_t norm_idx(std::size_t idx) const { return idx; }
 
   constexpr std::array<store_t, max_length> get_wrapper() const { return storage; }
-  constexpr store_t get(idx_t idx) const { return storage[norm_idx(idx)]; }
-  constexpr return_t run(idx_t idx, auto... params) const { return get(idx)(params...); }
+  constexpr store_t get(std::size_t idx) const { return storage[norm_idx(idx)]; }
+  constexpr return_t run(std::size_t idx, auto... params) const { return get(idx)(params...); }
 
-  constexpr void fill(idx_t idx, store_t what) { storage[norm_idx(idx)] = what; }
-  constexpr std::size_t fill(idx_t idx_base, store_t what, idx_t mask) {
+  constexpr void fill(std::size_t idx, store_t what) { storage[norm_idx(idx)] = what; }
+  constexpr std::size_t fill(std::size_t idx_base, store_t what, std::size_t mask) {
     std::size_t b{norm_idx(idx_base)}, m{norm_idx(mask)};
     put(b, what);
     return 1 + fill_recursive(b, m, what, true) + fill_recursive(b, m, what, false);

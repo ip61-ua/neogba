@@ -456,4 +456,7 @@ public:
 };
 ```
 
-  - Luego me puse a refactorizar el código para una versión branchless el caso de recursivo branch 
+  - Luego me puse a refactorizar el código para una versión branchless el caso de recursivo branch.
+  - Pero no tuvo tanto sentido, porque no cubiría la llamada a función
+  - Además esto tiene penalización en tiempo de compilación y no en ejecución preferiblemente. O en caso de tenerlo, sería mínimo en ejecución por la naturaleza de la estructura.
+  - Vale, me estoy liando. Vamos a hacer naive en caso recursivo branch para ir pasando los test y optimizando. O no porque a quién le importa si es solo una vez.
