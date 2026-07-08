@@ -460,3 +460,5 @@ public:
   - Pero no tuvo tanto sentido, porque no cubiría la llamada a función
   - Además esto tiene penalización en tiempo de compilación y no en ejecución preferiblemente. O en caso de tenerlo, sería mínimo en ejecución por la naturaleza de la estructura.
   - Vale, me estoy liando. Vamos a hacer naive en caso recursivo branch para ir pasando los test y optimizando. O no porque a quién le importa si es solo una vez.
+  - vale ya se lo que estaba pasando y es que el test estaba mal. No seguía la signatura bien. He simplificado lógica.
+  - ES MUY IMPORTANTE DEPURAR ANTES QUE HACER PRINTS.

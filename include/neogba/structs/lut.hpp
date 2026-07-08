@@ -1,9 +1,9 @@
 #include "neogba/types.hpp"
 #include <array>
-#include <bitset>
 #include <cstddef>
 #include <cstdio>
-#include <iostream>
+// #include <bitset>
+// #include <iostream>
 
 namespace neogba {
 
@@ -33,11 +33,11 @@ private:
       base ^= a_bit_mask;
 
       put(base, what);
-    }
 
-    for (auto k = bit; k > 0; k--)
-      std::cout << "  ";
-    std::cout << bit << " " << (high ? "high" : "low ") << " " << std::bitset<8>(base) << "\n";
+      // for (auto k = bit; k > 0; k--)
+      //   std::cout << "  ";
+      // std::cout << bit << " " << (high ? "high" : "low ") << " " << std::bitset<8>(base) << "\n";
+    }
 
     ++bit;
 
