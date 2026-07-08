@@ -7,7 +7,7 @@
 
 namespace neogba {
 
-template <std::size_t max_length, typename store_t = void*, typename return_t = void> class lut {
+template <typename store_t, std::size_t max_length, typename return_t = void> class lut {
 private:
   std::array<store_t, max_length> storage{};
   constexpr void put(std::size_t raw_idx, store_t what) { storage[raw_idx] = what; }

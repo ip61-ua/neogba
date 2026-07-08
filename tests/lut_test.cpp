@@ -5,7 +5,7 @@
 using namespace neogba;
 
 TEST(lut_test, fill_recursive_and_ensure_how_many_stored) {
-  lut<1 << 8, int> my_lut;
+  lut<int, 1 << 8> my_lut;
 
   u8 mascara = 0b0010011, id_base = 0b1100110;
   int a = 42;
@@ -17,7 +17,7 @@ TEST(lut_test, fill_recursive_and_ensure_how_many_stored) {
 }
 
 TEST(lut_test, fill_recursive_and_ensure_whats_stored) {
-  lut<1 << 8, int> my_lut;
+  lut<int, 1 << 8> my_lut;
 
   u8 mascara = 0b0010011, id_base = 0b1100110;
   int a = 42;
