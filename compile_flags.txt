@@ -12,5 +12,6 @@
 -fsanitize=undefined
 -std=c++26
 -lgtest
+-lgmock
 -lgtest_main
 -pthread
