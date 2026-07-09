@@ -47,11 +47,27 @@ public:
   constexpr store_t get(std::size_t idx) const { return storage[norm_idx(idx)]; }
   constexpr return_t run(std::size_t idx, auto&&... params) const { return get(idx)(params...); }
 
+  constexpr void fill(store_t what) { storage.fill(what); }
   constexpr void fill(std::size_t idx, store_t what) { storage[norm_idx(idx)] = what; }
   constexpr std::size_t fill(std::size_t idx_base, std::size_t mask, store_t what) {
     std::size_t b{norm_idx(idx_base)}, m{norm_idx(mask)};
     put(b, what);
     return 1 + fill_recursive(b, m, what, true) + fill_recursive(b, m, what, false);
+  }
+  constexpr std::size_t fill_except(std::size_t idx_base, std::size_t mask, store_t what) {
+    std::size_t b{norm_idx(idx_base)}, m{norm_idx(mask)};
+    return fill_recursive(b, m, what, true) + fill_recursive(b, m, what, false);
+  }
+
+  constexpr std::size_t fill_range(std::size_t from, std::size_t to, store_t what) {
+    std::size_t f{norm_idx(from)}, t{norm_idx(to)}, n{};
+
+    for (auto i{f}; i < t; ++i) {
+      put(i, what);
+      n++;
+    }
+
+    return n;
   }
 
   constexpr std::size_t length() const { return max_length; };
