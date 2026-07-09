@@ -2,8 +2,6 @@
 #include <array>
 #include <cstddef>
 #include <cstdio>
-// #include <bitset>
-// #include <iostream>
 
 namespace neogba {
 
@@ -31,12 +29,7 @@ protected:
     if (!(high ^ is_base_zero)) {
       count = 1;
       base ^= a_bit_mask;
-
       put(base, what);
-
-      // for (auto k = bit; k > 0; k--)
-      //   std::cout << "  ";
-      // std::cout << bit << " " << (high ? "high" : "low ") << " " << std::bitset<8>(base) << "\n";
     }
 
     ++bit;
