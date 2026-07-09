@@ -470,4 +470,6 @@ public:
   - sin embargo, gtest trae un framwwork para mocking.
   - HACER EXPECT CALL.... un poco más enrevisada la sintaxis no es tan directa como en otros frameworks como easy mock en java.
   
+9 de julio
+  - he añadido más test para comprobar cómo usar la lut.
   
