@@ -109,13 +109,7 @@ TEST(lut_test, fill_recursive_and_execution_by_running_lambdas_returning_values_
 }
 
 TEST(lut_test, fill_get_with_custom_norm_idx_and_ensure_whats_stored) {
-  struct customlut : public lut<long, 1 << 2> {
-    constexpr std::size_t norm_idx(std::size_t idx) const override {
-      return (0b11 & idx) % length();
-    }
-  };
-
-  customlut my_lut;
+  lut<long, 1 << 2, void, [](std::size_t idx) -> std::size_t { return 0b11 & idx; }> my_lut;
   std::array<long, 1 << 2> arr;
 
   arr[0b00] = LUT_DATA_EXAMPLE;
@@ -130,13 +124,12 @@ TEST(lut_test, fill_get_with_custom_norm_idx_and_ensure_whats_stored) {
 }
 
 TEST(lut_test, fill_get_with_custom_norm_idx_and_ensure_whats_stored_2) {
-  struct customlut : public lut<u16, 1 << 4> {
-    constexpr std::size_t norm_idx(std::size_t idx) const override {
-      return (((idx & 0b1110000) >> 3) | ((idx & 0b10) >> 1)) % length();
-    }
-  };
+  lut<u16, 1 << 4, void,
+      [](std::size_t idx) -> std::size_t {
+        return (((idx & 0b1110000) >> 3) | ((idx & 0b10) >> 1));
+      }>
+      my_lut;
 
-  customlut my_lut;
   std::array<u16, 1 << 4> arr;
 
   // arr[0b1100110] = LUT_DATA_EXAMPLE;
@@ -161,4 +154,19 @@ TEST(lut_test, fill_get_with_custom_norm_idx_and_ensure_whats_stored_2) {
   my_lut.fill(LUT_BASE_EXAMPLE, LUT_MASK_EXAMPLE, LUT_DATA_EXAMPLE);
 
   ASSERT_EQ(arr, my_lut.get_wrapper());
+}
+
+TEST(lut_test, fill_and_execution_with_references_params) {
+  using handler_test = int (*)(int& a);
+
+  lut<handler_test, 1 << 8, int> my_lut;
+
+  int a{7};
+  auto important_operation = [](int& a) -> int { return a++; };
+
+  my_lut.fill(LUT_BASE_EXAMPLE, important_operation);
+
+  auto a1 = my_lut.run(LUT_BASE_EXAMPLE, a);
+  ASSERT_EQ(7, a1);
+  ASSERT_EQ(8, a);
 }

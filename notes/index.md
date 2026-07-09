@@ -472,4 +472,10 @@ public:
   
 9 de julio
   - he añadido más test para comprobar cómo usar la lut.
-  
+  - he optimizado algunas cosas más. como reemplazar la operación módulo por una máscara.
+  - Hay un problema en el método run y es que el reenvío de parámetros a sus repectivas funciones, las copia y no preserva referencias.
+  - para solucionar esto debemos utilizar la referencia universal auto&&... params para tratar todos los tipos lvalue o rvalues o mantener de solo lectura. 
+  - std::forward<decltype(params)> reenvia y mantiene la naturaleza de todos los tipos empaquetados en params mientras interfamente se trate como lvalue en el ámbido de run. Aunque viene a mantener soluciones recientes de c++ de movimiento.
+  - Las llamadas virtuales tienen un coste a asumir. Añaden overhead de indirección.
+  - por ello, he replanteado que en lugar de utilizar la derivación de la clase lut, he utilizado la inyección de políticas. Esto es que, hay un parámetro de plantilla que dicta el comportamiento de la lut. De modo que no permita cambio en tiempo de ejecución. Esto adelanta lo máximo posible al tiempo de compilación.
+  - Beneficiándose de mayor flexibilidad.

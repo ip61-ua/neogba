@@ -5,8 +5,13 @@
 
 namespace neogba {
 
-template <typename store_t, std::size_t max_length, typename return_t = void> class lut {
+constexpr std::size_t lut_default_normalizer(std::size_t idx) noexcept { return idx; }
+
+template <typename store_t, std::size_t max_length, typename return_t = void,
+          std::size_t (*normalizer)(std::size_t idx) = lut_default_normalizer>
+class lut {
 protected:
+  const std::size_t MAX_MASK{max_length - 1};
   std::array<store_t, max_length> storage{};
   constexpr void put(std::size_t raw_idx, store_t what) { storage[raw_idx] = what; }
   constexpr std::size_t fill_recursive(std::size_t base, std::size_t mask, store_t what, bool high,
@@ -37,11 +42,11 @@ protected:
   }
 
 public:
-  constexpr virtual std::size_t norm_idx(std::size_t idx) const { return idx % max_length; }
+  constexpr std::size_t norm_idx(std::size_t idx) const { return normalizer(idx) & MAX_MASK; }
 
   constexpr std::array<store_t, max_length> get_wrapper() const { return storage; }
   constexpr store_t get(std::size_t idx) const { return storage[norm_idx(idx)]; }
-  constexpr return_t run(std::size_t idx, auto... params) const { return get(idx)(params...); }
+  constexpr return_t run(std::size_t idx, auto&&... params) const { return get(idx)(params...); }
 
   constexpr void fill(std::size_t idx, store_t what) { storage[norm_idx(idx)] = what; }
   constexpr std::size_t fill(std::size_t idx_base, std::size_t mask, store_t what) {
@@ -53,7 +58,7 @@ public:
   constexpr std::size_t length() const { return max_length; };
   constexpr std::size_t count_stored(store_t what) const {
     std::size_t n{};
-    for (auto elem : storage)
+    for (const auto& elem : storage)
       if (elem == what)
         n++;
     return n;
