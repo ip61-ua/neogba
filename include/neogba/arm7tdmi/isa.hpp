@@ -26,11 +26,11 @@ struct isa_field_delayed : isa_field<instruction_t, return_t, n_shift, (base_mas
 template <typename instruction_t, u8 n_shift>
 struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)> {
   [[nodiscard]] static constexpr bool get(isa_field_bool::ins_t instruction) {
-    return (instruction & isa_field_bool::mask) != 0;
+    return ((instruction)&isa_field_bool::mask) != 0;
   }
 
   [[nodiscard]] static constexpr u8 get_raw(isa_field_bool::ins_t instruction) {
-    return instruction & isa_field_bool::mask >> n_shift;
+    return ((instruction)&isa_field_bool::mask) >> n_shift;
   }
 
   [[nodiscard]] static constexpr isa_field_bool::ins_t set(isa_field_bool::ins_t instruction,
@@ -244,7 +244,7 @@ using ISA_ARM_COPROCOP_CRM = /*       */ ISA_ARM_MULTIPLY_RM;
 
 /// Coprocessor register transfer
 constexpr u32 ISA_ARM_COPROCREGTRANS_TEMPLATE{0x0e000010u};
-using ISA_ARM_COPROCREGTRANS_CPOPC = /* */ isa_field_delayed<u32, u8, 21, 0x7u>;
+using ISA_ARM_COPROCREGTRANS_CPOPC = /*  */ isa_field_delayed<u32, u8, 21, 0x7u>;
 using ISA_ARM_COPROCREGTRANS_L = /*      */ ISA_ARM_SINGLETRANS_L;
 using ISA_ARM_COPROCREGTRANS_CRN = /*    */ ISA_ARM_COPROCOP_CRN;
 using ISA_ARM_COPROCREGTRANS_RD = /*     */ ISA_ARM_COPROCOP_CRD;
