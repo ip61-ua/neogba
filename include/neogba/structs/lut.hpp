@@ -8,7 +8,7 @@
 namespace neogba {
 
 template <typename store_t, std::size_t max_length, typename return_t = void> class lut {
-private:
+protected:
   std::array<store_t, max_length> storage{};
   constexpr void put(std::size_t raw_idx, store_t what) { storage[raw_idx] = what; }
   constexpr std::size_t fill_recursive(std::size_t base, std::size_t mask, store_t what, bool high,
@@ -46,7 +46,7 @@ private:
   }
 
 public:
-  constexpr virtual std::size_t norm_idx(std::size_t idx) const { return idx; }
+  constexpr virtual std::size_t norm_idx(std::size_t idx) const { return idx % max_length; }
 
   constexpr std::array<store_t, max_length> get_wrapper() const { return storage; }
   constexpr store_t get(std::size_t idx) const { return storage[norm_idx(idx)]; }

@@ -14,6 +14,7 @@ TEST(lut_test, fill_recursive_and_ensure_how_many_stored_with_count_stored) {
   auto n = my_lut.fill(LUT_BASE_EXAMPLE, LUT_MASK_EXAMPLE, LUT_DATA_EXAMPLE);
 
   ASSERT_EQ(LUT_RESULT_LENGTH_EXAMPLE, n);
+  ASSERT_EQ(LUT_RESULT_LENGTH_EXAMPLE, my_lut.count_stored(LUT_DATA_EXAMPLE));
 }
 
 TEST(lut_test, fill_recursive_and_ensure_whats_stored_get_wrapper) {
@@ -52,18 +53,24 @@ TEST(lut_test, fill_recursive_and_ensure_whats_stored_by_get) {
 }
 
 TEST(lut_test, fill_recursive_and_execution_by_running_lambdas) {
-  using handler_test = void (*)(bool a, int b);
-
+  using handler_test = void (*)(int);
   lut<handler_test, 1 << 8> my_lut;
 
-  static int a1{};
-  static int b1{};
+  class FunctionMock {
+  public:
+    MOCK_METHOD(void, execute, (int a));
+  };
 
-  auto important_operation = [](bool a, int b) -> void {
-    if (a) {
-      a1 = b;
-    } else {
-      b1 = b;
+  static FunctionMock* mock_bridge = nullptr;
+  FunctionMock mock_instance;
+  mock_bridge = &mock_instance;
+
+  EXPECT_CALL(mock_instance, execute(2)).Times(1);
+  EXPECT_CALL(mock_instance, execute(9)).Times(1);
+
+  auto important_operation = [](int a) -> void {
+    if (mock_bridge) {
+      mock_bridge->execute(a);
     }
   };
 
@@ -77,11 +84,13 @@ TEST(lut_test, fill_recursive_and_execution_by_running_lambdas) {
   ASSERT_EQ(important_operation, my_lut.get(0b1110101));
   ASSERT_EQ(important_operation, my_lut.get(0b1110110));
   ASSERT_EQ(important_operation, my_lut.get(0b1110100));
+  ASSERT_NE(important_operation, my_lut.get(0b0010100));
+  ASSERT_NE(important_operation, my_lut.get(0b0000000));
 
-  my_lut.run(0b1110100, true, 2);
-  my_lut.run(0b1110101, false, 9);
-  ASSERT_EQ(2, a1);
-  ASSERT_EQ(9, b1);
+  my_lut.run(0b1110100, 2);
+  my_lut.run(0b1110101, 9);
+
+  mock_bridge = nullptr;
 }
 
 TEST(lut_test, fill_recursive_and_execution_by_running_lambdas_returning_values_and_no_vargs) {
@@ -97,4 +106,22 @@ TEST(lut_test, fill_recursive_and_execution_by_running_lambdas_returning_values_
   auto b1 = my_lut.run(0b1110101);
   ASSERT_EQ(42, a1);
   ASSERT_EQ(42, b1);
+}
+
+TEST(lut_test, fill_get_with_custom_norm_idx_and_ensure_whats_stored) {
+  lut<int, 1 << 8> my_lut;
+  std::array<int, 1 << 8> arr;
+
+  arr[0b1100110] = LUT_DATA_EXAMPLE;
+  arr[0b1100111] = LUT_DATA_EXAMPLE;
+  arr[0b1100101] = LUT_DATA_EXAMPLE;
+  arr[0b1100100] = LUT_DATA_EXAMPLE;
+  arr[0b1110111] = LUT_DATA_EXAMPLE;
+  arr[0b1110101] = LUT_DATA_EXAMPLE;
+  arr[0b1110110] = LUT_DATA_EXAMPLE;
+  arr[0b1110100] = LUT_DATA_EXAMPLE;
+
+  my_lut.fill(LUT_BASE_EXAMPLE, LUT_MASK_EXAMPLE, LUT_DATA_EXAMPLE);
+
+  ASSERT_EQ(arr, my_lut.get_wrapper());
 }

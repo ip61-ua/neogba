@@ -468,5 +468,6 @@ public:
   - Para garantizar que las pruebas vamos a utilizar lambas que alteres variables del test. Lo cierto es que hay varios tipos de lambdas. Una es preservando con capturas referencias locales de ámbito, pero ello pierde ser una función típica. Es decir deja de ser un puntero crudo como sí pasa en c.
   - interesa hacer un test fácil, comprobar que realmente se ha llamado. Y esto es más típico de mocks en donde comprobamos de forma unitaria a llamada a una dependencia externa falsificando su comportamiento y retorno para registrar que tal llamada sí fue efectiva. sin embargo, vamos a hacer algo más simple y es comprobar que unos valores externos hayan sido modificados.
   - sin embargo, gtest trae un framwwork para mocking.
+  - HACER EXPECT CALL.... un poco más enrevisada la sintaxis no es tan directa como en otros frameworks como easy mock en java.
   
-  - HACER EXPECT CALL....
+  
