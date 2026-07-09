@@ -579,8 +579,51 @@ moderns (tm)
 	  -i ^ lsr ^ -(shift_a >= 32)                   -> rm >> shift_a
 	  -i ^ asr ^ special_case                       -> (shift_a = 32) // dejar e ir
 	  -i ^ asr                                      -> static_cast<u32>(static_cast<int32_t>(rm) >> std::min<u32>(31, shift_amount));
-
+	  -i ^ ror ^ special_case                       ->  |= (rm >> 1)
+	  -i ^ ror ^ -special_case ^ (shift_a == 0)     -> rm
+	  -i ^ ror ^ -special_case ^ -(shift_a == 0)    -> ((rm >> shift_amount) | (rm << (32 - shift_amount)))
     ```
 
 
-    a su vez podemos simplificar los casos iniciales
+es complicado, pero ayuda podemos decidir más fácilmente cómo optimizar y simplificar.
+
+   - lo cierto es que is_special_case{!four && shift_amount == 0}; y 
+    shift_amount = four ? cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst))
+                        : ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
+    no lo pone nada fácil en codificar.
+	
+   - sin embargo, pensemos por un momento: el bit 4 es clave !!! y partir de ahí podemos sacar si usar una u otra fórmula de obtención del numérico.
+   - en paralelo tenemos shift_type que siempre está en el mismo sitio y en ese sentido no hay tanto problema.
+   - el problema tocho viene por el bit 4 que enfunción de este deberemos hacer un doble aplanamiento. Por que intercede si considerar 5 bits o 4 cuatro. Volviéndose peligroso al tener que que crear por cuatro casos de rotación por 2 diferentes implementaciones de extrema semejanza. 
+   - esta posiblemente sea una de las grandes desventajas de un código tan corto e hiperespecializado: duplicación de código.
+   - sin embargo obtenemos un código con una única responsabilidad. 
+   
+   
+   una idea que se me ocurre de atacar esto es añadiendo una indirección. porque piensa en que tú el fondo lo que te intersa tener para luego en las rotaciones el shift_amount y special_case. 
+   AHora pensándolo mejor, la dirección es casi obligatoria. Solo lo es para el caso de cuando el bit 4 esté activo por que recuperará un dato de la cpu. sin embargo aquí la cpu es un ""ente"" ajeno del que es IMPOSIBLE conocer de antemano que devolverá ese read ya que depende de un contexto y estados no relativos a la instrucción. 
+   
+   Además el tema de bits es lo menos que sea 5 o 4. si solo fuera ese el problema es que sería relativamente sencillo acotar una solución que proporcionase un número. De algún u otro modo, el read nos dificulta el paso al aplanamiento.
+   
+   como ya hemos dicho en el shift_type hay una serie bien ubicada y sus valores son comprendidos entre límites precisos.
+
+   Pero hemos de percatarnos de un dato de vital transcendencia que no podemos pasar por alto y es que todo special case será con el bit 4 apagado!! Esto quiere decir que el caso especial solo será cuando trabajemos con shift amount es decir cuando bit 4 sea 0 y shift amount sea 0 también.
+   
+   Desde este nuevo prisma si es posible asumir ciertas simplificaciones.
+	
+	```   	  
+	  (lenguaje lógico)
+	  i ^ (shift_a = 0)                             -> imm
+	  i ^ -(shift_a = 0)                            -> ((imm >> shift_amount) | (imm << (32 - shift_amount)))
+	  -i ^ lsl ^ -4 ^ (shift_a = 0)                 -> rm
+	  -i ^ lsl ^ 4 ^ (shift_a >= 32)                -> 0º
+	  -i ^ lsl ^ 4 ^ -(shift_a >= 32)               -> rm << shift_a
+	  -i ^ lsr ^ -4 ^ (shift_a = 0)                 -> (shift_a = 32) // dejar e ir 
+	  -i ^ lsr ^ (shift_a >= 32)                    -> 0
+	  -i ^ lsr ^ -(shift_a >= 32)                   -> rm >> shift_a
+	  -i ^ asr ^ -4 ^ (shift_a = 0)                 -> (shift_a = 32) // dejar e ir
+	  -i ^ asr                                      -> static_cast<u32>(static_cast<int32_t>(rm) >> std::min<u32>(31, shift_amount));
+	  -i ^ ror ^ -4 ^ (shift_a = 0)                 ->  |= (rm >> 1)
+	  -i ^ ror ^ 4 ^ (shift_a == 0)                 -> rm
+	  -i ^ ror ^ 4 ^ -(shift_a == 0)                -> ((rm >> shift_amount) | (rm << (32 - shift_amount)))
+    ```
+
