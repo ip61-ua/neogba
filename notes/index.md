@@ -490,3 +490,97 @@ public:
 	- lo que buscamos es una abstracción de coste cero que pueda ser ahustada a nuestras necesidades usando plantillas.
 	- la lut no es más que un array "vitaminado" con métodos para poner más fácil inserción de elementos y también utilizar un código que sirva a modo índice con el navegar entre opciones. Pero el código que se use puede ser otro al que realmente se utilice. Dejando a conveniencia bien devolver 42, o un número aleatorio, o desaprovechar las entradas de la lut, o idílicamente aprochear para recortar y ajustar los bits de interés de la máscara.
 	- otro caso de uso al que se le puede prestar esta implementación es al direccionamiento de memoria. Decidir a qué chip consultar.
+
+  - Así retomando la especificación del cómputo de operand2 podemos ponernos a analizar como aplicarlo al cómputo de operand2.
+  - Lo debamos hacer ahora es ver cómo podemos unificar todos las distintas combinaciones.
+  - De una operación de procesado de datos y fsr nos interesa conocer su bit i y el campo operand2. Ya ha pasado un tiempo en el que no no acuerdo bien cuales ni cuántos eran. Pero los podemos construir utilizando los extractores.
+  - Yo haría la lut tabla basándome en cómo esta hecha la implementación de operand2. 
+  - De manera que es un método muy estúpido y mecánico en el explorar en orden las conexiones y bifurcaciones del código.
+    1. siendo el bit i el más condicionante en la decisión.
+	2. dentro de i = true, shift_amount es un condicionante porque dicta si devolver solo imm o realizar operación de encadenamiento y desplazo.
+	
+	- Por lo tanto tenemos que 
+	  
+	  ``` 
+	  (lenguaje lógico)
+	  shift_amount = rotate == 0
+	  
+	  i ^ shift_a  -> imm
+	  i ^ -shift_a -> ((imm >> shift_amount) | (imm << (32 - shift_amount)))
+	  ```
+
+    3. Ahora si el i no es true, vamos a otra parte del código en la que se asume que "operand2 is a register with shift", y es algo más complidaca.
+	4. el bit 4 nos dice si es otro registro o es shift_amount. En parte del código donde es realmente dificil hacer una inspección, podemos aplicar otro método y este consiste en ir del final al principio. Siendo que primero tomemos las sentencias finales y visualicemos qué ha hecho falta para llegar a ellas.
+
+	- Por lo tanto tenemos que 
+	  
+	  ``` 
+	  (lenguaje lógico)
+	  -i ^ lsl ^ special_case                       -> rm
+	  -i ^ lsl ^ -special_case ^ (shift_a >= 32)    -> 0
+	  -i ^ lsl ^ -special_case ^ -(shift_a >= 32)   -> rm << shift_a
+	  -i ^ lsr ^ special_case                       -> (shift_a = 32) // dejar e ir 
+	  -i ^ lsr ^ (shift_a >= 32)                    -> 0
+	  -i ^ lsr ^ -(shift_a >= 32)                   -> rm >> shift_a
+	  -i ^ asr ^ special_case                       -> (shift_a = 32) // dejar e ir
+	  -i ^ asr ^ (shift_a >= 32) ^ (rm is neg)      -> 0xffffffff
+	  -i ^ asr ^ (shift_a >= 32) ^ -(rm is neg)     -> 0
+	  -i ^ asr ^ -(shift_a >= 32)                    -> static_cast<u32>(static_cast<int32_t>(rm) >> shift_amount)
+	  ```
+
+
+    es un proceso similar al diseño y simplificación máquinas de estado finito.
+	
+	- en este punto me percato que asr puede simplificarse de sobremanera. ¿porqué? porque podemos aprovecharnos del desplazamiento con preservación de signo también para devolver los valores estáticos y con una regla de comprobación mínimos.
+	
+
+  originals (r)
+
+	``` c++
+	
+    case ASR:
+      if (is_special_case)
+        shift_amount = 32; // ASR #0
+      if (shift_amount >= 32) {
+
+        // Shifting ge 32, a. if and negative -> ffff, b. if and postive -> 0s
+        operable_operand2 = (rm & 0x80000000) ? 0xffffffff : 0;
+      } else {
+        // Preserve sign bit with i32
+        operable_operand2 = static_cast<u32>(static_cast<int32_t>(rm) >> shift_amount);
+      }
+      break;
+
+	```
+
+moderns (tm)
+
+
+	``` c++	
+    case ASR:
+      if (is_special_case) {
+        shift_amount = 32; // ASR #0
+      }
+
+      operable_operand2 = static_cast<u32>(static_cast<int32_t>(rm) >> std::min<u32>(31, shift_amount));
+      break;
+
+	```
+
+	por lo que:
+	
+	``` 
+	  (lenguaje lógico)
+	  -i ^ lsl ^ special_case                       -> rm
+	  -i ^ lsl ^ -special_case ^ (shift_a >= 32)    -> 0
+	  -i ^ lsl ^ -special_case ^ -(shift_a >= 32)   -> rm << shift_a
+	  -i ^ lsr ^ special_case                       -> (shift_a = 32) // dejar e ir 
+	  -i ^ lsr ^ (shift_a >= 32)                    -> 0
+	  -i ^ lsr ^ -(shift_a >= 32)                   -> rm >> shift_a
+	  -i ^ asr ^ special_case                       -> (shift_a = 32) // dejar e ir
+	  -i ^ asr                                      -> static_cast<u32>(static_cast<int32_t>(rm) >> std::min<u32>(31, shift_amount));
+
+    ```
+
+
+    a su vez podemos simplificar los casos iniciales
