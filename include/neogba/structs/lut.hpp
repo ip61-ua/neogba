@@ -6,9 +6,8 @@
 namespace neogba {
 
 template <typename store_t, std::size_t max_length, typename return_t = void,
-          std::size_t (*normalizer)(std::size_t idx) = [](std::size_t idx) -> std::size_t {
-            return idx;
-          }>
+          std::size_t (*normalizer)(std::size_t idx) =
+              +[](std::size_t idx) -> std::size_t { return idx; }>
 class lut {
 protected:
   const std::size_t MAX_MASK{max_length - 1};

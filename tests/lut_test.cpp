@@ -98,7 +98,7 @@ TEST(lut_test, fill_recursive_and_execution_by_running_lambdas_returning_values_
 
   lut<handler_test, 1 << 8, int> my_lut;
 
-  auto important_operation = []() -> int { return 42; };
+  auto important_operation = +[]() -> int { return 42; };
 
   my_lut.fill(LUT_BASE_EXAMPLE, LUT_MASK_EXAMPLE, important_operation);
 
@@ -109,7 +109,7 @@ TEST(lut_test, fill_recursive_and_execution_by_running_lambdas_returning_values_
 }
 
 TEST(lut_test, fill_get_with_custom_norm_idx_and_ensure_whats_stored) {
-  lut<long, 1 << 2, void, [](std::size_t idx) -> std::size_t { return 0b11 & idx; }> my_lut;
+  lut<long, 1 << 2, void, +[](std::size_t idx) -> std::size_t { return 0b11 & idx; }> my_lut;
   std::array<long, 1 << 2> arr;
 
   arr[0b00] = LUT_DATA_EXAMPLE;

@@ -479,3 +479,14 @@ public:
   - Las llamadas virtuales tienen un coste a asumir. Añaden overhead de indirección.
   - por ello, he replanteado que en lugar de utilizar la derivación de la clase lut, he utilizado la inyección de políticas. Esto es que, hay un parámetro de plantilla que dicta el comportamiento de la lut. De modo que no permita cambio en tiempo de ejecución. Esto adelanta lo máximo posible al tiempo de compilación.
   - Beneficiándose de mayor flexibilidad.
+  
+  - Ahora que tenemos todo esto funcionando... ¿para qué?
+    - bien, creo que es haber tocado esta estructura antes podemos hacernos a la idea los problemas y usabilidad de la misma.
+	- métafora: la lut = multiplexor. En el fondo, eficiencia de una estructura depende fuertemente del uso que se le vaya a propiciar.
+	- ! all struct are =
+	- si pensamos a nivel de hardware, el multiplexor es una estructura perfecta para la búsqueda. Por que es directa!!!
+	- Sabe exactamente donde hay un ítem o qué salida dar. O si hay varias que emitan la misma salida.
+	- los multiplexores tienen una longitud fija. A no ser que interconectemos uno con otro.
+	- lo que buscamos es una abstracción de coste cero que pueda ser ahustada a nuestras necesidades usando plantillas.
+	- la lut no es más que un array "vitaminado" con métodos para poner más fácil inserción de elementos y también utilizar un código que sirva a modo índice con el navegar entre opciones. Pero el código que se use puede ser otro al que realmente se utilice. Dejando a conveniencia bien devolver 42, o un número aleatorio, o desaprovechar las entradas de la lut, o idílicamente aprochear para recortar y ajustar los bits de interés de la máscara.
+	- otro caso de uso al que se le puede prestar esta implementación es al direccionamiento de memoria. Decidir a qué chip consultar.
