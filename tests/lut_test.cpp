@@ -109,17 +109,54 @@ TEST(lut_test, fill_recursive_and_execution_by_running_lambdas_returning_values_
 }
 
 TEST(lut_test, fill_get_with_custom_norm_idx_and_ensure_whats_stored) {
-  lut<int, 1 << 8> my_lut;
-  std::array<int, 1 << 8> arr;
+  struct customlut : public lut<long, 1 << 2> {
+    constexpr std::size_t norm_idx(std::size_t idx) const override {
+      return (0b11 & idx) % length();
+    }
+  };
 
-  arr[0b1100110] = LUT_DATA_EXAMPLE;
-  arr[0b1100111] = LUT_DATA_EXAMPLE;
-  arr[0b1100101] = LUT_DATA_EXAMPLE;
-  arr[0b1100100] = LUT_DATA_EXAMPLE;
-  arr[0b1110111] = LUT_DATA_EXAMPLE;
-  arr[0b1110101] = LUT_DATA_EXAMPLE;
-  arr[0b1110110] = LUT_DATA_EXAMPLE;
-  arr[0b1110100] = LUT_DATA_EXAMPLE;
+  customlut my_lut;
+  std::array<long, 1 << 2> arr;
+
+  arr[0b00] = LUT_DATA_EXAMPLE;
+  arr[0b01] = LUT_DATA_EXAMPLE;
+  arr[0b10] = LUT_DATA_EXAMPLE;
+  arr[0b11] = LUT_DATA_EXAMPLE;
+
+  my_lut.fill(LUT_BASE_EXAMPLE, LUT_MASK_EXAMPLE, LUT_DATA_EXAMPLE);
+
+  ASSERT_EQ(arr, my_lut.get_wrapper());
+  ASSERT_EQ(LUT_DATA_EXAMPLE, my_lut.get(LUT_BASE_EXAMPLE));
+}
+
+TEST(lut_test, fill_get_with_custom_norm_idx_and_ensure_whats_stored_2) {
+  struct customlut : public lut<u16, 1 << 4> {
+    constexpr std::size_t norm_idx(std::size_t idx) const override {
+      return (((idx & 0b1110000) >> 3) | ((idx & 0b10) >> 1)) % length();
+    }
+  };
+
+  customlut my_lut;
+  std::array<u16, 1 << 4> arr;
+
+  // arr[0b1100110] = LUT_DATA_EXAMPLE;
+  // arr[0b1100111] = LUT_DATA_EXAMPLE;
+  // arr[0b1100101] = LUT_DATA_EXAMPLE;
+  // arr[0b1100100] = LUT_DATA_EXAMPLE;
+  // arr[0b1110111] = LUT_DATA_EXAMPLE;
+  // arr[0b1110101] = LUT_DATA_EXAMPLE;
+  // arr[0b1110110] = LUT_DATA_EXAMPLE;
+  // arr[0b1110100] = LUT_DATA_EXAMPLE;
+
+  ASSERT_EQ(0b1101, my_lut.norm_idx(0b1100110));
+  arr[0b1101] = LUT_DATA_EXAMPLE;
+  // arr[0b1101] = LUT_DATA_EXAMPLE;
+  arr[0b1100] = LUT_DATA_EXAMPLE;
+  // arr[0b1100] = LUT_DATA_EXAMPLE;
+  // arr[0b1111] = LUT_DATA_EXAMPLE;
+  arr[0b1110] = LUT_DATA_EXAMPLE;
+  arr[0b1111] = LUT_DATA_EXAMPLE;
+  // arr[0b1110] = LUT_DATA_EXAMPLE;
 
   my_lut.fill(LUT_BASE_EXAMPLE, LUT_MASK_EXAMPLE, LUT_DATA_EXAMPLE);
 

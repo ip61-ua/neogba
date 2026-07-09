@@ -18,11 +18,11 @@ protected:
 
     // caso recursivo no fork
     bool is_mask_one{(shifted & 0x1u) == 1};
+    std::size_t a_bit_mask{1u << bit++};
     if (!is_mask_one)
-      return fill_recursive(base, mask, what, high, ++bit);
+      return fill_recursive(base, mask, what, high, bit);
 
     // caso recursivo branch
-    std::size_t a_bit_mask{1u << bit};
     bool is_base_zero{((base) & (a_bit_mask)) == 0};
     u8 count{0};
 
@@ -31,8 +31,6 @@ protected:
       base ^= a_bit_mask;
       put(base, what);
     }
-
-    ++bit;
 
     return count + fill_recursive(base, mask, what, true, bit) +
            fill_recursive(base, mask, what, false, bit);
