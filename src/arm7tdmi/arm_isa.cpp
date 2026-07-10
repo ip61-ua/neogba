@@ -2,6 +2,34 @@
 
 using namespace neogba;
 
+arm_operand2_result arm_operand2_compute_i1_rotate0(arm7tdmi*, u32 inst) {
+  // operand2 is immediate value with shift.
+  return {0, ISA_ARM_FSR_OPERAND2_IMM::get(inst)};
+}
+
+arm_operand2_result arm_operand2_compute_i1_rotatenot0(arm7tdmi*, u32 inst) {
+  // operand2 is immediate value with shift.
+  u32 rotate = 2 * ISA_ARM_FSR_OPERAND2_ROTATE::get(inst), imm{ISA_ARM_FSR_OPERAND2_IMM::get(inst)};
+  return {rotate, ((imm >> rotate) | (imm << (32 - rotate)))};
+}
+
+arm_operand2_result arm_operand2_compute_i0_40_shifta0_LSL(arm7tdmi* cpu, u32 inst) {
+  return {0, cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst))};
+}
+
+arm_operand2_result arm_operand2_compute_i0_40_shifta0_LSR(arm7tdmi*, u32) { return {0, 0}; }
+
+arm_operand2_result arm_operand2_compute_i0_40_shifta0_ASR(arm7tdmi* cpu, u32 inst) {
+  return {0, static_cast<u32>(
+                 static_cast<i32>(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst))) >>
+                 31)};
+}
+
+arm_operand2_result arm_operand2_compute_i0_40_shifta0_ROR(arm7tdmi* cpu, u32 inst) {
+  return {0, ((cpu->read_cpsr() & arm7tdmi::C) << (31 - 29)) |
+                 (cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst)) >> 1)};
+}
+
 arm_operand2_result arm_operand2_compute(arm7tdmi* cpu, u32 inst) {
   u32 shift_amount, operable_operand2{};
   u8 i{ISA_ARM_FSR_I::get_raw(inst)};
@@ -9,13 +37,11 @@ arm_operand2_result arm_operand2_compute(arm7tdmi* cpu, u32 inst) {
   if (i) {
     // operand2 is immediate value with shift.
 
-    shift_amount = 2 * ISA_ARM_FSR_OPERAND2_ROTATE::get(inst);
+    auto rotate = shift_amount = 2 * ISA_ARM_FSR_OPERAND2_ROTATE::get(inst);
     u32 imm{ISA_ARM_FSR_OPERAND2_IMM::get(inst)};
 
-    operable_operand2 =
-        (shift_amount == 0) ? imm : ((imm >> shift_amount) | (imm << (32 - shift_amount)));
+    operable_operand2 = (rotate == 0) ? imm : ((imm >> rotate) | (imm << (32 - rotate)));
   } else {
-
     // operand2 is a register with shift.
 
     u8 rm_idx{ISA_ARM_FSR_OPERAND2_RM::get(inst)};
@@ -23,7 +49,7 @@ arm_operand2_result arm_operand2_compute(arm7tdmi* cpu, u32 inst) {
     u8 shift_type{ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(inst)};
     bool four{ISA_ARM_FSR_OPERAND2_4::get(inst)};
 
-    shift_amount = four ? cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst))
+    shift_amount = four ? (cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst)) & 0xff)
                         : ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
 
     bool is_special_case{!four && shift_amount == 0};
@@ -56,14 +82,11 @@ arm_operand2_result arm_operand2_compute(arm7tdmi* cpu, u32 inst) {
     case ROR:
       if (is_special_case) {
         // RRX: Rotate 1 bit and include Cin.
-        if (cpu->is_cpsr(arm7tdmi::C, arm7tdmi::C))
-          operable_operand2 = 0x80000000;
-
-        operable_operand2 |= (rm >> 1);
+        operable_operand2 = ((cpu->read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1);
       } else {
-        shift_amount &= (1 << 5) - 1;
+        auto masked_shift = shift_amount & 0x1f;
         operable_operand2 =
-            (shift_amount == 0) ? rm : ((rm >> shift_amount) | (rm << (32 - shift_amount)));
+            (masked_shift == 0) ? rm : ((rm >> masked_shift) | (rm << (32 - masked_shift)));
       }
       break;
     }
