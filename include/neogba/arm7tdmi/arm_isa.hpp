@@ -26,8 +26,8 @@ arm_operand2_result arm_operand2_compute_i0_41_ASR(arm7tdmi& cpu, u32 inst);
 arm_operand2_result arm_operand2_compute_i0_41_ROR(arm7tdmi& cpu, u32 inst);
 // arm_operand2_result arm_operand2_compute(arm7tdmi* cpu, u32 inst);
 
-static constexpr auto arm_operand2_lut = []() consteval {
-  lut<arm_operand2_result (*)(arm7tdmi&, u32), 2, arm_operand2_result,
+inline constexpr auto arm_operand2_lut = []() consteval {
+  lut<arm_operand2_result (*)(arm7tdmi&, u32), 1 << 4, arm_operand2_result,
       +[](std::size_t idx) -> std::size_t {
         bool i = ISA_ARM_FSR_I::get_raw(idx);
         bool b4 = ISA_ARM_FSR_OPERAND2_4::get_raw(idx);

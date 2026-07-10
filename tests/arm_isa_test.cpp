@@ -36,7 +36,7 @@ TEST_F(cpu_arm_fixture, arm_and_simple_testing_not_filling_operand2) {
   cpu->write_raw_register(r2, 0xffu);
   cpu->write_raw_register(r12, 0xf0u);
 
-  arm_AND(cpu.get(), inst);
+  arm_AND(*cpu.get(), inst);
 
   ASSERT_EQ(0xf0u, cpu->read_raw_register(r5));
 };
