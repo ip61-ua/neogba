@@ -60,12 +60,20 @@ public:
   }
   constexpr std::size_t fill_range(std::size_t from, std::size_t to, store_t what) {
     std::size_t f{norm_idx(from)}, t{norm_idx(to)}, n{};
-
     for (auto i{f}; i < t; ++i) {
       put(i, what);
       n++;
     }
-
+    return n;
+  }
+  constexpr std::size_t fill_missing(store_t what) {
+    std::size_t n{};
+    for (std::size_t i{0}; i < max_length; ++i) {
+      if (storage[i] == store_t{}) {
+        put(i, what);
+        n++;
+      }
+    }
     return n;
   }
 

@@ -39,11 +39,12 @@ static constexpr auto arm_operand2_lut = []() consteval {
         u8 n3 = i | b4;
         u8 n2 = i | (!b4 & s_not_0);
         u8 n1 = !i & t1;
-        u8 n0 = ((r_not_0)&i) | (t0 & !i);
+        u8 n0 = ((r_not_0) & (i)) | (t0 & !i);
 
         return (n3 << 3) | (n2 << 2) | (n1 << 1) | n0;
       }>
-      table{};
+      table;
+
   return table;
 }();
 
