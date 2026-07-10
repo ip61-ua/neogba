@@ -29,7 +29,19 @@ arm_operand2_result arm_operand2_compute_i0_41_ROR(arm7tdmi& cpu, u32 inst);
 static constexpr auto arm_operand2_lut = []() consteval {
   lut<arm_operand2_result (*)(arm7tdmi&, u32), 2, arm_operand2_result,
       +[](std::size_t idx) -> std::size_t {
-        return ISA_ARM_FSR_I::get_raw(idx) | (((idx)&ISA_ARM_FSR_OPERAND2::mask) << 1);
+        bool i = ISA_ARM_FSR_I::get_raw(idx);
+        bool b4 = ISA_ARM_FSR_OPERAND2_4::get_raw(idx);
+        bool t1 = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(idx) & 0x1;
+        bool t0 = (ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(idx) & 0x2) >> 1;
+        bool s_not_0 = (ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(idx)) != 0;
+        bool r_not_0 = (ISA_ARM_FSR_OPERAND2_ROTATE::get(idx)) != 0;
+
+        u8 n3 = i | b4;
+        u8 n2 = i | (!b4 & s_not_0);
+        u8 n1 = !i & t1;
+        u8 n0 = ((r_not_0)&i) | (t0 & !i);
+
+        return (n3 << 3) | (n2 << 2) | (n1 << 1) | n0;
       }>
       table{};
   return table;
