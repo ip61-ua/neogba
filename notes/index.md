@@ -612,18 +612,29 @@ es complicado, pero ayuda podemos decidir más fácilmente cómo optimizar y sim
 	
 	```   	  
 	  (lenguaje lógico)
-	  i ^ (shift_a = 0)                             -> imm
-	  i ^ -(shift_a = 0)                            -> ((imm >> shift_amount) | (imm << (32 - shift_amount)))
-	  -i ^ lsl ^ -4 ^ (shift_a = 0)                 -> rm
-	  -i ^ lsl ^ 4 ^ (shift_a >= 32)                -> 0º
-	  -i ^ lsl ^ 4 ^ -(shift_a >= 32)               -> rm << shift_a
-	  -i ^ lsr ^ -4 ^ (shift_a = 0)                 -> (shift_a = 32) // dejar e ir 
-	  -i ^ lsr ^ (shift_a >= 32)                    -> 0
-	  -i ^ lsr ^ -(shift_a >= 32)                   -> rm >> shift_a
-	  -i ^ asr ^ -4 ^ (shift_a = 0)                 -> (shift_a = 32) // dejar e ir
-	  -i ^ asr                                      -> static_cast<u32>(static_cast<int32_t>(rm) >> std::min<u32>(31, shift_amount));
-	  -i ^ ror ^ -4 ^ (shift_a = 0)                 ->  |= (rm >> 1)
-	  -i ^ ror ^ 4 ^ (shift_a == 0)                 -> rm
-	  -i ^ ror ^ 4 ^ -(shift_a == 0)                -> ((rm >> shift_amount) | (rm << (32 - shift_amount)))
+	   i ^  (rotate == 0)                -> imm
+	   i ^ -(rotate == 0)                -> ((imm >> shift_amount) | (imm << (32 - shift_amount)))
+	  -i ^ lsl ^ -4 ^  (shift_a == 0)    -> rm
+	  -i ^ lsr ^ -4 ^  (shift_a == 0)    -> (shift_a = 32) ^ operand2 = 0 
+	  -i ^ asr ^ -4 ^  (shift_a == 0)    -> (shift_a = 32) ^ operand2 = static_cast<u32>(static_cast<int32_t>(rm) >> 31);
+	  -i ^ ror ^ -4 ^  (shift_a == 0)    -> comprobar C ^ |= (rm >> 1)
+	  -i ^ lsl ^  4 ^  (shift_a >= 32)   -> 0
+	  -i ^ lsl ^  4 ^ -(shift_a >= 32)   -> rm << shift_a
+	  -i ^ lsr ^  4 ^  (shift_a >= 32)   -> 0
+	  -i ^ lsr ^  4 ^ -(shift_a >= 32)   -> rm >> shift_a
+	  -i ^ asr ^  4                      -> static_cast<u32>(static_cast<int32_t>(rm) >> std::min<u32>(31, shift_amount));
+	  -i ^ ror ^  4 ^  (shift_a == 0)    -> rm
+	  -i ^ ror ^  4 ^ -(shift_a == 0)    -> ((rm >> shift_amount) | (rm << (32 - shift_amount)))
     ```
+
+10 de julio.
+
+  - nos fijamos en los bits de control y no en los datos. 
+  - ojo: si cuando es 0 shift_a y es -4 -> casos especiales. 
+  - podemos anticipar el valor de shift_a para casos especiales
+  - creo ha llegado de usar el papel.
+	
+	
+  
+
 

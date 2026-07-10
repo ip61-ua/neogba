@@ -58,7 +58,6 @@ public:
     std::size_t b{norm_idx(idx_base)}, m{norm_idx(mask)};
     return fill_recursive(b, m, what, true) + fill_recursive(b, m, what, false);
   }
-
   constexpr std::size_t fill_range(std::size_t from, std::size_t to, store_t what) {
     std::size_t f{norm_idx(from)}, t{norm_idx(to)}, n{};
 

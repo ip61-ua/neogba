@@ -50,8 +50,7 @@ arm_operand2_result arm_operand2_compute(arm7tdmi* cpu, u32 inst) {
         shift_amount = 32; // ASR #0
       }
 
-      operable_operand2 =
-          static_cast<u32>(static_cast<int32_t>(rm) >> std::min<u32>(31, shift_amount));
+      operable_operand2 = static_cast<u32>(static_cast<i32>(rm) >> std::min<u32>(31, shift_amount));
       break;
 
     case ROR:
