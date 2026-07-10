@@ -16,18 +16,83 @@ arm_operand2_result arm_operand2_compute_i1_rotatenot0(arm7tdmi*, u32 inst) {
 arm_operand2_result arm_operand2_compute_i0_40_shifta0_LSL(arm7tdmi* cpu, u32 inst) {
   return {0, cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst))};
 }
-
 arm_operand2_result arm_operand2_compute_i0_40_shifta0_LSR(arm7tdmi*, u32) { return {0, 0}; }
-
 arm_operand2_result arm_operand2_compute_i0_40_shifta0_ASR(arm7tdmi* cpu, u32 inst) {
   return {0, static_cast<u32>(
                  static_cast<i32>(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst))) >>
                  31)};
 }
-
 arm_operand2_result arm_operand2_compute_i0_40_shifta0_ROR(arm7tdmi* cpu, u32 inst) {
   return {0, ((cpu->read_cpsr() & arm7tdmi::C) << (31 - 29)) |
                  (cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst)) >> 1)};
+}
+
+arm_operand2_result arm_operand2_compute_i0_40_shiftanot0_LSL(arm7tdmi* cpu, u32 inst) {
+  u32 shift_amount{ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst)},
+      rm{static_cast<u32>(
+          static_cast<i32>(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst))) >>
+          shift_amount)};
+
+  return {shift_amount, rm << shift_amount};
+}
+arm_operand2_result arm_operand2_compute_i0_40_shiftanot0_LSR(arm7tdmi* cpu, u32 inst) {
+  u32 shift_amount{ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst)},
+      rm{static_cast<u32>(
+          static_cast<i32>(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst))) >>
+          shift_amount)};
+
+  return {shift_amount, rm >> shift_amount};
+}
+arm_operand2_result arm_operand2_compute_i0_40_shiftanot0_ASR(arm7tdmi* cpu, u32 inst) {
+  u32 shift_amount{ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst)},
+      rm{static_cast<u32>(
+          static_cast<i32>(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst))) >>
+          shift_amount)};
+
+  return {shift_amount, static_cast<u32>(static_cast<i32>(rm) >> shift_amount)};
+}
+arm_operand2_result arm_operand2_compute_i0_40_shiftanot0_ROR(arm7tdmi* cpu, u32 inst) {
+  u32 shift_amount{ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst)},
+      rm{static_cast<u32>(
+          static_cast<i32>(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst))) >>
+          shift_amount)};
+
+  return {shift_amount, ((rm >> shift_amount) | (rm << (32 - shift_amount)))};
+}
+
+arm_operand2_result arm_operand2_compute_i0_41_LSL(arm7tdmi* cpu, u32 inst) {
+  u32 shift_amount{(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst)) & 0xff)},
+      rm{static_cast<u32>(
+          static_cast<i32>(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst))) >>
+          shift_amount)};
+
+  return {shift_amount, (shift_amount >= 32) ? 0 : (rm << shift_amount)};
+}
+arm_operand2_result arm_operand2_compute_i0_41_LSR(arm7tdmi* cpu, u32 inst) {
+  u32 shift_amount{(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst)) & 0xff)},
+      rm{static_cast<u32>(
+          static_cast<i32>(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst))) >>
+          shift_amount)};
+
+  return {shift_amount, (shift_amount >= 32) ? 0 : (rm >> shift_amount)};
+}
+arm_operand2_result arm_operand2_compute_i0_41_ASR(arm7tdmi* cpu, u32 inst) {
+  u32 shift_amount{(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst)) & 0xff)},
+      rm{static_cast<u32>(
+          static_cast<i32>(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst))) >>
+          shift_amount)};
+
+  return {shift_amount, static_cast<u32>(static_cast<i32>(rm) >> std::min<u32>(31, shift_amount))};
+}
+arm_operand2_result arm_operand2_compute_i0_41_ROR(arm7tdmi* cpu, u32 inst) {
+  u32 shift_amount{(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst)) & 0xff)},
+      rm{static_cast<u32>(
+          static_cast<i32>(cpu->read_active_register(ISA_ARM_FSR_OPERAND2_RM::get(inst))) >>
+          shift_amount)};
+  auto masked_shift{shift_amount & 0x1f};
+
+  return {shift_amount,
+          (masked_shift == 0) ? rm : ((rm >> masked_shift) | (rm << (32 - masked_shift)))};
 }
 
 arm_operand2_result arm_operand2_compute(arm7tdmi* cpu, u32 inst) {

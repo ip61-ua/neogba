@@ -717,21 +717,24 @@ es complicado, pero ayuda podemos decidir más fácilmente cómo optimizar y sim
 
 aquí estoy observando que el shift_amount del extractor da un u8 que en realidad es un numero de 5 bit (no el registro rs). Por lo tanto sí bit 4 es 0 el número de shift amount jamás podrá ser superior a 31 por su limitación de base binaria y en caso de superarse desbordaría para 32. Así que naturalmente no tiene sentido comprobar que un número es mayor que otro cuando el primero no requiera más bits que el segundo a compararse. Esto induce a que podemos hacer una temprana detección del shiftamoutn por el bit 4 y evitar las comprobaciones de límites con el hallazgo de mínimos y si sera mayor o igual que 32 porque serán ciclos susceptibles a ahorrarse con motivo de la optimización.
 
-| Operación                                                                         | I | rotate | bit 4 | `shift_amount` | `shift_type` |
-|-----------------------------------------------------------------------------------|---|--------|-------|----------------|--------------|
-| imm                                                                               | 1 | 0      | x     | x              | x            |
-| `((imm >> rotate) | (imm << (32 - rotate)))`                                      | 1 | not    | x     | x              | x            |
-| rm << `shift_amount`                                                              | 0 | x      | 0     | not 0          | LSL          |
-| rm >> `shift_amount`                                                              | 0 | x      | 0     | not 0          | LSR          |
-| `static_cast<u32>(static_cast<i32>(rm) >> shift_amount)`                          | 0 | x      | 0     | not 0          | ASR          |
-| `(masked_shift == 0) ? rm : ((rm >> masked_shift) | (rm << (32 - masked_shift)))` | 0 | x      | 0     | not 0          | ROR          |
-| rm (special case)                                                                 | 0 | x      | 0     | 0              | LSL          |
-| 0 (special case)                                                                  | 0 | x      | 0     | 0              | LSR          |
-| `static_cast<u32>(static_cast<i32>(rm) >> 31)` (special case)                     | 0 | x      | 0     | 0              | ASR          |
-| `((cpu->read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1)` (special case)      | 0 | x      | 0     | 0              | ROR          |
-| operand2 is a register with shift (rs)                                            | 0 | x      | 1     | x              | LSL          |
-| operand2 is a register with shift (rs)                                            | 0 | x      | 1     | x              | LSR          |
-| operand2 is a register with shift (rs)                                            | 0 | x      | 1     | x              | ASR          |
-| operand2 is a register with shift (rs)                                            | 0 | x      | 1     | x              | ROR          |
+| Operación                                                                    | I | rotate | bit 4 | `shift_amount` | `shift_type` |
+|------------------------------------------------------------------------------|---|--------|-------|----------------|--------------|
+| imm                                                                          | 1 | 0      | x     | x              | x            |
+| `((imm >> rotate) | (imm << (32 - rotate)))`                                 | 1 | not    | x     | x              | x            |
+|------------------------------------------------------------------------------|---|--------|-------|----------------|--------------|
+| rm << `shift_amount`                                                         | 0 | x      | 0     | not 0          | LSL          |
+| rm >> `shift_amount`                                                         | 0 | x      | 0     | not 0          | LSR          |
+| `static_cast<u32>(static_cast<i32>(rm) >> shift_amount)`                     | 0 | x      | 0     | not 0          | ASR          |
+| `((rm >> masked_shift) | (rm << (32 - masked_shift)))`                       | 0 | x      | 0     | not 0          | ROR          |
+|------------------------------------------------------------------------------|---|--------|-------|----------------|--------------|
+| rm (special case)                                                            | 0 | x      | 0     | 0              | LSL          |
+| 0 (special case)                                                             | 0 | x      | 0     | 0              | LSR          |
+| `static_cast<u32>(static_cast<i32>(rm) >> 31)` (special case)                | 0 | x      | 0     | 0              | ASR          |
+| `((cpu->read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1)` (special case) | 0 | x      | 0     | 0              | ROR          |
+|------------------------------------------------------------------------------|---|--------|-------|----------------|--------------|
+| operand2 is a register with shift (rs)                                       | 0 | x      | 1     | x              | LSL          |
+| operand2 is a register with shift (rs)                                       | 0 | x      | 1     | x              | LSR          |
+| operand2 is a register with shift (rs)                                       | 0 | x      | 1     | x              | ASR          |
+| operand2 is a register with shift (rs)                                       | 0 | x      | 1     | x              | ROR          |
 
 Ante este escenario poco podemos averiguar que valor habrá en rs del que posteriormente solo emplean los 8 bits primeros. Esto como ya hemos dicho antes, depende del estado de la cpu que atraviese la cpu por ese momento. Y por tanto poca optimización podemos realizar.
