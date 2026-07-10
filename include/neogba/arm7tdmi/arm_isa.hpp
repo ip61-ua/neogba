@@ -45,6 +45,22 @@ static constexpr auto arm_operand2_lut = []() consteval {
       }>
       table;
 
+  table.fill(0b0000, arm_operand2_compute_i0_40_shifta0_LSL);
+  table.fill(0b0001, arm_operand2_compute_i0_40_shifta0_LSL);
+  table.fill(0b0010, arm_operand2_compute_i0_40_shifta0_LSL);
+  table.fill(0b0011, arm_operand2_compute_i0_40_shifta0_LSL);
+  table.fill(0b0100, arm_operand2_compute_i0_40_shiftanot0_LSL);
+  table.fill(0b0101, arm_operand2_compute_i0_40_shiftanot0_LSR);
+  table.fill(0b0110, arm_operand2_compute_i0_40_shiftanot0_ASR);
+  table.fill(0b0111, arm_operand2_compute_i0_40_shiftanot0_ROR);
+  table.fill(0b1000, arm_operand2_compute_i0_41_LSL);
+  table.fill(0b1001, arm_operand2_compute_i0_41_LSR);
+  table.fill(0b1010, arm_operand2_compute_i0_41_ASR);
+  table.fill(0b1011, arm_operand2_compute_i0_41_ROR);
+  table.fill(0b1100, arm_operand2_compute_i1_rotate0);
+  table.fill(0b1101, arm_operand2_compute_i1_rotatenot0);
+  table.fill_missing(arm_operand2_compute_i1_rotatenot0);
+
   return table;
 }();
 
