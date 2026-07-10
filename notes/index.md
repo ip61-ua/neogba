@@ -720,7 +720,7 @@ aquí estoy observando que el shift_amount del extractor da un u8 que en realida
 | Operación                                                                    | I | rotate | bit 4 | `shift_amount` | `shift_type` |
 |------------------------------------------------------------------------------|---|--------|-------|----------------|--------------|
 | imm                                                                          | 1 | 0      | x     | x              | x            |
-| `((imm >> rotate) | (imm << (32 - rotate)))`                                 | 1 | not    | x     | x              | x            |
+| `((imm >> rotate) | (imm << (32 - rotate)))`                                 | 1 | not 0  | x     | x              | x            |
 |------------------------------------------------------------------------------|---|--------|-------|----------------|--------------|
 | rm << `shift_amount`                                                         | 0 | x      | 0     | not 0          | LSL          |
 | rm >> `shift_amount`                                                         | 0 | x      | 0     | not 0          | LSR          |
@@ -738,3 +738,126 @@ aquí estoy observando que el shift_amount del extractor da un u8 que en realida
 | operand2 is a register with shift (rs)                                       | 0 | x      | 1     | x              | ROR          |
 
 Ante este escenario poco podemos averiguar que valor habrá en rs del que posteriormente solo emplean los 8 bits primeros. Esto como ya hemos dicho antes, depende del estado de la cpu que atraviese la cpu por ese momento. Y por tanto poca optimización podemos realizar.
+
+Una vez ya hecho pedazos la función de operand2, lo complicado es ahora determinar los índices que ocuparán las funciones dentro de la lut. Esta tarea no parece ser fácil tampoco. Pero, como todo, hay verlo sobre el papel. Lo cierto es que la lut que tenemos, tendremos una penalización muy grande de espacio y por tanto peor caché y consecuentemente rendimiento bajo. esto es porque tenemos varios valores que no son unos o ceros. Y mayor agravante si consideramos que solo tenemos 14 casos. Los bits necesarios para capturar esos catorce casos son 4. Aquí surge otro reto.
+
+Vayamos por partes. Razonemos un poco sobre lo que hay sobre la mesa: tenemos que el campo rotate se entremezcla con `shift_amount` siendo que ocupen 4 y 5 bits en el mismo espacio, tenemos que el tipo de shift ocupa 2 bits irremediablemente. Luego no hay que confuncir rs con `shift_amount`. El bit i es un buen distintivo.
+
+Lo que podemos hacer es comprimir los valores del normalizador. Los números largos pasan a valer un bit. Esto que que para los únicos casos donde neguemos no hay interferencias con otros valores. Dando lugar a esta tabla
+
+| n  | Operación                                                                    | I | rotate != 0 | bit 4 | `shift_amount` != 0 | `shift_type` |
+|----|------------------------------------------------------------------------------|---|-------------|-------|---------------------|--------------|
+| 0  | imm                                                                          | 1 | 0           | x     | x                   | x            |
+| 1  | `((imm >> rotate) | (imm << (32 - rotate)))`                                 | 1 | 1           | x     | x                   | x            |
+|----|------------------------------------------------------------------------------|---|-------------|-------|---------------------|--------------|
+| 2  | rm << `shift_amount`                                                         | 0 | x           | 0     | 1                   | LSL          |
+| 3  | rm >> `shift_amount`                                                         | 0 | x           | 0     | 1                   | LSR          |
+| 4  | `static_cast<u32>(static_cast<i32>(rm) >> shift_amount)`                     | 0 | x           | 0     | 1                   | ASR          |
+| 5  | `((rm >> masked_shift) | (rm << (32 - masked_shift)))`                       | 0 | x           | 0     | 1                   | ROR          |
+|----|------------------------------------------------------------------------------|---|-------------|-------|---------------------|--------------|
+| 6  | rm (special case)                                                            | 0 | x           | 0     | 0                   | LSL          |
+| 7  | 0 (special case)                                                             | 0 | x           | 0     | 0                   | LSR          |
+| 8  | `static_cast<u32>(static_cast<i32>(rm) >> 31)` (special case)                | 0 | x           | 0     | 0                   | ASR          |
+| 9  | `((cpu->read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1)` (special case) | 0 | x           | 0     | 0                   | ROR          |
+|----|------------------------------------------------------------------------------|---|-------------|-------|---------------------|--------------|
+| 10 | operand2 is a register with shift (rs)                                       | 0 | x           | 1     | x                   | LSL          |
+| 11 | operand2 is a register with shift (rs)                                       | 0 | x           | 1     | x                   | LSR          |
+| 12 | operand2 is a register with shift (rs)                                       | 0 | x           | 1     | x                   | ASR          |
+| 13 | operand2 is a register with shift (rs)                                       | 0 | x           | 1     | x                   | ROR          |
+
+En tal caso ahora podemos juntar rotate con bit 4 e interpretar en conjunto con el bit I. Esto lo podemos hacer porque justo para los casos en donde I sea 0 rotate no se considera.
+
+
+| Operación                                                                    | I | rotate != 0 v bit 4 | `shift_amount` != 0 | `shift_type` |
+|------------------------------------------------------------------------------|---|---------------------|---------------------|--------------|
+| imm                                                                          | 1 | 0                   | x                   | x            |
+| `((imm >> rotate) | (imm << (32 - rotate)))`                                 | 1 | 1                   | x                   | x            |
+|------------------------------------------------------------------------------|---|---------------------|---------------------|--------------|
+| rm << `shift_amount`                                                         | 0 | 0                   | 1                   | LSL          |
+| rm >> `shift_amount`                                                         | 0 | 0                   | 1                   | LSR          |
+| `static_cast<u32>(static_cast<i32>(rm) >> shift_amount)`                     | 0 | 0                   | 1                   | ASR          |
+| `((rm >> masked_shift) | (rm << (32 - masked_shift)))`                       | 0 | 0                   | 1                   | ROR          |
+|------------------------------------------------------------------------------|---|---------------------|---------------------|--------------|
+| rm (special case)                                                            | 0 | 0                   | 0                   | LSL          |
+| 0 (special case)                                                             | 0 | 0                   | 0                   | LSR          |
+| `static_cast<u32>(static_cast<i32>(rm) >> 31)` (special case)                | 0 | 0                   | 0                   | ASR          |
+| `((cpu->read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1)` (special case) | 0 | 0                   | 0                   | ROR          |
+|------------------------------------------------------------------------------|---|---------------------|---------------------|--------------|
+| operand2 is a register with shift (rs)                                       | 0 | 1                   | x                   | LSL          |
+| operand2 is a register with shift (rs)                                       | 0 | 1                   | x                   | LSR          |
+| operand2 is a register with shift (rs)                                       | 0 | 1                   | x                   | ASR          |
+| operand2 is a register with shift (rs)                                       | 0 | 1                   | x                   | ROR          |
+
+Pero sin embargo debamos, reconsiderar rehacer la simplificación tomando las expansiones de los símbolos ROR, LSL...
+
+| Operación                                                                    | I | rotate != 0 v bit 4 | `shift_amount` != 0 | `shift_type` |
+|------------------------------------------------------------------------------|---|---------------------|---------------------|--------------|
+| imm                                                                          | 1 | 0                   | x                   | x            |
+| `((imm >> rotate) | (imm << (32 - rotate)))`                                 | 1 | 1                   | x                   | x            |
+|------------------------------------------------------------------------------|---|---------------------|---------------------|--------------|
+| rm << `shift_amount`                                                         | 0 | 0                   | 1                   | 00           |
+| rm >> `shift_amount`                                                         | 0 | 0                   | 1                   | 01           |
+| `static_cast<u32>(static_cast<i32>(rm) >> shift_amount)`                     | 0 | 0                   | 1                   | 10           |
+| `((rm >> masked_shift) | (rm << (32 - masked_shift)))`                       | 0 | 0                   | 1                   | 11           |
+|------------------------------------------------------------------------------|---|---------------------|---------------------|--------------|
+| rm (special case)                                                            | 0 | 0                   | 0                   | 00           |
+| 0 (special case)                                                             | 0 | 0                   | 0                   | 01           |
+| `static_cast<u32>(static_cast<i32>(rm) >> 31)` (special case)                | 0 | 0                   | 0                   | 10           |
+| `((cpu->read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1)` (special case) | 0 | 0                   | 0                   | 11           |
+|------------------------------------------------------------------------------|---|---------------------|---------------------|--------------|
+| operand2 is a register with shift (rs)                                       | 0 | 1                   | x                   | 00           |
+| operand2 is a register with shift (rs)                                       | 0 | 1                   | x                   | 01           |
+| operand2 is a register with shift (rs)                                       | 0 | 1                   | x                   | 10           |
+| operand2 is a register with shift (rs)                                       | 0 | 1                   | x                   | 11           |
+
+ESTO ES MUY TOP.
+
+ES MUY IMPORTANTE: PONER N
+
+| n  | Operación                                                                    | I | rotate != 0 | bit 4 | `shift_amount` != 0 | `shift_type` |
+|----|------------------------------------------------------------------------------|---|-------------|-------|---------------------|--------------|
+| 0  | rm << `shift_amount`                                                         | 0 | x           | 0     | 1                   | LSL          |
+| 1  | rm >> `shift_amount`                                                         | 0 | x           | 0     | 1                   | LSR          |
+| 2  | `static_cast<u32>(static_cast<i32>(rm) >> shift_amount)`                     | 0 | x           | 0     | 1                   | ASR          |
+| 3  | `((rm >> masked_shift) | (rm << (32 - masked_shift)))`                       | 0 | x           | 0     | 1                   | ROR          |
+|----|------------------------------------------------------------------------------|---|-------------|-------|---------------------|--------------|
+| 4  | rm (special case)                                                            | 0 | x           | 0     | 0                   | LSL          |
+| 5  | 0 (special case)                                                             | 0 | x           | 0     | 0                   | LSR          |
+| 6  | `static_cast<u32>(static_cast<i32>(rm) >> 31)` (special case)                | 0 | x           | 0     | 0                   | ASR          |
+| 7  | `((cpu->read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1)` (special case) | 0 | x           | 0     | 0                   | ROR          |
+|----|------------------------------------------------------------------------------|---|-------------|-------|---------------------|--------------|
+| 8  | imm                                                                          | 1 | 0           | x     | x                   | x            |
+| 9  | `((imm >> rotate) | (imm << (32 - rotate)))`                                 | 1 | 1           | x     | x                   | x            |
+|----|------------------------------------------------------------------------------|---|-------------|-------|---------------------|--------------|
+| 10 | operand2 is a register with shift (rs)                                       | 0 | x           | 1     | x                   | LSL          |
+| 11 | operand2 is a register with shift (rs)                                       | 0 | x           | 1     | x                   | LSR          |
+| 12 | operand2 is a register with shift (rs)                                       | 0 | x           | 1     | x                   | ASR          |
+| 13 | operand2 is a register with shift (rs)                                       | 0 | x           | 1     | x                   | ROR          |
+
+¡SON MAPAS DE Mapas de Karnaugh! (ni me acordaba de FC)
+
+Si organizamos, a conveniencia...
+Podemos idenficar que I v bit4 -> 1 para todo n tal que n3 = 1. Es decir, I v b4 -> [8, 16] // 1xxx
+Para n2 será 1 si I v (-(r != 0) ^ (s != 0))
+Para n1 será -I ^ t1
+Para n0 será ((r != 0) ^ I) v (t0 ^ -I)
+
+| n    | Operación                                                     | I v b4 | I v (-(r != 0) ^ (s != 0)) | I | r != 0 | b4 | `s` != 0 | `t` |
+|------|---------------------------------------------------------------|--------|----------------------------|---|--------|----|----------|-----|
+| 0000 | rm << `shift_amount`                                          | 0      | 0                          | 0 | x      | 0  | 1        | 00  |
+| 0001 | `static_cast<u32>(static_cast<i32>(rm) >> shift_amount)`      | 0      | 0                          | 0 | x      | 0  | 1        | 01  |
+| 0010 | `((rm >> masked_shift) | (rm << (32 - masked_shift)))`        | 0      | 0                          | 0 | x      | 0  | 1        | 10  |
+| 0011 | rm >> `shift_amount`                                          | 0      | 0                          | 0 | x      | 0  | 1        | 11  |
+|------|---------------------------------------------------------------|--------|----------------------------|---|--------|----|----------|-----|
+| 0100 | rm                                                            | 0      | 1                          | 0 | x      | 0  | 0        | 00  |
+| 0101 | `static_cast<u32>(static_cast<i32>(rm) >> 31)`                | 0      | 1                          | 0 | x      | 0  | 0        | 01  |
+| 0110 | `((cpu->read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1)` | 0      | 1                          | 0 | x      | 0  | 0        | 10  |
+| 0111 | 0                                                             | 0      | 1                          | 0 | x      | 0  | 0        | 11  |
+|------|---------------------------------------------------------------|--------|----------------------------|---|--------|----|----------|-----|
+| 1000 | operand2 is a register with shift (rs)                        | 1      | 0                          | 0 | x      | 1  | x        | 00  |
+| 1001 | operand2 is a register with shift (rs)                        | 1      | 0                          | 0 | x      | 1  | x        | 01  |
+| 1010 | operand2 is a register with shift (rs)                        | 1      | 0                          | 0 | x      | 1  | x        | 10  |
+| 1011 | operand2 is a register with shift (rs)                        | 1      | 0                          | 0 | x      | 1  | x        | 11  |
+|------|---------------------------------------------------------------|--------|----------------------------|---|--------|----|----------|-----|
+| 1100 | imm                                                           | 1      | 1                          | 1 | 0      | x  | x        | x   |
+| 1101 | `((imm >> rotate) | (imm << (32 - rotate)))`                  | 1      | 1                          | 1 | 1      | x  | x        | x   |
