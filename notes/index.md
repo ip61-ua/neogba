@@ -933,3 +933,53 @@ Vale en esta nueva versión he tomado en cuenta el carry y todos los edge cases.
 De momento vamos tirando así. Cons ifs. 
 
 He "estilizado" el código para hacer más idiomático.
+
+Yo creo que esto lo dejamos aparcado para seguir con las instrucciones.
+
+
+The condition codes in the CPSR may be preserved or updated as a result of this instruction,
+according to the value of the S bit in the instruction.
+
+Certain operations (TST, TEQ, CMP, CMN) do not write the result to Rd. They are used only to
+perform tests and to set the condition codes on the result and always have the S bit set.
+
+The logical operations (AND, EOR, TST, TEQ, ORR, MOV, BIC, MVN) perform the logical action on all
+corresponding bits of the operand or operands to produce the result. If the S bit is set (and Rd
+is not R15, see below) the V flag in the CPSR will be unaffected, the C flag will be set to the
+carry out from the barrel shifter (or preserved when the shift operation is LSL #0), the Z flag
+will be set if and only if the result is all zeros, and the N flag will be set to the logical
+value of bit 31 of the result.
+	
+The arithmetic operations (SUB, RSB, ADD, ADC, SBC, RSC, CMP, CMN) treat each
+operand as a 32 bit integer (either unsigned or 2’s complement signed, the two are
+equivalent). If the S bit is set (and Rd is not R15) the V flag in the CPSR will be set if
+an overflow occurs into bit 31 of the result; this may be ignored if the operands were
+considered unsigned, but warns of a possible error if the operands were 2’s
+
+ -S v r15 -> update
+ 
+ complement signed. The C flag will be set to the carry out of bit 31 of the ALU, the Z
+flag will be set if and only if the result was zero, and the N flag will be set to the value
+of bit 31 of the result (indicating a negative result if the operands are considered to be
+2’s complement signed).
+
+If R15 (the PC) is used as an operand in a data processing instruction the register is
+used directly.
+The PC value will be the address of the instruction, plus 8 or 12 bytes due to instruction
+prefetching. If the shift amount is specified in the instruction, the PC will be 8 bytes
+ahead. If a register is used to specify the shift amount the PC will be 12 bytes ahead.
+
+If R15 (the PC) is used as an operand in a data processing instruction the register is
+used directly.
+The PC value will be the address of the instruction, plus 8 or 12 bytes due to instruction
+prefetching. If the shift amount is specified in the instruction, the PC will be 8 bytes
+ahead. If a register is used to specify the shift amount the PC will be 12 bytes ahead.
+4.5.6 TEQ, TST, CMP and CMN opcodes
+Note
+TEQ, TST, CMP and CMN do not write the result of their operation but do set flags in
+the CPSR. An assembler should always set the S flag for these instructions even if this
+is not specified in the mnemonic.
+The TEQP form of the TEQ instruction used in earlier ARM processors must not be
+used: the PSR transfer operations should be used instead.
+The action of TEQP in the ARM7TDMI-S is to move SPSR_mode to the CPSR if the
+processor is in a privileged mode and to do nothing if in User mode.

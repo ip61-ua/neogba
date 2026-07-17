@@ -57,6 +57,7 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
       }
     } else {
 
+      // esto no importa al caso especial complemente, por lo que lo podemos atrasar hasta aquí.
       u32 shift_amount;
       if constexpr (bit4) {
         shift_amount = cpu.read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst)) & 0xff;
