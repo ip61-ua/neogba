@@ -876,7 +876,7 @@ los otros dos son fáciles.
 Lo cierto es que viendo la estructura que devuelven las instrucciones creo que hace falta la necesidad de un campo para carry_out. Aunque entiendo de mi yo del pasado para devolver el shift amount, lo cierto es que puede no tener las mismas implicaciones para todos los casos y resulta absurdo tener una lut y luego en concretar un qué hacer hiperespecializado... Pasando por comprobaciones muy similares y añadiendo mayor carga de overhead.
 
 Estoy comprobando que la mantenibilidad es muy baja. Por todas las cosas que hay que cambiar.
-	Este proyecto https://github.com/nba-emu/NanoBoyAdvance/blob/master/src/nba/src/arm/handlers/handler32.inl una vez más demuestra lo fácilmente descriptivo que es c++ con las plantillas. 
+Este proyecto https://github.com/nba-emu/NanoBoyAdvance/blob/master/src/nba/src/arm/handlers/handler32.inl una vez más demuestra lo fácilmente descriptivo que es c++ con las plantillas. 
 
 ``` c++
   int carry = state.cpsr.f.c;
@@ -915,5 +915,14 @@ Estoy comprobando que la mantenibilidad es muy baja. Por todas las cosas que hay
 
     DoShift(shift_type, op2, shift, carry, shift_imm);
   }
+```
+
+
+claro, con este código de así concentramos todo en uno.
+
+``` c++
+template <bool a> int get_operand2(int b) { return a ? 1 : b; }
+auto v = get_operand2<true>; // es un int(*)(int)
+auto b = v(2);                      // es un int
 ```
 

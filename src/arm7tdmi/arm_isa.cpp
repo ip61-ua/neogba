@@ -116,69 +116,68 @@ arm_operand2_result neogba::arm_operand2_compute_i0_41_ROR(arm7tdmi& cpu, u32 in
           (masked_shift == 0) ? rm : ((rm >> masked_shift) | (rm << (32 - masked_shift)))};
 }
 
-// arm_operand2_result neogba::arm_operand2_compute(arm7tdmi& cpu, u32 inst) {
-//   // u32 shift_amount, operable_operand2{};
-//   // u8 i{ISA_ARM_FSR_I::get_raw(inst)};
+arm_operand2_result neogba::arm_operand2_compute(arm7tdmi& cpu, u32 inst) {
+  u32 shift_amount, operable_operand2{};
+  u8 i{ISA_ARM_FSR_I::get_raw(inst)};
 
-//   // if (i) {
-//   //   // operand2 is immediate value with shift.
+  if (i) {
+    //       operand2 is immediate value with shift.
 
-//   //   auto rotate = shift_amount = 2 * ISA_ARM_FSR_OPERAND2_ROTATE::get(inst);
-//   //   u32 imm{ISA_ARM_FSR_OPERAND2_IMM::get(inst)};
+    auto rotate = shift_amount = 2 * ISA_ARM_FSR_OPERAND2_ROTATE::get(inst);
+    u32 imm{ISA_ARM_FSR_OPERAND2_IMM::get(inst)};
 
-//   //   operable_operand2 = (rotate == 0) ? imm : ((imm >> rotate) | (imm << (32 - rotate)));
-//   // } else {
-//   //   // operand2 is a register with shift.
+    operable_operand2 = (rotate == 0) ? imm : ((imm >> rotate) | (imm << (32 - rotate)));
+  } else {
+    //        operand2 is a register with shift.
 
-//   //   u8 rm_idx{ISA_ARM_FSR_OPERAND2_RM::get(inst)};
-//   //   u32 rm{cpu.read_active_register(rm_idx)};
-//   //   u8 shift_type{ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(inst)};
-//   //   bool four{ISA_ARM_FSR_OPERAND2_4::get(inst)};
+    u8 rm_idx{ISA_ARM_FSR_OPERAND2_RM::get(inst)};
+    u32 rm{cpu.read_active_register(rm_idx)};
+    u8 shift_type{ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(inst)};
+    bool four{ISA_ARM_FSR_OPERAND2_4::get(inst)};
 
-//   //   shift_amount = four ? (cpu.read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst)) &
-//   0xff)
-//   //                       : ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
+    shift_amount = four ? (cpu.read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst)) & 0xff)
+                        : ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
 
-//   //   bool is_special_case{!four && shift_amount == 0};
+    bool is_special_case{!four && shift_amount == 0};
 
-//   //   switch (shift_type) {
+    switch (shift_type) {
 
-//   //   case LSL:
-//   //     if (is_special_case) {
-//   //       operable_operand2 = rm; // LSL #0
-//   //     } else {
-//   //       operable_operand2 = (shift_amount >= 32) ? 0 : (rm << shift_amount);
-//   //     }
-//   //     break;
+    case LSL:
+      if (is_special_case) {
+        operable_operand2 = rm; // LSL #0
+      } else {
+        operable_operand2 = (shift_amount >= 32) ? 0 : (rm << shift_amount);
+      }
+      break;
 
-//   //   case LSR:
-//   //     if (is_special_case)
-//   //       shift_amount = 32; // LSR #0
+    case LSR:
+      if (is_special_case)
+        shift_amount = 32; // LSR #0
 
-//   //     operable_operand2 = (shift_amount >= 32) ? 0 : (rm >> shift_amount);
-//   //     break;
+      operable_operand2 = (shift_amount >= 32) ? 0 : (rm >> shift_amount);
+      break;
 
-//   //   case ASR:
-//   //     if (is_special_case) {
-//   //       shift_amount = 32; // ASR #0
-//   //     }
+    case ASR:
+      if (is_special_case) {
+        shift_amount = 32; //  ASR #0
+      }
 
-//   //     operable_operand2 = static_cast<u32>(static_cast<i32>(rm) >> std::min<u32>(31,
-//   //     shift_amount)); break;
+      operable_operand2 = static_cast<u32>(static_cast<i32>(rm) >> std::min<u32>(31, shift_amount));
+      break;
 
-//   //   case ROR:
-//   //     if (is_special_case) {
-//   //       // RRX: Rotate 1 bit and include Cin.
-//   //       operable_operand2 = ((cpu.read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1);
-//   //     } else {
-//   //       auto masked_shift = shift_amount & 0x1f;
-//   //       operable_operand2 =
-//   //           (masked_shift == 0) ? rm : ((rm >> masked_shift) | (rm << (32 - masked_shift)));
-//   //     }
-//   //     break;
-//   //   }
-//   // }
-// }
+    case ROR:
+      if (is_special_case) {
+        //           RRX: Rotate 1 bit and include Cin.
+        operable_operand2 = ((cpu.read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1);
+      } else {
+        auto masked_shift = shift_amount & 0x1f;
+        operable_operand2 =
+            (masked_shift == 0) ? rm : ((rm >> masked_shift) | (rm << (32 - masked_shift)));
+      }
+      break;
+    }
+  }
+}
 
 // para las lógicas el bit v no está afectado si (S=1 ^ rd != r15)
 // -(s ^ -r15) -> update
