@@ -923,6 +923,9 @@ claro, con este código de así concentramos todo en uno.
 ``` c++
 template <bool a> int get_operand2(int b) { return a ? 1 : b; }
 auto v = get_operand2<true>; // es un int(*)(int)
-auto b = v(2);                      // es un int
+auto b = v(2);               // es un int
 ```
 
+vale, pensaba era más simple pero no. Hay faena por hacer. Creo que hacerlo de esta forma centralizará y formentará la mantenibilidad. Reducirneod incosistencias y duplicidad de código.
+
+Vale en esta nueva versión he tomado en cuenta el carry y todos los edge cases. Esto posiblemente dé para otra lut y utilizar karnaugh para simplificar saltos ifs, pero de momento hay que tener algo funcando, pero me ha jodido el carry. Creo que es una idea muy certera que pueda llevarse a cabo para optimizar y volver a las luts con karnaugh.
