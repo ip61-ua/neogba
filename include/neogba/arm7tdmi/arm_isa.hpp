@@ -129,17 +129,17 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
 inline constexpr auto arm_operand2_lut = []() consteval {
   lut<arm_operand2_result (*)(arm7tdmi&, u32), 14, arm_operand2_result,
       +[](std::size_t idx) -> std::size_t {
-        bool i = ISA_ARM_FSR_I::get_raw(idx);
-        bool b4 = ISA_ARM_FSR_OPERAND2_4::get_raw(idx);
-        bool t1 = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(idx) & 0x1;
-        bool t0 = (ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(idx) & 0x2) >> 1;
-        bool s_not_0 = (ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(idx)) != 0;
-        bool r_not_0 = (ISA_ARM_FSR_OPERAND2_ROTATE::get(idx)) != 0;
+        auto i{static_cast<bool>(ISA_ARM_FSR_I::get_raw(idx))};
+        auto b4{static_cast<bool>(ISA_ARM_FSR_OPERAND2_4::get_raw(idx))};
+        auto t1{static_cast<bool>(ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(idx) & 0x1)};
+        auto t0{static_cast<bool>((ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(idx) & 0x2) >> 1)};
+        auto s_not_0{(ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(idx)) != 0};
+        auto r_not_0{(ISA_ARM_FSR_OPERAND2_ROTATE::get(idx)) != 0};
 
-        u8 n3 = i | b4;
-        u8 n2 = i | (!b4 & s_not_0);
-        u8 n1 = !i & t1;
-        u8 n0 = ((r_not_0) & (i)) | (t0 & !i);
+        auto n3{static_cast<u8>(i | b4)};
+        auto n2{static_cast<u8>(i | (!b4 & s_not_0))};
+        auto n1{static_cast<u8>(!i & t1)};
+        auto n0{static_cast<u8>(((r_not_0) & (i)) | (t0 & !i))};
 
         return (n3 << 3) | (n2 << 2) | (n1 << 1) | n0;
       }>

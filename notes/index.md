@@ -929,3 +929,7 @@ auto b = v(2);               // es un int
 vale, pensaba era más simple pero no. Hay faena por hacer. Creo que hacerlo de esta forma centralizará y formentará la mantenibilidad. Reducirneod incosistencias y duplicidad de código.
 
 Vale en esta nueva versión he tomado en cuenta el carry y todos los edge cases. Esto posiblemente dé para otra lut y utilizar karnaugh para simplificar saltos ifs, pero de momento hay que tener algo funcando, pero me ha jodido el carry. Creo que es una idea muy certera que pueda llevarse a cabo para optimizar y volver a las luts con karnaugh.
+
+De momento vamos tirando así. Cons ifs. 
+
+He "estilizado" el código para hacer más idiomático.
