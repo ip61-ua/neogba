@@ -908,7 +908,7 @@ Este proyecto https://github.com/nba-emu/NanoBoyAdvance/blob/master/src/nba/src/
       bus.Idle();
 
       pipe.access = Access::Code | Access::Nonsequential;
-    }
+       }
 
     op1 = GetReg(reg_op1);
     op2 = GetReg(reg_op2);

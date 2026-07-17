@@ -43,30 +43,34 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
 
     constexpr bool is_special_case{!bit4 && shift_zero};
 
-    if constexpr (shift_type == LSL) {
-      if constexpr (is_special_case)
+    if constexpr (is_special_case) {
+      if constexpr (shift_type == LSL) {
         result = rm;
-      else
-        result = (shift_amount >= 32) ? 0 : (rm << shift_amount);
 
-    } else if constexpr (shift_type == LSR) {
-      if constexpr (is_special_case)
+      } else if constexpr (shift_type == LSR) {
         shift_amount = 32; // LSR #0
+        result = 0;
 
-      result = (shift_amount >= 32) ? 0 : (rm >> shift_amount);
-
-    } else if constexpr (shift_type == ASR) {
-      if (is_special_case) {
+      } else if constexpr (shift_type == ASR) {
         shift_amount = 32; //  ASR #0
-      }
+        result = static_cast<u32>(static_cast<i32>(rm) >> 31);
 
-      result = static_cast<u32>(static_cast<i32>(rm) >> std::min<u32>(31, shift_amount));
-
-    } else if constexpr (shift_type == ROR) {
-      if constexpr (is_special_case) {
+      } else if constexpr (shift_type == ROR) {
         // RRX: Rotate 1 bit and include Cin.
         result = ((cpu.read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1);
-      } else {
+      }
+    } else {
+
+      if constexpr (shift_type == LSL) {
+        result = (shift_amount >= 32) ? 0 : (rm << shift_amount);
+
+      } else if constexpr (shift_type == LSR) {
+        result = (shift_amount >= 32) ? 0 : (rm >> shift_amount);
+
+      } else if constexpr (shift_type == ASR) {
+        result = static_cast<u32>(static_cast<i32>(rm) >> std::min<u32>(31, shift_amount));
+
+      } else if constexpr (shift_type == ROR) {
         auto masked_shift{shift_amount & 0x1f};
         if (masked_shift == 0) {
           result = rm;
