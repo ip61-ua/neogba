@@ -3,10 +3,6 @@
 
 using namespace neogba;
 
-// para las lógicas el bit v no está afectado si (S=1 ^ rd != r15)
-// -(s ^ -r15) -> update
-// -S v r15 -> update
-
 void neogba::arm_AND(arm7tdmi& cpu, u32 inst) {
   u8 rn_idx{ISA_ARM_FSR_RN::get(inst)};
   u8 rd_idx{ISA_ARM_FSR_RD::get(inst)};
