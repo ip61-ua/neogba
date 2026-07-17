@@ -129,20 +129,20 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
 inline constexpr auto arm_operand2_lut = []() consteval {
   constexpr auto
 
-      arm_operand2_compute_i1_rotate0{arm_operand2_generator<true, true>},
-      arm_operand2_compute_i1_rotatenot0{arm_operand2_generator<true, false>},
-      arm_operand2_compute_i0_40_sant0_LSL{arm_operand2_generator<false, false, false, false, LSL>},
-      arm_operand2_compute_i0_40_sant0_LSR{arm_operand2_generator<false, false, false, false, LSR>},
-      arm_operand2_compute_i0_40_sant0_ASR{arm_operand2_generator<false, false, false, false, ASR>},
-      arm_operand2_compute_i0_40_sant0_ROR{arm_operand2_generator<false, false, false, false, ROR>},
       arm_operand2_compute_i0_40_sa0_LSL{arm_operand2_generator<false, false, false, true, LSL>},
       arm_operand2_compute_i0_40_sa0_LSR{arm_operand2_generator<false, false, false, true, LSR>},
       arm_operand2_compute_i0_40_sa0_ASR{arm_operand2_generator<false, false, false, true, ASR>},
       arm_operand2_compute_i0_40_sa0_ROR{arm_operand2_generator<false, false, false, true, ROR>},
+      arm_operand2_compute_i0_40_sant0_LSL{arm_operand2_generator<false, false, false, false, LSL>},
+      arm_operand2_compute_i0_40_sant0_LSR{arm_operand2_generator<false, false, false, false, LSR>},
+      arm_operand2_compute_i0_40_sant0_ASR{arm_operand2_generator<false, false, false, false, ASR>},
+      arm_operand2_compute_i0_40_sant0_ROR{arm_operand2_generator<false, false, false, false, ROR>},
       arm_operand2_compute_i0_41_LSL{arm_operand2_generator<false, false, true, false, LSL>},
       arm_operand2_compute_i0_41_LSR{arm_operand2_generator<false, false, true, false, LSR>},
       arm_operand2_compute_i0_41_ASR{arm_operand2_generator<false, false, true, false, ASR>},
-      arm_operand2_compute_i0_41_ROR{arm_operand2_generator<false, false, true, false, ROR>};
+      arm_operand2_compute_i0_41_ROR{arm_operand2_generator<false, false, true, false, ROR>},
+      arm_operand2_compute_i1_rotate0{arm_operand2_generator<true, true>},
+      arm_operand2_compute_i1_rotatenot0{arm_operand2_generator<true, false>};
 
   lut<arm_operand2_result (*)(arm7tdmi&, u32), 1 << 4, arm_operand2_result,
       +[](std::size_t idx) -> std::size_t {
