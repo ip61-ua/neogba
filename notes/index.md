@@ -861,3 +861,59 @@ Para n0 será ((r != 0) ^ I) v (t0 ^ -I)
 |------|---------------------------------------------|--------|----------------------------|---|--------|----|----------|-----|
 | 1100 | `arm_operand2_compute_i1_rotate0`           | 1      | 1                          | 1 | 0      | x  | x        | x   |
 | 1101 | `arm_operand2_compute_i1_rotatenot0`        | 1      | 1                          | 1 | 1      | x  | x        | x   |
+
+# 17 de julio.
+
+Hoy quiero implementar todas las lógicas.
+Pero antes quiero perfeccionar mi and para que actualice los el cpsr flags como toque.
+El resto de operaciones creo que será coser y cantar.
+Cambiar alguna cosita pero creo que sera fácil.
+Lo importante ahora es ver exactamente qué hace la operación y qué implicaciones tiene en los cpsr flags.
+
+es decir vamos a ver cómo se activan V y C en cpsr.
+los otros dos son fáciles.
+
+Lo cierto es que viendo la estructura que devuelven las instrucciones creo que hace falta la necesidad de un campo para carry_out. Aunque entiendo de mi yo del pasado para devolver el shift amount, lo cierto es que puede no tener las mismas implicaciones para todos los casos y resulta absurdo tener una lut y luego en concretar un qué hacer hiperespecializado... Pasando por comprobaciones muy similares y añadiendo mayor carga de overhead.
+
+Estoy comprobando que la mantenibilidad es muy baja. Por todas las cosas que hay que cambiar.
+	Este proyecto https://github.com/nba-emu/NanoBoyAdvance/blob/master/src/nba/src/arm/handlers/handler32.inl una vez más demuestra lo fácilmente descriptivo que es c++ con las plantillas. 
+
+``` c++
+  int carry = state.cpsr.f.c;
+  u32 op1;
+  u32 op2;
+
+  pipe.access = Access::Code | Access::Sequential;
+
+  if constexpr (immediate) {
+    int value = instruction & 0xFF;
+    int shift = ((instruction >> 8) & 0xF) * 2;
+
+    if (shift != 0) {
+      carry = (value >> (shift - 1)) & 1;
+      op2   = (value >> shift) | (value << (32 - shift));
+    } else {
+      op2 = value;
+    }
+
+    op1 = GetReg(reg_op1);
+  } else {
+    u32 shift;
+
+    if constexpr (shift_imm) {
+      shift = (instruction >> 7) & 0x1F;
+    } else {
+      shift = GetReg((instruction >> 8) & 0xF);
+      state.r15 += 4;
+      bus.Idle();
+
+      pipe.access = Access::Code | Access::Nonsequential;
+    }
+
+    op1 = GetReg(reg_op1);
+    op2 = GetReg(reg_op2);
+
+    DoShift(shift_type, op2, shift, carry, shift_imm);
+  }
+```
+
