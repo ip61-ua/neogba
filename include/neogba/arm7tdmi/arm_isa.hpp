@@ -164,6 +164,17 @@ inline constexpr auto arm_operand2_lut = []() consteval {
   return table;
 }();
 
+template <bool s, void (*operation)(arm7tdmi& cpu, u32 inst, arm_operand2_result& operand2)>
+void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
+  auto rn_idx{ISA_ARM_FSR_RN::get(inst)};
+  auto rd_idx{ISA_ARM_FSR_RD::get(inst)};
+  auto operand2{arm_operand2_lut.run(inst, cpu, inst)};
+  auto res{cpu.read_active_register(rn_idx) & operand2.operable_operand2};
+
+  if constexpr (s) {
+  }
+}
+
 void arm_AND(arm7tdmi& cpu, u32 inst);
 void arm_EOR(arm7tdmi& cpu, u32 inst);
 void arm_SUB(arm7tdmi& cpu, u32 inst);
