@@ -3,17 +3,17 @@
 
 using namespace neogba;
 
-static constexpr u32 K_TEST_HALFIMM_INS = 0xa17cdbd3u;
-static constexpr auto K_TEST_HALFIMM_INS_COND = 0xa;
-static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_P = true;
-static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_U = false;
-static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_W = true;
-static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_L = true;
-static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_RN = 0xc;
-static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_RD = 0xd;
-static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_S = true;
-static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_H = false;
-static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_OFFSET = 0xb3;
+static constexpr u32 K_TEST_HALFIMM_INS{0xa17cdbd3u};
+static constexpr auto K_TEST_HALFIMM_INS_COND{0xa};
+static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_P{true};
+static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_U{false};
+static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_W{true};
+static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_L{true};
+static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_RN{0xc};
+static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_RD{0xd};
+static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_S{true};
+static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_H{false};
+static constexpr auto K_TEST_HALFIMM_INS_HALFIMM_OFFSET{0xb3};
 
 TEST(isa_test, should_change_only_arm_cond_field) {
   u32 ins = -1;
