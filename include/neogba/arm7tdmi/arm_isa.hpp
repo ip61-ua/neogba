@@ -12,7 +12,7 @@ struct arm_operand2_result {
   u8 carry_in;
 };
 
-template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero = 0,
+template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero = false,
           arm_shift_type shift_type = arm_shift_type::LSL>
 arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
   auto carry_out{static_cast<u8>((cpu.read_cpsr() & arm7tdmi::C) >> arm7tdmi::C_SHIFT)};
@@ -167,7 +167,25 @@ inline constexpr auto arm_operand2_lut = []() consteval {
   return table;
 }();
 
-template <bool s, arm_fsr_opcode opcode, bool rd_pc>
+/**
+ * @brief Plantilla generadora de operaciones de procesamiento de datos y transferencia FSR para el
+ * modo ARM del procesador ARM7TDMI.
+ *
+ * El diseño de esta plantilla reside en que sea lo más precomputable en tiempo de compilación para
+ * evitar el riesgo de emisiones en ordenadores modernos y predicción de saltos condicionales. De
+ * forma que será necesario crear variantes de la misma función activando y desactivando parámetros.
+ *
+ * Esto es a propósito para poder facilitar la implementación y organización dentro de una tabla
+ * lut u otras estructuras afines.
+ *
+ * @param s Bit que indica si activar efectos colaterales de escritura sobre el registro de
+ * banderas.
+ * @param opcode Enumerado de operación de procesamiento a realizar.
+ * @param rd_pc Boleano que indica si el destino es PC.
+ * @param cpu Objeto por referencia de contexto de la CPU.
+ * @param inst Instrucción máquina a ejecutar por valor.
+ */
+template <arm_fsr_opcode opcode, bool s = false, bool rd_pc = false>
 void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
   // Meta template variables
   constexpr auto is_logical{opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::EOR ||
@@ -248,20 +266,21 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
   }
 }
 
-void arm_AND(arm7tdmi& cpu, u32 inst);
-void arm_EOR(arm7tdmi& cpu, u32 inst);
-void arm_SUB(arm7tdmi& cpu, u32 inst);
-void arm_RSB(arm7tdmi& cpu, u32 inst);
-void arm_ADD(arm7tdmi& cpu, u32 inst);
-void arm_ADC(arm7tdmi& cpu, u32 inst);
-void arm_SBC(arm7tdmi& cpu, u32 inst);
-void arm_RSC(arm7tdmi& cpu, u32 inst);
-void arm_TST(arm7tdmi& cpu, u32 inst);
-void arm_TEQ(arm7tdmi& cpu, u32 inst);
-void arm_CMP(arm7tdmi& cpu, u32 inst);
-void arm_CMN(arm7tdmi& cpu, u32 inst);
-void arm_ORR(arm7tdmi& cpu, u32 inst);
-void arm_MOV(arm7tdmi& cpu, u32 inst);
-void arm_BIC(arm7tdmi& cpu, u32 inst);
-void arm_MVN(arm7tdmi& cpu, u32 inst);
+inline constexpr auto arm_EOR{arm_fsr_generator<arm_fsr_opcode::EOR>};
+inline constexpr auto arm_AND{arm_fsr_generator<arm_fsr_opcode::AND>};
+inline constexpr auto arm_SUB{arm_fsr_generator<arm_fsr_opcode::SUB>};
+inline constexpr auto arm_RSB{arm_fsr_generator<arm_fsr_opcode::RSB>};
+inline constexpr auto arm_ADD{arm_fsr_generator<arm_fsr_opcode::ADD>};
+inline constexpr auto arm_ADC{arm_fsr_generator<arm_fsr_opcode::ADC>};
+inline constexpr auto arm_SBC{arm_fsr_generator<arm_fsr_opcode::SBC>};
+inline constexpr auto arm_RSC{arm_fsr_generator<arm_fsr_opcode::RSC>};
+inline constexpr auto arm_TST{arm_fsr_generator<arm_fsr_opcode::TST>};
+inline constexpr auto arm_TEQ{arm_fsr_generator<arm_fsr_opcode::TEQ>};
+inline constexpr auto arm_CMP{arm_fsr_generator<arm_fsr_opcode::CMP>};
+inline constexpr auto arm_CMN{arm_fsr_generator<arm_fsr_opcode::CMN>};
+inline constexpr auto arm_ORR{arm_fsr_generator<arm_fsr_opcode::ORR>};
+inline constexpr auto arm_MOV{arm_fsr_generator<arm_fsr_opcode::MOV>};
+inline constexpr auto arm_BIC{arm_fsr_generator<arm_fsr_opcode::BIC>};
+inline constexpr auto arm_MVN{arm_fsr_generator<arm_fsr_opcode::MVN>};
+
 } // namespace neogba
