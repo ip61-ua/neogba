@@ -6,10 +6,11 @@ using namespace neogba;
 void neogba::arm_AND(arm7tdmi& cpu, u32 inst) {
   u8 rn_idx{ISA_ARM_FSR_RN::get(inst)};
   u8 rd_idx{ISA_ARM_FSR_RD::get(inst)};
-  auto operand2{arm_operand2_lut.run(inst, cpu, inst)};
+  auto op1{cpu.read_active_register(rn_idx)};
+  auto op2{arm_operand2_lut.run(inst, cpu, inst)};
   [[maybe_unused]] bool s{ISA_ARM_FSR_S::get(inst)};
 
-  auto res{cpu.read_active_register(rn_idx) & operand2.operable_operand2};
+  auto res{op1 & op2.result};
 
   cpu.write_active_register(rd_idx, res);
 
