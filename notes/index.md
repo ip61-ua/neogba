@@ -1035,3 +1035,184 @@ Se me ocurre mejor juntarlo todo en uno y decir en tiempo de compilación su es 
 Esto es una barbaridad de rápido. Y todo muy práctico a hacer refactors ad hoc al vuelo. => esto es que me pongo a implementar los primeros y de repente veo que hay un caso especial que ignora o lo que sea, y es muy directo a modificar una parte solo.
 
 He decidido en añadir variables para conocer los shift de los bits de interés del cpsr.
+
+
+Ya tengo esto, algo básico con lo que poder trabajar cómodamente e ir aplicando mejoras conforme vea.
+Ahora voy a ver la especificación y ver que pasa.
+
+``` c++
+
+template <bool s, arm_fsr_opcode opcode> void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
+  // Meta template variables
+  constexpr auto is_logical{opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::EOR ||
+                            opcode == arm_fsr_opcode::TST || opcode == arm_fsr_opcode::TEQ ||
+                            opcode == arm_fsr_opcode::ORR || opcode == arm_fsr_opcode::MOV ||
+                            opcode == arm_fsr_opcode::BIC || opcode == arm_fsr_opcode::MVN};
+  constexpr auto can_write_rd{!(opcode == arm_fsr_opcode::TST || opcode == arm_fsr_opcode::TEQ ||
+                                opcode == arm_fsr_opcode::CMP || opcode == arm_fsr_opcode::CMN)};
+
+  // Retrieve values
+  auto rn_idx{ISA_ARM_FSR_RN::get(inst)};
+  auto rd_idx{ISA_ARM_FSR_RD::get(inst)};
+
+  u32 c_in = (cpu.read_cpsr() & arm7tdmi::C) ? 1 : 0;
+  u32 op1;
+  if constexpr (opcode != arm_fsr_opcode::MOV && opcode != arm_fsr_opcode::MVN)
+    op1 = cpu.read_active_register(rn_idx);
+
+  auto op2{arm_operand2_lut.run(inst, cpu, inst)};
+  u32 res{};
+
+  // Perform operation
+  if constexpr (opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::TST) {
+    res = op1 & op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::EOR || opcode == arm_fsr_opcode::TEQ) {
+    res = op1 ^ op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::SUB || opcode == arm_fsr_opcode::CMP) {
+    res = op1 - op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::RSB) {
+    res = op2.result - op1;
+  } else if constexpr (opcode == arm_fsr_opcode::ADD || opcode == arm_fsr_opcode::CMN) {
+    res = op1 + op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::ADC) {
+    res = op1 + op2.result + c_in;
+  } else if constexpr (opcode == arm_fsr_opcode::SBC) {
+    res = op1 - op2.result + c_in - 1;
+  } else if constexpr (opcode == arm_fsr_opcode::RSC) {
+    res = op2.result - op1 + c_in - 1;
+  } else if constexpr (opcode == arm_fsr_opcode::ORR) {
+    res = op1 | op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::MOV) {
+    res = op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::BIC) {
+    res = op1 & ~op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::MVN) {
+    res = ~op2.result;
+  }
+
+  // write back the result
+  if constexpr (can_write_rd) {
+    cpu.write_active_register(rd_idx, res);
+  }
+
+  // Side effects
+  if constexpr (s) {
+    auto z{res == 0 ? arm7tdmi::Z : 0};
+    auto n{(res & 0x80000000) != 0 ? arm7tdmi::N : 0};
+    auto v{rd_idx == pc ? 0 /* update logic */ : cpu.read_cpsr() & arm7tdmi::V};
+
+    cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V, z | n | v);
+  }
+}
+
+```
+
+Esto nos dice la especificación.
+
+The logical operations (AND, EOR, TST, TEQ, ORR, MOV, BIC, MVN) perform the logical action on all
+corresponding bits of the operand or operands to produce the result. If the S bit is set (and Rd
+is not R15, see below) the V flag in the CPSR will be unaffected, the C flag will be set to the
+carry out from the barrel shifter (or preserved when the shift operation is LSL #0), the Z flag
+will be set if and only if the result is all zeros, and the N flag will be set to the logical
+value of bit 31 of the result.
+
+<<<
+Aquí destacamos que:
+
+- las lógicas tienen un tratamiento especial.
+- Siendo S := bit s activo, R := rd es 15, F := actualiza banderas
+  - S ^ -R -> F
+  
+- V = default
+- C = shift Barrel
+- N = 80...
+- Z = 00...
+
+<<<
+
+The arithmetic operations (SUB, RSB, ADD, ADC, SBC, RSC, CMP, CMN) treat each
+operand as a 32 bit integer (either unsigned or 2’s complement signed, the two are
+equivalent). If the S bit is set (and Rd is not R15) the V flag in the CPSR will be set if
+an overflow occurs into bit 31 of the result; this may be ignored if the operands were
+considered unsigned, but warns of a possible error if the operands were 2’s complement signed. 
+The C flag will be set to the carry out of bit 31 of the ALU, the Z flag will be set if and 
+only if the result was zero, and the N flag will be set to the value of bit 31 of the result 
+(indicating a negative result if the operands are considered to be 2’s complement signed).
+
+<<<
+Aquí destacamos que:
+
+- las arithmetics tienen un tratamiento especial.
+- ojo con signo y sin signo.
+- S ^ -R -> F
+  
+- V = over 31
+- C = cout Alu
+- N = 80...
+- Z = 00...
+<<<
+
+Bien, con esta info que podríamos considerar efectuar los siguientes cambios. Vemos claramente que la relación con la variable lógica que definimos antes R tiene mucho que ver. Rd es un campo de locación fija dentro del campo de instrucción. Esto es que no se mueve y por ende estará en la misma posición siempre. El valor de r15 se codifica como 1111 por lo que podemos identificar fácilmente con un operador and dado que solo nos importa el índice y no el contenido de r15.
+
+con el simulador jarmemu, https://cpulator.01xz.net/?sys=arm (más preciso)
+
+``` assembly
+.global _start
+.text
+_start:
+  @ Beginning of the program
+  mov r2, #16
+  mov r5, #0x80000000
+  mov r6, #1
+  mov r2, #4
+  ands pc, r5, r2 % es legal que s esté habilitado?
+  mov r2, #2
+  mov r2, #2
+  mov r2, #2
+  mov r2, #2
+  mov r2, #2
+  ands r2, r5, r2
+```
+
+ejercicio 1
+
+`and pc, r5, r2` = `0xe005f002` = `1110 0000 0000 0101 1111 0000 0000 0010`
+
+| 1110      | 00  | 0 | 0000   | 0 | 0101 | 1111 | 0000 0000 0010 |
+|-----------|-----|---|--------|---|------|------|----------------|
+| condición | lol | I | opcode | S | r5   | pc   | r2             |
+
+ ----????....====!!!!AAAAçççç
+`11100000000001011111000000000010`
+
+ejercicio 2
+
+`ands pc, r5, r2` = `0xe015f002` = `1110 0000 0001 0101 1111 0000 0000 0010`
+
+| 1110      | 00  | 0 | 0000   | 1 | 0101 | 1111 | 0000 0000 0010 |
+|-----------|-----|---|--------|---|------|------|----------------|
+| condición | lol | I | opcode | S | r5   | pc   | r2             |
+
+ ----????....====!!!!AAAAçççç
+`11100000000101011111000000000010`
+
+
+Vale, otro comportamiento que podemos optimizar es delegar la recuperación del valor de c_in a la función de cómputo de operand2.
+¿Por qué?
+Bueno en realidad, en la base del código actual hacemos esta recuperación dos veces cuando no es necesario.
+Una operación de procesamiento de datos efectúa esta recuperación 
+
+``` c++
+u32 c_in = (cpu.read_cpsr() & arm7tdmi::C) >> arm7tdmi::C_SHIFT;
+```
+
+pero dentro de la lut de operands2 llevamos a cabo otra recuperación.
+
+``` c++
+template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero = 0,
+          arm_shift_type shift_type = arm_shift_type::LSL>
+arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
+  auto carry_out{static_cast<u8>(cpu.is_cpsr(arm7tdmi::C, arm7tdmi::C))};
+```
+
+sabiendo que operand2 es un paso obligatorio para toda operación de ALU, podemos evitar duplicidades y recuperar del generador direcamente.
