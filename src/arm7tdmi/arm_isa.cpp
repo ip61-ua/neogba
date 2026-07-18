@@ -15,7 +15,7 @@ void neogba::arm_AND(arm7tdmi& cpu, u32 inst) {
 
   if (s) {
     auto z{res == 0 ? arm7tdmi::Z : 0};
-    auto n{(res & 0x8000000) != 0 ? arm7tdmi::N : 0};
+    auto n{(res & 0x80000000) != 0 ? arm7tdmi::N : 0};
     auto v{rd_idx == pc ? 0 /* update logic */ : cpu.read_cpsr() & arm7tdmi::V};
 
     cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V, z | n | v);
