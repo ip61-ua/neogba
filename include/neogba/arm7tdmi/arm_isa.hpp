@@ -52,7 +52,7 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
 
       } else if constexpr (shift_type == arm_shift_type::ROR) {
         // RRX: Rotate 1 bit and include Cin.
-        result = ((cpu.read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1);
+        result = ((cpu.read_cpsr() & arm7tdmi::C) << (31 - arm7tdmi::C_SHIFT)) | (rm >> 1);
         carry_out = rm & 1;
       }
     } else {
@@ -197,11 +197,11 @@ template <bool s, arm_fsr_opcode opcode> void arm_fsr_generator(arm7tdmi& cpu, u
   } else if constexpr (opcode == arm_fsr_opcode::ADD || opcode == arm_fsr_opcode::CMN) {
     res = op1 + op2.result;
   } else if constexpr (opcode == arm_fsr_opcode::ADC) {
-    res = op1 + op2.result + op2.carry_out;
+    res = op1 + op2.result + c_in;
   } else if constexpr (opcode == arm_fsr_opcode::SBC) {
-    res = op1 - op2.result + op2.carry_out - 1;
+    res = op1 - op2.result + c_in - 1;
   } else if constexpr (opcode == arm_fsr_opcode::RSC) {
-    res = op2.result - op1 + op2.carry_out - 1;
+    res = op2.result - op1 + c_in - 1;
   } else if constexpr (opcode == arm_fsr_opcode::ORR) {
     res = op1 | op2.result;
   } else if constexpr (opcode == arm_fsr_opcode::MOV) {

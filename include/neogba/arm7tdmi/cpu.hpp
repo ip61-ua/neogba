@@ -24,6 +24,7 @@ enum arm7tdmi_register : u8 {
 
 struct arm7tdmi {
   static constexpr u32
+
       /** @brief Negative (N) */
       N_SHIFT{31},
       N{1u << N_SHIFT},
