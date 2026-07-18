@@ -196,7 +196,7 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
   }
 
   auto op2{arm_operand2_lut.run(inst, cpu, inst)};
-  u32 res{};
+  u64 res{};
 
   // Perform operation
   if constexpr (opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::TST)
@@ -230,13 +230,21 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
 
   // Side effects
   if constexpr (s and not rd_pc) {
-
-    auto v{rd_idx == pc ? 0 /* update logic */ : cpu.read_cpsr() & arm7tdmi::V};
-
+    // common
     auto z{res == 0 ? arm7tdmi::Z : 0};
     auto n{(res & 0x80000000) != 0 ? arm7tdmi::N : 0};
 
-    cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V, z | n | v);
+    if constexpr (is_logical) {
+      auto c{static_cast<u32>(op2.carry_out << arm7tdmi::C_SHIFT)};
+
+      cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C, z | n | c);
+    } else {
+      auto c{static_cast<u32>((res >> 31) & 1) << arm7tdmi::C_SHIFT};
+      auto v{static_cast<u32>((~(op1 ^ op2.result) & (op1 ^ static_cast<u32>(res))) & 0x80000000)
+             << arm7tdmi::V_SHIFT};
+
+      cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V, z | n | c | v);
+    }
   }
 }
 

@@ -1216,3 +1216,25 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
 ```
 
 sabiendo que operand2 es un paso obligatorio para toda operación de ALU, podemos evitar duplicidades y recuperar del generador direcamente.
+Es una tontería así de grande pero cada cosa importa.
+
+
+<<<
+- las lógicas tienen un tratamiento especial.
+- V = default
+- C = shift Barrel
+- N = 80...
+- Z = 00...
+<<<
+
+<<<
+- las arithmetics tienen un tratamiento especial.
+- V = over 31
+- C = cout Alu
+- N = 80...
+- Z = 00...
+<<<
+
+
+Podemos aprovechar que expandir el resultado a 64 bits en lugar de 32 para y así detectar más fácil el efecto overflow.
+
