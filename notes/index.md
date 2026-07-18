@@ -949,6 +949,12 @@ is not R15, see below) the V flag in the CPSR will be unaffected, the C flag wil
 carry out from the barrel shifter (or preserved when the shift operation is LSL #0), the Z flag
 will be set if and only if the result is all zeros, and the N flag will be set to the logical
 value of bit 31 of the result.
+
+logical -> -update(V)
+(S ^ -r15) > -update
+-S v r15 > update
+	
+<<< aquí veo un potencial comportamiento común. Las lógicas no tocan V ni aunque lo tengan S. Podemos de alguna forma estandarizar este comportamiento para toda lógica que se meta.
 	
 The arithmetic operations (SUB, RSB, ADD, ADC, SBC, RSC, CMP, CMN) treat each
 operand as a 32 bit integer (either unsigned or 2’s complement signed, the two are
@@ -956,24 +962,30 @@ equivalent). If the S bit is set (and Rd is not R15) the V flag in the CPSR will
 an overflow occurs into bit 31 of the result; this may be ignored if the operands were
 considered unsigned, but warns of a possible error if the operands were 2’s
 
- -S v r15 -> update
- 
+
  complement signed. The C flag will be set to the carry out of bit 31 of the ALU, the Z
 flag will be set if and only if the result was zero, and the N flag will be set to the value
 of bit 31 of the result (indicating a negative result if the operands are considered to be
 2’s complement signed).
 
-If R15 (the PC) is used as an operand in a data processing instruction the register is
-used directly.
-The PC value will be the address of the instruction, plus 8 or 12 bytes due to instruction
-prefetching. If the shift amount is specified in the instruction, the PC will be 8 bytes
-ahead. If a register is used to specify the shift amount the PC will be 12 bytes ahead.
+<<< no obstante hay cosas que comparten en común. como el hecho de proceder a actualizar las banderas. ¿Estás pensando en plantillas? yo también.
 
 If R15 (the PC) is used as an operand in a data processing instruction the register is
 used directly.
 The PC value will be the address of the instruction, plus 8 or 12 bytes due to instruction
 prefetching. If the shift amount is specified in the instruction, the PC will be 8 bytes
 ahead. If a register is used to specify the shift amount the PC will be 12 bytes ahead.
+
+<<< esto es importante: PC cambia. 
+
+If R15 (the PC) is used as an operand in a data processing instruction the register is
+used directly.
+The PC value will be the address of the instruction, plus 8 or 12 bytes due to instruction
+prefetching. If the shift amount is specified in the instruction, the PC will be 8 bytes
+ahead. If a register is used to specify the shift amount the PC will be 12 bytes ahead.
+
+
+
 4.5.6 TEQ, TST, CMP and CMN opcodes
 Note
 TEQ, TST, CMP and CMN do not write the result of their operation but do set flags in
@@ -983,3 +995,35 @@ The TEQP form of the TEQ instruction used in earlier ARM processors must not be
 used: the PSR transfer operations should be used instead.
 The action of TEQP in the ARM7TDMI-S is to move SPSR_mode to the CPSR if the
 processor is in a privileged mode and to do nothing if in User mode.
+
+<<< lo lógico vaya.
+
+de momento voy a montar una estructura de plantillas que sirva para definir qué instrucción es cada cosa y minimizar duplicidades y errores en común. Luego a partir de ahí vamos perfeccionando.
+Mi planteamiento inicial es crear una común que acepte un lambda donde haga de por sí la operación solicitada y otro lambda para la actualización de bits. 
+SIn embargo, creo que el lambda es lo más bobo... bueno no, en la común creo que sí tiene sentido... No mejor no, no deleguemos más trabajo al compilador. Vamos a evitarle a toda costa la posible indirección del salto.
+Entonces la común tendrá un funcionamiento talque primero coja todos los operandos, llame para obtener operand2, operación en cuestión definida por el lambda y luego un if constexpr (caso) para qué actualizar o no actualizar.
+Esto último nos puede dar flexibilidad para decidir qué considerar en la futura lut que aglutine todas las operaciones y podamos saltar directamente a ejecutar al sitio que interese con los efectos colaterales que nos interese.
+
+# 18 de julio
+
+He llegado a la conclusión de que es mejor definir un conjunto finito en lugar de dar indirección. De modo que la prioridad para optimizar código con lut sea:
+
+1. Es un conjunto de valores muy concretos? Entonces plantilla y en tiempo de compilación handlear todo eso. Abstraiga los valores concretos a tiempo de compilación
+- Vale para cualquier cosa: tipo receta (todo es igual pero cambia una parte solo, lambdas) 
+
+2. Es una función que puede ser utilizada a convenienza múltiples veces? lambda.
+- lo recomendable es que el compilador sea capaz de hacerle el inline si es una función simplona.
+
+3. es un valor demasiado grande? quizás podría ser karnaugh pero es mejor simplicarlo lógicamente, como por ejemplo trabajar algo_grande != 0. O dividirlo en varias variables que ayuden a identificar. En otro caso pasar al siguiente.
+
+4. es un valor demasiado grande y hay indirección para conocerlo? Esto es que hay un valor que solo se conoce en tiempo de ejecución y compilación. Por lo tanto aquí no podemos optimizar nada. Toca pasar por el aro y aguardar para que el compilador haga su faena muy bien.
+
+5. Si después de todo puedes ver que hay patrón que se repite, quizás sea indicativo para revisar y abstraer más variables. Pero esto es solo recomendable en fases muy estables y consolidades o con una batería de prueba demasiado exhaustiva.
+
+Entonces creo que tomar en cuenta que hay una plantilla común no es lo más adecuado. Sí bien es cierto que hay código que estará en ambas, lo cierto es que es muy minúsculo y no prohibitivo. No derivaremos y haremos clases de funciones concretas.
+
+Además de que si lo pensamos bien, el conjunto de operaciones no es tanto. `arm_fsr_opcode` solo tiene 16 valores posibles. Y no creo que vaya necesariamente poner un lambda. Precisamente ya el mero echo de que tengamos bien definido este enum `arm_fsr_opcode` es un indicativo que es finito. Un lambda puede llegar agregar indirección. pero esa decisión la delegamos al compilador si hacer inline o no. Propongo que la plantilla en tiempos de compilación evalúe el trozo que le interese poner en hueco de la operación.
+
+Esto tiene otra ventaja y es que podemos despreocuparnos de la ventana de contexto del lambda. Ampliándola a toda la plantilla y sin "paso de parámetros" con referencia ni punteros. Lo cierto que es que no tenemos que definir qué parámetros irán en el lmanda y omitimos el rollazo de cambiarlo de posición porque lol no he considerado un edge case entre las 16 opciones.
+
+
