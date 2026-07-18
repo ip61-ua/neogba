@@ -145,7 +145,7 @@ TEST_F(cpu_test, checks_if_the_entire_chunk_of_registers_are_equal) {
   expected[r14_und] = 100;
   expected[spsr_und] = static_cast<u32>(-102);
 
-  u32 j = 0;
+  u32 j{0};
   for (auto mode : {arm7tdmi::MODE_USR, arm7tdmi::MODE_FIQ, arm7tdmi::MODE_IRQ, arm7tdmi::MODE_SVC,
                     arm7tdmi::MODE_ABT, arm7tdmi::MODE_UND, arm7tdmi::MODE_SYS}) {
 
@@ -160,7 +160,7 @@ TEST_F(cpu_test, checks_if_the_entire_chunk_of_registers_are_equal) {
 
     cpu->write_spsr(-j);
 
-    auto activ = cpu->REGISTERS_PRESET[cpu->get_idx_registers_preset_by_mode(mode)];
+    auto activ{cpu->REGISTERS_PRESET[cpu->get_idx_registers_preset_by_mode(mode)]};
     ASSERT_EQ(expected[activ[arm7tdmi::spsr]], cpu->read_spsr());
   }
 

@@ -1026,4 +1026,6 @@ Además de que si lo pensamos bien, el conjunto de operaciones no es tanto. `arm
 
 Esto tiene otra ventaja y es que podemos despreocuparnos de la ventana de contexto del lambda. Ampliándola a toda la plantilla y sin "paso de parámetros" con referencia ni punteros. Lo cierto que es que no tenemos que definir qué parámetros irán en el lmanda y omitimos el rollazo de cambiarlo de posición porque lol no he considerado un edge case entre las 16 opciones.
 
+Otra cuestión que voy aprovechar es refactorizar `enum` para hacer servir `enum class`. Esto se debe principalmente a aplicar buenas prácticas de programación del lenguaje y hacer lo más idiomático.
+
 

@@ -18,37 +18,37 @@ bool arm7tdmi::ckeck_arm_condition(u32 instruction) const {
   auto cond = static_cast<arm_cond>(ISA_ARM_COND::get(instruction)); // lol
 
   switch (cond) {
-  case COND_EQ:
+  case arm_cond::EQ:
     return is_cpsr(Z, Z);
-  case COND_NE:
+  case arm_cond::NE:
     return is_cpsr(Z, 0);
-  case COND_HSCS:
+  case arm_cond::HSCS:
     return is_cpsr(C, C);
-  case COND_LOCC:
+  case arm_cond::LOCC:
     return is_cpsr(C, 0);
-  case COND_MI:
+  case arm_cond::MI:
     return is_cpsr(N, N);
-  case COND_PL:
+  case arm_cond::PL:
     return is_cpsr(N, 0);
-  case COND_VS:
+  case arm_cond::VS:
     return is_cpsr(V, V);
-  case COND_VC:
+  case arm_cond::VC:
     return is_cpsr(V, 0);
-  case COND_HI:
+  case arm_cond::HI:
     return is_cpsr(C | Z, C);
-  case COND_LS:
+  case arm_cond::LS:
     return is_cpsr(C, 0) || is_cpsr(Z, Z);
-  case COND_GE:
+  case arm_cond::GE:
     return is_cpsr(N, N) == is_cpsr(V, V);
-  case COND_LT:
+  case arm_cond::LT:
     return is_cpsr(N, N) != is_cpsr(V, V);
-  case COND_GT:
+  case arm_cond::GT:
     return is_cpsr(Z, 0) && (is_cpsr(N, N) == is_cpsr(V, V));
-  case COND_LE:
+  case arm_cond::LE:
     return is_cpsr(Z, Z) || (is_cpsr(N, N) != is_cpsr(V, V));
-  case COND_AL:
+  case arm_cond::AL:
     return true;
-  case COND_NV:
+  case arm_cond::NV:
   default:
     return false;
   };

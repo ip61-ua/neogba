@@ -11,7 +11,7 @@ constexpr auto LUT_RESULT_LENGTH_EXAMPLE{8};
 TEST(lut_test, fill_recursive_and_ensure_how_many_stored_with_count_stored) {
   lut<int, 1 << 8> my_lut;
 
-  auto n = my_lut.fill(LUT_BASE_EXAMPLE, LUT_MASK_EXAMPLE, LUT_DATA_EXAMPLE);
+  auto n{my_lut.fill(LUT_BASE_EXAMPLE, LUT_MASK_EXAMPLE, LUT_DATA_EXAMPLE)};
 
   ASSERT_EQ(LUT_RESULT_LENGTH_EXAMPLE, n);
   ASSERT_EQ(LUT_RESULT_LENGTH_EXAMPLE, my_lut.count_stored(LUT_DATA_EXAMPLE));
@@ -61,7 +61,7 @@ TEST(lut_test, fill_recursive_and_execution_by_running_lambdas) {
     MOCK_METHOD(void, execute, (int a));
   };
 
-  static FunctionMock* mock_bridge = nullptr;
+  static FunctionMock* mock_bridge{nullptr};
   FunctionMock mock_instance;
   mock_bridge = &mock_instance;
 
@@ -162,11 +162,11 @@ TEST(lut_test, fill_and_execution_with_references_params) {
   lut<handler_test, 1 << 8, int> my_lut;
 
   int a{7};
-  auto important_operation = [](int& a) -> int { return a++; };
+  auto important_operation{[](int& a) -> int { return a++; }};
 
   my_lut.fill(LUT_BASE_EXAMPLE, important_operation);
 
-  auto a1 = my_lut.run(LUT_BASE_EXAMPLE, a);
+  auto a1{my_lut.run(LUT_BASE_EXAMPLE, a)};
   ASSERT_EQ(7, a1);
   ASSERT_EQ(8, a);
 }

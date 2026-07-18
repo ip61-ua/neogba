@@ -26,7 +26,7 @@ protected:
 } // namespace
 
 TEST_F(cpu_arm_fixture, arm_and_simple_testing_not_filling_operand2) {
-  auto inst = ISA_ARM_FSR_TEMPLATE;
+  auto inst{ISA_ARM_FSR_TEMPLATE};
 
   inst = ISA_ARM_FSR_RN::set(inst, r2);
   inst = ISA_ARM_FSR_RD::set(inst, r5);

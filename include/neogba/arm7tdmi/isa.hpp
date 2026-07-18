@@ -72,29 +72,29 @@ struct isa_fieldSplit : isa_field<instruction_t, return_t, n_shift, bit_mask> {
 } // namespace
 
 /// ARM
-enum arm_cond : u8 {
-  COND_EQ = 0b0000,
-  COND_NE = 0b0001,
-  COND_HSCS = 0b0010,
-  COND_LOCC = 0b0011,
-  COND_MI = 0b0100,
-  COND_PL = 0b0101,
-  COND_VS = 0b0110,
-  COND_VC = 0b0111,
-  COND_HI = 0b1000,
-  COND_LS = 0b1001,
-  COND_GE = 0b1010,
-  COND_LT = 0b1011,
-  COND_GT = 0b1100,
-  COND_LE = 0b1101,
-  COND_AL = 0b1110,
-  COND_NV = 0b1111,
+enum class arm_cond : u8 {
+  EQ = 0b0000,
+  NE = 0b0001,
+  HSCS = 0b0010,
+  LOCC = 0b0011,
+  MI = 0b0100,
+  PL = 0b0101,
+  VS = 0b0110,
+  VC = 0b0111,
+  HI = 0b1000,
+  LS = 0b1001,
+  GE = 0b1010,
+  LT = 0b1011,
+  GT = 0b1100,
+  LE = 0b1101,
+  AL = 0b1110,
+  NV = 0b1111,
 };
 
 using ISA_ARM_COND = isa_field_delayed<u32, u8, 28>;
 
 /// Data processing and FSR transfer
-enum arm_fsr_opcode : u8 {
+enum class arm_fsr_opcode : u8 {
   AND = 0b0000,
   EOR = 0b0001,
   SUB = 0b0010,
@@ -113,7 +113,7 @@ enum arm_fsr_opcode : u8 {
   MVN = 0b1111,
 };
 
-enum arm_shift_type : u8 {
+enum class arm_shift_type : u8 {
   LSL = 0b00,
   LSR = 0b01,
   ASR = 0b10,

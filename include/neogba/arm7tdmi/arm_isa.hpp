@@ -12,7 +12,7 @@ struct arm_operand2_result {
 };
 
 template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero = 0,
-          arm_shift_type shift_type = LSL>
+          arm_shift_type shift_type = arm_shift_type::LSL>
 arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
   auto carry_out{static_cast<u8>(cpu.is_cpsr(arm7tdmi::C, arm7tdmi::C))};
   u32 result;
@@ -37,20 +37,20 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
     constexpr bool is_special_case{!bit4 && shift_zero};
 
     if constexpr (is_special_case) {
-      if constexpr (shift_type == LSL) {
+      if constexpr (shift_type == arm_shift_type::LSL) {
         result = rm;
 
-      } else if constexpr (shift_type == LSR) {
+      } else if constexpr (shift_type == arm_shift_type::LSR) {
         // shift_amount = 32; // LSR #0 = LSR #32
         result = 0;
         carry_out = (rm >> 31) & 1;
 
-      } else if constexpr (shift_type == ASR) {
+      } else if constexpr (shift_type == arm_shift_type::ASR) {
         // shift_amount = 32; //  ASR #0
         result = static_cast<u32>(static_cast<i32>(rm) >> 31);
         carry_out = (rm >> 31) & 1;
 
-      } else if constexpr (shift_type == ROR) {
+      } else if constexpr (shift_type == arm_shift_type::ROR) {
         // RRX: Rotate 1 bit and include Cin.
         result = ((cpu.read_cpsr() & arm7tdmi::C) << (31 - 29)) | (rm >> 1);
         carry_out = rm & 1;
@@ -68,7 +68,7 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
       // Esto posiblemente dé para otra lut y utilizar karnaugh para simplificar saltos ifs, pero de
       // momento hay que tener algo funcando, pero me ha jodido el carry. Creo que es una idea muy
       // certera.
-      if constexpr (shift_type == LSL) {
+      if constexpr (shift_type == arm_shift_type::LSL) {
         if (shift_amount == 0) {
           result = rm;
         } else if (shift_amount < 32) {
@@ -82,7 +82,7 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
           result = 0;
         }
 
-      } else if constexpr (shift_type == LSR) {
+      } else if constexpr (shift_type == arm_shift_type::LSR) {
         if (shift_amount == 0) {
           result = rm;
         } else if (shift_amount < 32) {
@@ -96,7 +96,7 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
           carry_out = 0;
         }
 
-      } else if constexpr (shift_type == ASR) {
+      } else if constexpr (shift_type == arm_shift_type::ASR) {
         if (shift_amount == 0) {
           result = rm;
         } else if (shift_amount < 32) {
@@ -107,7 +107,7 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
           carry_out = (rm >> 31) & 1;
         }
 
-      } else if constexpr (shift_type == ROR) {
+      } else if constexpr (shift_type == arm_shift_type::ROR) {
         if (shift_amount == 0) {
           result = rm;
         } else {
@@ -146,26 +146,25 @@ inline constexpr auto arm_operand2_lut = []() consteval {
       }>
       table;
 
-  table.put_raw(0b0000, arm_operand2_generator<false, false, false, true, LSL>);
-  table.put_raw(0b0001, arm_operand2_generator<false, false, false, true, LSR>);
-  table.put_raw(0b0010, arm_operand2_generator<false, false, false, true, ASR>);
-  table.put_raw(0b0011, arm_operand2_generator<false, false, false, true, ROR>);
-  table.put_raw(0b0100, arm_operand2_generator<false, false, false, false, LSL>);
-  table.put_raw(0b0101, arm_operand2_generator<false, false, false, false, LSR>);
-  table.put_raw(0b0110, arm_operand2_generator<false, false, false, false, ASR>);
-  table.put_raw(0b0111, arm_operand2_generator<false, false, false, false, ROR>);
-  table.put_raw(0b1000, arm_operand2_generator<false, false, true, false, LSL>);
-  table.put_raw(0b1001, arm_operand2_generator<false, false, true, false, LSR>);
-  table.put_raw(0b1010, arm_operand2_generator<false, false, true, false, ASR>);
-  table.put_raw(0b1011, arm_operand2_generator<false, false, true, false, ROR>);
+  table.put_raw(0b0000, arm_operand2_generator<false, false, false, true, arm_shift_type::LSL>);
+  table.put_raw(0b0001, arm_operand2_generator<false, false, false, true, arm_shift_type::LSR>);
+  table.put_raw(0b0010, arm_operand2_generator<false, false, false, true, arm_shift_type::ASR>);
+  table.put_raw(0b0011, arm_operand2_generator<false, false, false, true, arm_shift_type::ROR>);
+  table.put_raw(0b0100, arm_operand2_generator<false, false, false, false, arm_shift_type::LSL>);
+  table.put_raw(0b0101, arm_operand2_generator<false, false, false, false, arm_shift_type::LSR>);
+  table.put_raw(0b0110, arm_operand2_generator<false, false, false, false, arm_shift_type::ASR>);
+  table.put_raw(0b0111, arm_operand2_generator<false, false, false, false, arm_shift_type::ROR>);
+  table.put_raw(0b1000, arm_operand2_generator<false, false, true, false, arm_shift_type::LSL>);
+  table.put_raw(0b1001, arm_operand2_generator<false, false, true, false, arm_shift_type::LSR>);
+  table.put_raw(0b1010, arm_operand2_generator<false, false, true, false, arm_shift_type::ASR>);
+  table.put_raw(0b1011, arm_operand2_generator<false, false, true, false, arm_shift_type::ROR>);
   table.put_raw(0b1100, arm_operand2_generator<true, true>);
   table.put_raw(0b1101, arm_operand2_generator<true, false>);
 
   return table;
 }();
 
-template <bool s, void (*operation)(arm7tdmi& cpu, u32 inst, arm_operand2_result& operand2)>
-void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
+template <bool s> void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
   auto rn_idx{ISA_ARM_FSR_RN::get(inst)};
   auto rd_idx{ISA_ARM_FSR_RD::get(inst)};
   auto operand2{arm_operand2_lut.run(inst, cpu, inst)};

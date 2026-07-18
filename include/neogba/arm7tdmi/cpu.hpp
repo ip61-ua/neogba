@@ -4,7 +4,7 @@
 
 namespace neogba {
 
-enum arm7tdmi_registers : u8 {
+enum arm7tdmi_register : u8 {
 
   // clang-format off
     r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr,
