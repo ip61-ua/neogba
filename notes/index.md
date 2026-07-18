@@ -1238,3 +1238,101 @@ Es una tontería así de grande pero cada cosa importa.
 
 Podemos aprovechar que expandir el resultado a 64 bits en lugar de 32 para y así detectar más fácil el efecto overflow.
 
+Vale.
+
+Bueno ya ha es otro día.
+
+# 19 de julio.
+
+España juega la mundial contra la Argentina. ¡Qué gane España!
+Se palpa un ambiente de poca división que recientemente no se ve.
+Aunque no se muy futbolero, considero que esto es muy positivo.
+Y más si vemos el contexto de crispación, escándalos y desastres en los últimos tiempos.
+A ver si sale la segunda estrella...
+
+Estoy mirando en optimizar el código de generación de instrucciones. He implementado siguiendo la instruccón que recupere el spsr al cpsr si el destino es 15 según como se indica en la documentación:
+
+``` c++
+if constexpr (rd_pc) 
+	cpu.write_cpsr(cpu.read_spsr());
+
+
+```
+
+"When Rd is a register other than R15, the condition code flags in the CPSR may be
+updated from the ALU flags as described above.
+When Rd is R15 and the S flag in the instruction is not set the result of the operation is
+placed in R15 and the CPSR is unaffected.
+When Rd is R15 and the S flag is set the result of the operation is placed in R15 and
+the SPSR corresponding to the current mode is moved to the CPSR. This allows state
+changes which atomically restore both PC and CPSR. This form of instruction should
+not be used in User mode."
+
+He implementado los efectos colaterales para grabar en cpsr diferenciando si sea lógica o no sencillamente. 
+En las aritméticas, hay un error en considerar en cual sea el primer operando porque se reviertes para algunas operaciones.
+Por lo mi propuesta inicial fue hacer un intercambio de variables para ese caso. Sin embargo, ví la oportunidad de reducir el código del if de operaciones, si realizacemos el intercambio antes de efectuar la operación y después de obtener los operandos 1 y 2. Mi planteamineto inicial fue 
+
+``` c++
+
+  if constexpr (is_inverted_sub) { // a^b^b = a <-> https://youtube.com/watch?v=4KdvcQKNfbQ
+    op1 ^= op2.result;
+    op2.result ^= op1;
+    op1 ^= op2.result;
+  }
+
+  // Perform operation
+  if constexpr (opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::TST)
+    res = op1 & op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::EOR || opcode == arm_fsr_opcode::TEQ)
+    res = op1 ^ op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::SUB || opcode == arm_fsr_opcode::CMP ||
+                     opcode == arm_fsr_opcode::RSB)
+    res = static_cast<u64>(op1) - op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::ADD || opcode == arm_fsr_opcode::CMN)
+    res = static_cast<u64>(op1) + op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::ADC)
+    res = static_cast<u64>(op1) + op2.result + op2.carry_in;
+  else if constexpr (opcode == arm_fsr_opcode::SBC || opcode == arm_fsr_opcode::RSC)
+    res = static_cast<u64>(op1) - op2.result + op2.carry_in - 1;
+  else if constexpr (opcode == arm_fsr_opcode::ORR)
+    res = op1 | op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::MOV)
+    res = op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::BIC)
+    res = op1 & ~op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::MVN)
+    res = ~op2.result;
+
+```
+
+aplicando la propiedad xor de memoria que recordé de un vídeo en el que no se podía utilizar una variable auxiliar. Sin embargo, esto queda en una curiosidad más en que en una funcionalidad, existe la función std::swap que en teoría es mejor porque delega la tarea al compilador el método a elegir para dar el cambiazo de dos variables de formas fáciles. Si vemos el código, es casi un hack porque es literalmente cambiar lo que toca op1 y op2.result para evitar cambios mayores. Al margen de la propiedad, he aplicado el std::swap para más idiomatez.
+
+Al margen de esto, esto ha permitido agrupar algo más el bloque de perform operation siendo que ahora no hay accciones que hagan lo mismo escritas por mi a mano.
+
+Ya desde aquí estaba servido el manejo de bits llegando a optar por evitar desplazar innecesariamente o hacer suposiciones o hacer los cálculos parciales para completarlos para que puedan ser alterados a conveniencia. Este último caso es sobre todo para el efecto colateral de las aritméticas cuando s y por si la operación efectuada no es una suma que invierta las variables c y v computados parcialmente y luego aplicar lo mismo para cualquier caso de aritmética.
+
+``` c++
+        // another meta template info
+        constexpr auto is_sum{opcode == arm_fsr_opcode::ADD || opcode == arm_fsr_opcode::ADC ||
+                              opcode == arm_fsr_opcode::CMN};
+
+        // (res >> 32) & 1 es 1 o 0.
+        auto c{static_cast<u32>(res >> 32)};
+        auto v{~(op1 ^ op2.result)};
+
+        if constexpr (not is_sum) {
+          c = !c;
+          v = ~v;
+        }
+
+        // Mover lo necesario!
+        c = (c & 1) << arm7tdmi::C_SHIFT;
+        // movemos lo justo el bit 31 resultante a la posición de V.
+        v = (v & (op1 ^ res32) & 0x80000000) >> (31 - arm7tdmi::V_SHIFT);
+
+        cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V, z | n | c | v);
+```
+
+He documentado esa función con tal de aumentar la mantenibilidad. Y he añadido algunos comentarios para ver soy consciente de lo que he hecho.
+
+Pero no sé después de ponerme una extensión de documentación mi emacs va lento... Ya veré como solvento esto o igual es cosa del lenguaje o del clangd.

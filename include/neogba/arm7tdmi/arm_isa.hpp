@@ -3,6 +3,7 @@
 #include "neogba/arm7tdmi/isa.hpp"
 #include "neogba/structs/lut.hpp"
 #include "neogba/types.hpp"
+#include <utility>
 
 namespace neogba {
 
@@ -178,61 +179,59 @@ inline constexpr auto arm_operand2_lut = []() consteval {
  * Esto es a propósito para poder facilitar la implementación y organización dentro de una tabla
  * lut u otras estructuras afines.
  *
- * @param s Bit que indica si activar efectos colaterales de escritura sobre el registro de
- * banderas.
  * @param opcode Enumerado de operación de procesamiento a realizar.
+ * @param s Bit que indica si activar efectos de escritura sobre el registro de banderas.
  * @param rd_pc Boleano que indica si el destino es PC.
  * @param cpu Objeto por referencia de contexto de la CPU.
  * @param inst Instrucción máquina a ejecutar por valor.
  */
 template <arm_fsr_opcode opcode, bool s = false, bool rd_pc = false>
 void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
+
   // Meta template variables
   constexpr auto is_logical{opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::EOR ||
                             opcode == arm_fsr_opcode::TST || opcode == arm_fsr_opcode::TEQ ||
                             opcode == arm_fsr_opcode::ORR || opcode == arm_fsr_opcode::MOV ||
                             opcode == arm_fsr_opcode::BIC || opcode == arm_fsr_opcode::MVN};
   constexpr auto can_write_rd{!(opcode == arm_fsr_opcode::TST || opcode == arm_fsr_opcode::TEQ ||
-                                opcode == arm_fsr_opcode::CMP || opcode == arm_fsr_opcode::CMN) &&
-                              s};
+                                opcode == arm_fsr_opcode::CMP || opcode == arm_fsr_opcode::CMN)};
+  constexpr auto is_inverted_sub{opcode == arm_fsr_opcode::RSB || opcode == arm_fsr_opcode::RSC};
+
+  // Nota!!! read(r15) ->  PC + 8
 
   // Retrieve values
+  u8 rd_idx;
+  u32 op1;
+  u64 res;
   auto rn_idx{ISA_ARM_FSR_RN::get(inst)};
 
-  u8 rd_idx;
   if constexpr (rd_pc)
     rd_idx = 0xfu;
   else
     rd_idx = ISA_ARM_FSR_RD::get(inst);
 
-  u32 op1;
-  if constexpr (opcode != arm_fsr_opcode::MOV && opcode != arm_fsr_opcode::MVN) {
-    if constexpr (rd_pc)
-      op1 = cpu.read_pc();
-    else
-      op1 = cpu.read_active_register(rn_idx);
-  }
+  if constexpr (opcode != arm_fsr_opcode::MOV && opcode != arm_fsr_opcode::MVN)
+    op1 = cpu.read_active_register(rn_idx);
 
   auto op2{arm_operand2_lut.run(inst, cpu, inst)};
-  u64 res{};
+
+  if constexpr (is_inverted_sub)
+    std::swap(op1, op2.result);
 
   // Perform operation
   if constexpr (opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::TST)
     res = op1 & op2.result;
   else if constexpr (opcode == arm_fsr_opcode::EOR || opcode == arm_fsr_opcode::TEQ)
     res = op1 ^ op2.result;
-  else if constexpr (opcode == arm_fsr_opcode::SUB || opcode == arm_fsr_opcode::CMP)
-    res = op1 - op2.result;
-  else if constexpr (opcode == arm_fsr_opcode::RSB)
-    res = op2.result - op1;
+  else if constexpr (opcode == arm_fsr_opcode::SUB || opcode == arm_fsr_opcode::CMP ||
+                     opcode == arm_fsr_opcode::RSB)
+    res = static_cast<u64>(op1) - op2.result;
   else if constexpr (opcode == arm_fsr_opcode::ADD || opcode == arm_fsr_opcode::CMN)
-    res = op1 + op2.result;
+    res = static_cast<u64>(op1) + op2.result;
   else if constexpr (opcode == arm_fsr_opcode::ADC)
-    res = op1 + op2.result + op2.carry_in;
-  else if constexpr (opcode == arm_fsr_opcode::SBC)
-    res = op1 - op2.result + op2.carry_in - 1;
-  else if constexpr (opcode == arm_fsr_opcode::RSC)
-    res = op2.result - op1 + op2.carry_in - 1;
+    res = static_cast<u64>(op1) + op2.result + op2.carry_in;
+  else if constexpr (opcode == arm_fsr_opcode::SBC || opcode == arm_fsr_opcode::RSC)
+    res = static_cast<u64>(op1) - op2.result + op2.carry_in - 1;
   else if constexpr (opcode == arm_fsr_opcode::ORR)
     res = op1 | op2.result;
   else if constexpr (opcode == arm_fsr_opcode::MOV)
@@ -243,25 +242,49 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
     res = ~op2.result;
 
   // write back the result
+  auto res32{static_cast<u32>(res)};
   if constexpr (can_write_rd)
-    cpu.write_active_register(rd_idx, res);
+    cpu.write_active_register(rd_idx, res32);
 
   // Side effects
-  if constexpr (s and not rd_pc) {
-    // common
-    auto z{res == 0 ? arm7tdmi::Z : 0};
-    auto n{(res & 0x80000000) != 0 ? arm7tdmi::N : 0};
+  if constexpr (s) {
+    if constexpr (rd_pc) {
+      cpu.write_cpsr(cpu.read_spsr());
 
-    if constexpr (is_logical) {
-      auto c{static_cast<u32>(op2.carry_out << arm7tdmi::C_SHIFT)};
-
-      cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C, z | n | c);
     } else {
-      auto c{static_cast<u32>((res >> 31) & 1) << arm7tdmi::C_SHIFT};
-      auto v{static_cast<u32>((~(op1 ^ op2.result) & (op1 ^ static_cast<u32>(res))) & 0x80000000)
-             << arm7tdmi::V_SHIFT};
 
-      cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V, z | n | c | v);
+      // common
+      auto z{static_cast<u32>(res32 == 0) << arm7tdmi::Z_SHIFT}; // (res32 == 0) -> true -> 0x0...01
+      u32 n{res32 & 0x80000000}; // N ya está en el bit 31 -> 0 movimientos
+
+      if constexpr (is_logical) {
+        auto c{static_cast<u32>(op2.carry_out << arm7tdmi::C_SHIFT)}; // op2.carry_out es 0 o 1.
+
+        // meter V aquí = !necesario -> no está afectado.
+        // set_cpsr(mask, values) sobrescribe solo estos `mask`
+        cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C, z | n | c);
+      } else {
+
+        // another meta template info
+        constexpr auto is_sum{opcode == arm_fsr_opcode::ADD || opcode == arm_fsr_opcode::ADC ||
+                              opcode == arm_fsr_opcode::CMN};
+
+        // (res >> 32) & 1 es 1 o 0.
+        auto c{static_cast<u32>(res >> 32)};
+        auto v{~(op1 ^ op2.result)};
+
+        if constexpr (not is_sum) {
+          c = !c;
+          v = ~v;
+        }
+
+        // Mover lo necesario!
+        c = (c & 1) << arm7tdmi::C_SHIFT;
+        // movemos lo justo el bit 31 resultante a la posición de V.
+        v = (v & (op1 ^ res32) & 0x80000000) >> (31 - arm7tdmi::V_SHIFT);
+
+        cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V, z | n | c | v);
+      }
     }
   }
 }
