@@ -10,7 +10,7 @@ namespace neogba {
 struct arm_operand2_result {
   u32 result;
   u8 carry_out; // 1 or 0
-  u8 carry_in;
+  u8 carry_in;  // 1 or 0
 };
 
 template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero = false,
