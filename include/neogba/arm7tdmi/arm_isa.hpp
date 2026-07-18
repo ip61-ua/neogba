@@ -8,7 +8,7 @@ namespace neogba {
 
 struct arm_operand2_result {
   u8 carry_out; // 1 or 0
-  u32 operable_operand2;
+  u32 result;
 };
 
 template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero = 0,
@@ -164,13 +164,66 @@ inline constexpr auto arm_operand2_lut = []() consteval {
   return table;
 }();
 
-template <bool s> void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
+template <bool s, arm_fsr_opcode opcode> void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
+  // Meta template variables
+  constexpr auto is_logical{opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::EOR ||
+                            opcode == arm_fsr_opcode::TST || opcode == arm_fsr_opcode::TEQ ||
+                            opcode == arm_fsr_opcode::ORR || opcode == arm_fsr_opcode::MOV ||
+                            opcode == arm_fsr_opcode::BIC || opcode == arm_fsr_opcode::MVN};
+  constexpr auto can_write_rd{!(opcode == arm_fsr_opcode::TST || opcode == arm_fsr_opcode::TEQ ||
+                                opcode == arm_fsr_opcode::CMP || opcode == arm_fsr_opcode::CMN)};
+
+  // Retrieve values
   auto rn_idx{ISA_ARM_FSR_RN::get(inst)};
   auto rd_idx{ISA_ARM_FSR_RD::get(inst)};
-  auto operand2{arm_operand2_lut.run(inst, cpu, inst)};
-  auto res{cpu.read_active_register(rn_idx) & operand2.operable_operand2};
 
+  u32 c_in = (cpu.read_cpsr() & arm7tdmi::C) ? 1 : 0;
+  u32 op1;
+  if constexpr (opcode != arm_fsr_opcode::MOV && opcode != arm_fsr_opcode::MVN)
+    op1 = cpu.read_active_register(rn_idx);
+
+  auto op2{arm_operand2_lut.run(inst, cpu, inst)};
+  u32 res{};
+
+  // Perform operation
+  if constexpr (opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::TST) {
+    res = op1 & op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::EOR || opcode == arm_fsr_opcode::TEQ) {
+    res = op1 ^ op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::SUB || opcode == arm_fsr_opcode::CMP) {
+    res = op1 - op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::RSB) {
+    res = op2.result - op1;
+  } else if constexpr (opcode == arm_fsr_opcode::ADD || opcode == arm_fsr_opcode::CMN) {
+    res = op1 + op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::ADC) {
+    res = op1 + op2.result + op2.carry_out;
+  } else if constexpr (opcode == arm_fsr_opcode::SBC) {
+    res = op1 - op2.result + op2.carry_out - 1;
+  } else if constexpr (opcode == arm_fsr_opcode::RSC) {
+    res = op2.result - op1 + op2.carry_out - 1;
+  } else if constexpr (opcode == arm_fsr_opcode::ORR) {
+    res = op1 | op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::MOV) {
+    res = op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::BIC) {
+    res = op1 & ~op2.result;
+  } else if constexpr (opcode == arm_fsr_opcode::MVN) {
+    res = ~op2.result;
+  }
+
+  // write back the result
+  if constexpr (can_write_rd) {
+    cpu.write_active_register(rd_idx, res);
+  }
+
+  // Side effects
   if constexpr (s) {
+    auto z{res == 0 ? arm7tdmi::Z : 0};
+    auto n{(res & 0x80000000) != 0 ? arm7tdmi::N : 0};
+    auto v{rd_idx == pc ? 0 /* update logic */ : cpu.read_cpsr() & arm7tdmi::V};
+
+    cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V, z | n | v);
   }
 }
 
