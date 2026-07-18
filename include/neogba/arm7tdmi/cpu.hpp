@@ -24,21 +24,29 @@ enum arm7tdmi_register : u8 {
 
 struct arm7tdmi {
   static constexpr u32
-      /// @brief Negative (N)
-      N{1u << 31},
-      /// @brief Zero (Z)
-      Z{1u << 30},
-      /// @brief Carry (C)
-      C{1u << 29},
-      /// @brief Overflow (V)
-      V{1u << 28},
-      /// @brief IRQ Disable (I)
-      I{1u << 7},
-      /// @brief FIQ Disable (F)
-      F{1u << 6},
-      /// @brief Thumb State (T)
-      T{1u << 5},
-      /// @brief Mode Bits (M)
+      /** @brief Negative (N) */
+      N_SHIFT{31},
+      N{1u << N_SHIFT},
+
+      /** @brief Zero (Z) */
+      Z_SHIFT{30}, Z{1u << Z_SHIFT},
+
+      /** @brief Carry (C) */
+      C_SHIFT{29}, C{1u << C_SHIFT},
+
+      /** @brief Overflow (V) */
+      V_SHIFT{28}, V{1u << V_SHIFT},
+
+      /** @brief IRQ Disable (I) */
+      I_SHIFT{7}, I{1u << I_SHIFT},
+
+      /** @brief FIQ Disable (F) */
+      F_SHIFT{6}, F{1u << F_SHIFT},
+
+      /** @brief Thumb State (T) */
+      T_SHIFT{5}, T{1u << T_SHIFT},
+
+      /** @brief Mode Bits (M) */
       M{0x1fu};
 
   static constexpr u32 EXCEPTION_RESET /*   */ {0x00000000}, EXCEPTION_UNDEFINS /*  */ {0x00000004},
@@ -54,7 +62,6 @@ struct arm7tdmi {
       REGISTERS_PRESET_SYS{0};
 
   static constexpr u8 N_ACTIVE_REGISTERS = 18, N_REGISTERS = 37;
-
   static constexpr u8 spsr = 17;
 
   static constexpr std::array<u8, N_ACTIVE_REGISTERS> REGISTERS_USR{

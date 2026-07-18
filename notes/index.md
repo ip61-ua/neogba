@@ -1028,4 +1028,10 @@ Esto tiene otra ventaja y es que podemos despreocuparnos de la ventana de contex
 
 Otra cuestión que voy aprovechar es refactorizar `enum` para hacer servir `enum class`. Esto se debe principalmente a aplicar buenas prácticas de programación del lenguaje y hacer lo más idiomático.
 
+hecho. 
 
+Se me ocurre mejor juntarlo todo en uno y decir en tiempo de compilación su es uno u otro (lógico o aritmético).
+
+Esto es una barbaridad de rápido. Y todo muy práctico a hacer refactors ad hoc al vuelo. => esto es que me pongo a implementar los primeros y de repente veo que hay un caso especial que ignora o lo que sea, y es muy directo a modificar una parte solo.
+
+He decidido en añadir variables para conocer los shift de los bits de interés del cpsr.
