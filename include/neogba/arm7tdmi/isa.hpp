@@ -4,6 +4,18 @@
 namespace neogba {
 
 namespace {
+
+/**
+ * @brief Describes a contiguous bit field within an instruction encoding.
+ *
+ * Provides compile-time utilities to extract and insert a bit or bits field using a mask and shift
+ * value.
+ *
+ * @tparam instruction_t Instruction type. `u32` for ARM. `u16` for Thumb.
+ * @tparam return_t Type returned by the extracted field.
+ * @tparam n_shift Least significant bit position of the field.
+ * @tparam bit_mask Bit mask identifying the field.
+ */
 template <typename instruction_t, typename return_t, u8 n_shift, instruction_t bit_mask = 0xfu>
 struct isa_field {
   using ins_t = instruction_t;
@@ -11,62 +23,167 @@ struct isa_field {
   static constexpr u8 shift = n_shift;
   static constexpr ins_t mask = bit_mask;
 
+  /**
+   * @brief Extracts the field value from an instruction.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Retrieved value from instruction.
+   */
   [[nodiscard]] static inline constexpr ret_t get(ins_t instruction) {
     return static_cast<ret_t>(((instruction) & (mask)) >> shift);
   }
 
+  /**
+   * @brief Replaces the field value within an instruction.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @param value Raw value to set in the field.
+   * @return Copy of the instruction and replaced field.
+   */
   [[nodiscard]] static inline constexpr ins_t set(ins_t instruction, ret_t value) {
     return ((instruction) & (~mask)) | ((value << shift) & mask);
   }
 };
 
+/**
+ * @brief Convenient wrapper for fields defined by an unshifted mask.
+ *
+ * The supplied mask is automatically shifted by `n_shift` before creating the underlying
+ * `isa_field`.
+ *
+ * @tparam instruction_t Instruction type.
+ * @tparam return_t Extracted value type.
+ * @tparam n_shift Least significant bit position of the field.
+ * @tparam base_mask Unshifted field mask.
+ *
+ * @see isa_field
+ */
 template <typename instruction_t, typename return_t, u8 n_shift, instruction_t base_mask = 0xfu>
 struct isa_field_delayed : isa_field<instruction_t, return_t, n_shift, (base_mask << n_shift)> {};
 
+/**
+ * @brief Specialization for single-bit instruction fields.
+ *
+ * Provides boolean accessors and convenience operations for manipulating individual bits.
+ *
+ * @tparam instruction_t Instruction type.
+ * @tparam n_shift Bit position.
+ *
+ * @see isa_field
+ */
 template <typename instruction_t, u8 n_shift>
 struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)> {
+  /**
+   * @brief Returns the bit as a boolean value.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Retrieved boolean from instruction.
+   */
   [[nodiscard]] static constexpr bool get(isa_field_bool::ins_t instruction) {
     return ((instruction)&isa_field_bool::mask) != 0;
   }
 
+  /**
+   * @brief Returns the bit as a 8 bit unsigned value.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Retrieved bit as 8 bit unsigned from instruction, but masked and shifted.
+   */
   [[nodiscard]] static constexpr u8 get_raw(isa_field_bool::ins_t instruction) {
     return ((instruction)&isa_field_bool::mask) >> n_shift;
   }
 
+  /**
+   * @brief Sets or clears the bit given an instruction.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @param value Sets if `true`, clears if `false`.
+   * @return Copy of the instruction with the bit changed.
+   */
   [[nodiscard]] static constexpr isa_field_bool::ins_t set(isa_field_bool::ins_t instruction,
                                                            bool value) {
     return ((instruction) & (~isa_field_bool::mask)) | (value ? isa_field_bool::mask : 0);
   }
 
+  /**
+   * @brief Clears the bit given an instruction.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Copy of the instruction with bit cleared.
+   */
   [[nodiscard]] static constexpr isa_field_bool::ins_t set0(isa_field_bool::ins_t instruction) {
     return instruction & ~isa_field_bool::mask;
   }
 
+  /**
+   * @brief Sets the bit given an instruction.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Copy of the instruction with bit set.
+   */
   [[nodiscard]] static constexpr isa_field_bool::ins_t set1(isa_field_bool::ins_t instruction) {
     return instruction | isa_field_bool::mask;
   }
 
+  /**
+   * @brief Toggles the bit given an instruction.
+   *
+   * toggle `true` becomes `false` and viceversa.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Copy of the instruction with bit toggled.
+   */
   [[nodiscard]] static constexpr isa_field_bool::ins_t toggle(isa_field_bool::ins_t instruction) {
     return instruction ^ isa_field_bool::mask;
   }
 };
 
+/**
+ * @brief Describes an instruction field split across two bit ranges.
+ *
+ * Some instruction encodings store a logical value in two non-contiguous bit fields. This helper
+ * represents them as a single contiguous value.
+ *
+ * Supose that A = a2,x,a0.
+ *
+ * @tparam instruction_t Instruction type.
+ * @tparam return_t Extracted value type.
+ * @tparam n_shift Unused by this specialization's extraction logic but kept for compatibility with
+ * `isa_field`. This value represents the least significant bit position of the field a0 in out
+ * example.
+ * @tparam bit_mask Upper bit range.
+ * @tparam bit_mask2 Lower bit range.
+ * @tparam join_shift Number of bits separating both ranges.
+ */
 template <typename instruction_t, typename return_t, u8 n_shift, instruction_t bit_mask,
           instruction_t bit_mask2, u8 join_shift>
-struct isa_fieldSplit : isa_field<instruction_t, return_t, n_shift, bit_mask> {
+struct isa_field_split : isa_field<instruction_t, return_t, n_shift, bit_mask> {
   static constexpr u8 join = join_shift;
   static constexpr instruction_t mask2 = bit_mask2;
 
-  [[nodiscard]] static constexpr isa_fieldSplit::ret_t get(isa_fieldSplit::ins_t instruction) {
-    return static_cast<isa_fieldSplit::ret_t>(((instruction & isa_fieldSplit::mask) >> join) |
-                                              (instruction & mask2));
+  /**
+   * @brief Extracts the combined field value.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Retrieved combined value from instruction.
+   */
+  [[nodiscard]] static constexpr isa_field_split::ret_t get(isa_field_split::ins_t instruction) {
+    return static_cast<isa_field_split::ret_t>(((instruction & isa_field_split::mask) >> join) |
+                                               (instruction & mask2));
   }
 
-  [[nodiscard]] static constexpr isa_fieldSplit::ins_t set(isa_fieldSplit::ins_t instruction,
-                                                           isa_fieldSplit::ret_t value) {
-    auto val = static_cast<isa_fieldSplit::ins_t>(value);
-    return (instruction & ~(isa_fieldSplit::mask | mask2)) | ((val) & (mask2)) |
-           ((val << join) & isa_fieldSplit::mask);
+  /**
+   * @brief Stores a combined value into both bit ranges.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @param value Combined raw value to set in split fields.
+   * @return Copy of the instruction and replaced field.
+   */
+  [[nodiscard]] static constexpr isa_field_split::ins_t set(isa_field_split::ins_t instruction,
+                                                            isa_field_split::ret_t value) {
+    auto val = static_cast<isa_field_split::ins_t>(value);
+    return (instruction & ~(isa_field_split::mask | mask2)) | ((val) & (mask2)) |
+           ((val << join) & isa_field_split::mask);
   }
 };
 } // namespace
@@ -189,8 +306,8 @@ using ISA_ARM_HALFIMM_RD = /*              */ ISA_ARM_FSR_RD;
 using ISA_ARM_HALFIMM_S = /*               */ ISA_ARM_HALFREG_S;
 using ISA_ARM_HALFIMM_H = /*               */ ISA_ARM_HALFREG_H;
 using ISA_ARM_HALFIMM_OFFSET =
-    isa_fieldSplit<u32, u8, ISA_ARM_MULTIPLY_RS::shift, ISA_ARM_MULTIPLY_RS::mask,
-                   ISA_ARM_MULTIPLY_RM::mask, 4>;
+    isa_field_split<u32, u8, ISA_ARM_MULTIPLY_RS::shift, ISA_ARM_MULTIPLY_RS::mask,
+                    ISA_ARM_MULTIPLY_RM::mask, 4>;
 
 /// Single data transfer
 constexpr u32 ISA_ARM_SINGLETRANS_TEMPLATE{0x06000000u};

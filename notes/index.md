@@ -1336,3 +1336,11 @@ Ya desde aquí estaba servido el manejo de bits llegando a optar por evitar desp
 He documentado esa función con tal de aumentar la mantenibilidad. Y he añadido algunos comentarios para ver soy consciente de lo que he hecho.
 
 Pero no sé después de ponerme una extensión de documentación mi emacs va lento... Ya veré como solvento esto o igual es cosa del lenguaje o del clangd.
+
+Vale lo he quitado y he optado por hacerlo a mano. Tampoco es que haya muchas opciones si buscamos más funcionalidades.
+He pensado que para la memoria y para el tamaño de alcance de proyecto he pensado en utilizar doxygen. Una plataforma que genera documentación del código resultando en una web navegable.
+
+Creo que es algo muy buena práctica.
+
+
+
