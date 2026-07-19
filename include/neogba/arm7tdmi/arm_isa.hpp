@@ -209,7 +209,7 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
  * @see arm7tdmi
  */
 inline constexpr auto arm_operand2_lut = []() consteval {
-  lut<arm_operand2_result (*)(arm7tdmi&, u32), 14, arm_operand2_result,
+  lut<arm_operand2_result (*)(arm7tdmi&, u32), 14,
       +[](std::size_t idx) -> std::size_t {
         auto i{static_cast<bool>(ISA_ARM_FSR_I::get_raw(idx))};
         auto b4{static_cast<bool>(ISA_ARM_FSR_OPERAND2_4::get_raw(idx))};
@@ -309,7 +309,7 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
   if constexpr (opcode != arm_fsr_opcode::MOV && opcode != arm_fsr_opcode::MVN)
     op1 = cpu.read_active_register(rn_idx);
 
-  auto op2{arm_operand2_lut.run(inst, cpu, inst)};
+  auto op2{arm_operand2_lut.invoke(inst, cpu, inst)};
 
   if constexpr (is_inverted_sub)
     std::swap(op1, op2.result);

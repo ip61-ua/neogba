@@ -32,7 +32,7 @@ TEST(lut_test, fill_recursive_and_ensure_whats_stored_get_wrapper) {
 
   my_lut.fill(LUT_BASE_EXAMPLE, LUT_MASK_EXAMPLE, LUT_DATA_EXAMPLE);
 
-  ASSERT_EQ(arr, my_lut.get_wrapper());
+  ASSERT_EQ(arr, my_lut.data());
 }
 
 TEST(lut_test, fill_recursive_and_ensure_whats_stored_by_get) {
@@ -87,8 +87,8 @@ TEST(lut_test, fill_recursive_and_execution_by_running_lambdas) {
   ASSERT_NE(important_operation, my_lut.get(0b0010100));
   ASSERT_NE(important_operation, my_lut.get(0b0000000));
 
-  my_lut.run(0b1110100, 2);
-  my_lut.run(0b1110101, 9);
+  my_lut.invoke(0b1110100, 2);
+  my_lut.invoke(0b1110101, 9);
 
   mock_bridge = nullptr;
 }
@@ -96,20 +96,20 @@ TEST(lut_test, fill_recursive_and_execution_by_running_lambdas) {
 TEST(lut_test, fill_recursive_and_execution_by_running_lambdas_returning_values_and_no_vargs) {
   using handler_test = int (*)();
 
-  lut<handler_test, 1 << 8, int> my_lut;
+  lut<handler_test, 1 << 8> my_lut;
 
   auto important_operation = +[]() -> int { return 42; };
 
   my_lut.fill(LUT_BASE_EXAMPLE, LUT_MASK_EXAMPLE, important_operation);
 
-  auto a1 = my_lut.run(0b1110100);
-  auto b1 = my_lut.run(0b1110101);
+  auto a1 = my_lut.invoke(0b1110100);
+  auto b1 = my_lut.invoke(0b1110101);
   ASSERT_EQ(42, a1);
   ASSERT_EQ(42, b1);
 }
 
 TEST(lut_test, fill_get_with_custom_norm_idx_and_ensure_whats_stored) {
-  lut<long, 1 << 2, void, +[](std::size_t idx) -> std::size_t { return 0b11 & idx; }> my_lut;
+  lut<long, 1 << 2, +[](std::size_t idx) -> std::size_t { return 0b11 & idx; }> my_lut;
   std::array<long, 1 << 2> arr;
 
   arr[0b00] = LUT_DATA_EXAMPLE;
@@ -119,12 +119,12 @@ TEST(lut_test, fill_get_with_custom_norm_idx_and_ensure_whats_stored) {
 
   my_lut.fill(LUT_BASE_EXAMPLE, LUT_MASK_EXAMPLE, LUT_DATA_EXAMPLE);
 
-  ASSERT_EQ(arr, my_lut.get_wrapper());
+  ASSERT_EQ(arr, my_lut.data());
   ASSERT_EQ(LUT_DATA_EXAMPLE, my_lut.get(LUT_BASE_EXAMPLE));
 }
 
 TEST(lut_test, fill_get_with_custom_norm_idx_and_ensure_whats_stored_2) {
-  lut<u16, 1 << 4, void,
+  lut<u16, 1 << 4,
       [](std::size_t idx) -> std::size_t {
         return (((idx & 0b1110000) >> 3) | ((idx & 0b10) >> 1));
       }>
@@ -153,20 +153,20 @@ TEST(lut_test, fill_get_with_custom_norm_idx_and_ensure_whats_stored_2) {
 
   my_lut.fill(LUT_BASE_EXAMPLE, LUT_MASK_EXAMPLE, LUT_DATA_EXAMPLE);
 
-  ASSERT_EQ(arr, my_lut.get_wrapper());
+  ASSERT_EQ(arr, my_lut.data());
 }
 
 TEST(lut_test, fill_and_execution_with_references_params) {
   using handler_test = int (*)(int& a);
 
-  lut<handler_test, 1 << 8, int> my_lut;
+  lut<handler_test, 1 << 8> my_lut;
 
   int a{7};
   auto important_operation{[](int& a) -> int { return a++; }};
 
   my_lut.fill(LUT_BASE_EXAMPLE, important_operation);
 
-  auto a1{my_lut.run(LUT_BASE_EXAMPLE, a)};
+  auto a1{my_lut.invoke(LUT_BASE_EXAMPLE, a)};
   ASSERT_EQ(7, a1);
   ASSERT_EQ(8, a);
 }
