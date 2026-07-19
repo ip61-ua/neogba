@@ -3,6 +3,7 @@
 #include "neogba/arm7tdmi/isa.hpp"
 #include "neogba/structs/lut.hpp"
 #include "neogba/types.hpp"
+#include <memory>
 #include <utility>
 
 namespace neogba {
@@ -179,9 +180,13 @@ inline constexpr auto arm_operand2_lut = []() consteval {
  * Esto es a propósito para poder facilitar la implementación y organización dentro de una tabla
  * lut u otras estructuras afines.
  *
- * @param opcode Enumerado de operación de procesamiento a realizar.
- * @param s Bit que indica si activar efectos de escritura sobre el registro de banderas.
- * @param rd_pc Boleano que indica si el destino es PC.
+ * @todo testing3
+ * @warning rd == r15!
+ *
+ *
+ * @tparam opcode Enumerado de operación de procesamiento a realizar.
+ * @tparam s Bit que indica si activar efectos de escritura sobre el registro de banderas.
+ * @tparam rd_pc Boleano que indica si el destino es PC.
  * @param cpu Objeto por referencia de contexto de la CPU.
  * @param inst Instrucción máquina a ejecutar por valor.
  */
