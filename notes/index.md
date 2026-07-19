@@ -1342,5 +1342,17 @@ He pensado que para la memoria y para el tamaño de alcance de proyecto he pensa
 
 Creo que es algo muy buena práctica.
 
+He cambiado algunos métodos de la lut con tal de hacerlo más al al estilo de stl containers. Como data e invoke.
+He refactorizado lut para que no definamos el tipo de retorno porque es algo nicho. Y en su defecto, he utilizado una característica del lenguaje para autodeterminar del tipo de retorno en base a lo que se almacena en la lut si sea llamable habilitará un método que invocación, en otro caso no: dando error de compilación.
 
+Es decir que ahora si almacenamos un int (algo que no es invocable), no dejará realizar el invoke. Si almacenamos funciones sí deja.
+Además, ahora sí compila con g++ y clang sin problemas y bajado las versiones porque estoy en debian "versiones estables".
+El error es que g++ es más riguroso que clang++, siendo que no permite utilizar using de clases base en derivadas en tiempo de compilación por considerarse incompletas. Pero no ocurre para los tipos concretos. Los using sirven como alias de tipos.
 
+Mis siguientes pasos son:
+1. Hacer testing de operand2 y de operaciones de arm fsr. (hoy)
+2. Luego si esto va, crear una lut iniciar parcial para saber como direccionar estas operaciones. (hoy-mañana)
+3. Probarla. (mañana)
+4. Diseñar un esquema básico de memoria con chip. (mañana + 4 días)
+5. Preparar estado del arte
+6. Preparar preguntas y reunión.
