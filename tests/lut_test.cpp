@@ -162,7 +162,7 @@ TEST(lut_test, fill_and_execution_with_references_params) {
   lut<handler_test, 1 << 8> my_lut;
 
   int a{7};
-  auto important_operation{[](int& a) -> int { return a++; }};
+  auto important_operation{[](int& value) -> int { return value++; }};
 
   my_lut.fill(LUT_BASE_EXAMPLE, important_operation);
 

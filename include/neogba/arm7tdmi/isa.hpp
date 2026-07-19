@@ -73,13 +73,15 @@ struct isa_field_delayed : isa_field<instruction_t, return_t, n_shift, (base_mas
  */
 template <typename instruction_t, u8 n_shift>
 struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)> {
+  using ins_t = instruction_t;
+
   /**
    * @brief Returns the bit as a boolean value.
    *
    * @param instruction Raw 32-bit ARM instruction.
    * @return Retrieved boolean from instruction.
    */
-  [[nodiscard]] static constexpr bool get(isa_field_bool::ins_t instruction) {
+  [[nodiscard]] static constexpr bool get(ins_t instruction) {
     return ((instruction)&isa_field_bool::mask) != 0;
   }
 
@@ -89,7 +91,7 @@ struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)>
    * @param instruction Raw 32-bit ARM instruction.
    * @return Retrieved bit as 8 bit unsigned from instruction, but masked and shifted.
    */
-  [[nodiscard]] static constexpr u8 get_raw(isa_field_bool::ins_t instruction) {
+  [[nodiscard]] static constexpr u8 get_raw(ins_t instruction) {
     return ((instruction)&isa_field_bool::mask) >> n_shift;
   }
 
@@ -100,8 +102,7 @@ struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)>
    * @param value Sets if `true`, clears if `false`.
    * @return Copy of the instruction with the bit changed.
    */
-  [[nodiscard]] static constexpr isa_field_bool::ins_t set(isa_field_bool::ins_t instruction,
-                                                           bool value) {
+  [[nodiscard]] static constexpr ins_t set(ins_t instruction, bool value) {
     return ((instruction) & (~isa_field_bool::mask)) | (value ? isa_field_bool::mask : 0);
   }
 
@@ -111,7 +112,7 @@ struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)>
    * @param instruction Raw 32-bit ARM instruction.
    * @return Copy of the instruction with bit cleared.
    */
-  [[nodiscard]] static constexpr isa_field_bool::ins_t set0(isa_field_bool::ins_t instruction) {
+  [[nodiscard]] static constexpr ins_t set0(ins_t instruction) {
     return instruction & ~isa_field_bool::mask;
   }
 
@@ -121,7 +122,7 @@ struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)>
    * @param instruction Raw 32-bit ARM instruction.
    * @return Copy of the instruction with bit set.
    */
-  [[nodiscard]] static constexpr isa_field_bool::ins_t set1(isa_field_bool::ins_t instruction) {
+  [[nodiscard]] static constexpr ins_t set1(ins_t instruction) {
     return instruction | isa_field_bool::mask;
   }
 
@@ -133,7 +134,7 @@ struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)>
    * @param instruction Raw 32-bit ARM instruction.
    * @return Copy of the instruction with bit toggled.
    */
-  [[nodiscard]] static constexpr isa_field_bool::ins_t toggle(isa_field_bool::ins_t instruction) {
+  [[nodiscard]] static constexpr ins_t toggle(ins_t instruction) {
     return instruction ^ isa_field_bool::mask;
   }
 };
@@ -158,6 +159,9 @@ struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)>
 template <typename instruction_t, typename return_t, u8 n_shift, instruction_t bit_mask,
           instruction_t bit_mask2, u8 join_shift>
 struct isa_field_split : isa_field<instruction_t, return_t, n_shift, bit_mask> {
+  using ret_t = return_t;
+  using ins_t = instruction_t;
+
   static constexpr u8 join = join_shift;
   static constexpr instruction_t mask2 = bit_mask2;
 
@@ -167,9 +171,9 @@ struct isa_field_split : isa_field<instruction_t, return_t, n_shift, bit_mask> {
    * @param instruction Raw 32-bit ARM instruction.
    * @return Retrieved combined value from instruction.
    */
-  [[nodiscard]] static constexpr isa_field_split::ret_t get(isa_field_split::ins_t instruction) {
-    return static_cast<isa_field_split::ret_t>(((instruction & isa_field_split::mask) >> join) |
-                                               (instruction & mask2));
+  [[nodiscard]] static constexpr ret_t get(ins_t instruction) {
+    return static_cast<ret_t>(((instruction & isa_field_split::mask) >> join) |
+                              (instruction & mask2));
   }
 
   /**
@@ -179,9 +183,8 @@ struct isa_field_split : isa_field<instruction_t, return_t, n_shift, bit_mask> {
    * @param value Combined raw value to set in split fields.
    * @return Copy of the instruction and replaced field.
    */
-  [[nodiscard]] static constexpr isa_field_split::ins_t set(isa_field_split::ins_t instruction,
-                                                            isa_field_split::ret_t value) {
-    auto val = static_cast<isa_field_split::ins_t>(value);
+  [[nodiscard]] static constexpr ins_t set(ins_t instruction, ret_t value) {
+    auto val = static_cast<ins_t>(value);
     return (instruction & ~(isa_field_split::mask | mask2)) | ((val) & (mask2)) |
            ((val << join) & isa_field_split::mask);
   }
