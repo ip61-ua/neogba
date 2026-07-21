@@ -1382,4 +1382,14 @@ Vamos a aprovechar el la estrategia de mocking para probar operand2 directamente
 
 Vamos a utilizar una fixture que construya la cpu y el estado del mockeo. El claro beneficio que tiene utilizar una megaplantilla es el rendimiento y que no hay una combinación explosiva de funciones a probar sino que podemos considerarlo todo como un algoritmo y por tanto resulta más fácil ver el transcurso del programa
 
+Vamos a empezar en orden y vamos a ir comprobando las bifurcaciones.
+
+Vale no, vamos a hacer primero pruebas unitarias y luego sobre la lut con mockeos. Aunque en realidad no hace falta para nada. La lut es un array del podemos recuperar el puntero función y ver si lo recuperado coincide. Siendo así que podemos garantizar su correcta ejecución. Podemos establecer un test parametrizado.
+
+Para probar `arm_fsr_operand2_i1_r1` necesitamos solo un caso dado que no tiene bifurcación alguna.
+Para probar `arm_fsr_operand2_i1_r0` necesitamos solo un caso dado que no tiene bifurcación alguna pero vamos a comprobar si realmente va bien el carry_out del shift barrel. Por lo que haremos 2.
+
+Ya hemos terminado con i=1, ahora vamos i=0:
+
+Vamos a empezar con los casos especiales y luego seguimos con resto. Los casos especiales siempre tendrán el bit 4 a cero. Y presisaremos de 3 casos más otros 4 para comprobar la acticación del carryout, con excepción del lsl.
 

@@ -69,7 +69,7 @@ struct arm_operand2_result {
  */
 template <bool i, bool rotate_zero = false, bool bit4 = false, bool special_zero_shift = false,
           arm_shift_type shift_type = arm_shift_type::LSL>
-arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
+[[nodiscard]] arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
   auto carry_out{static_cast<u8>((cpu.read_cpsr() & arm7tdmi::C) >> arm7tdmi::C_SHIFT)};
   auto carry_in{carry_out};
   u32 result;
