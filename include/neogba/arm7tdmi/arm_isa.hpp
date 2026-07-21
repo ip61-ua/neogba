@@ -81,8 +81,8 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool special_zero
       result = imm;
     else {
       auto rotate{2u * ISA_ARM_FSR_OPERAND2_ROTATE::get(inst)};
-      carry_out = (imm >> (rotate - 1)) & 1;
-      result = (imm >> rotate) | (imm << (32 - rotate));
+      result = std::rotr(imm, rotate);
+      carry_out = (result >> 31) & 1;
     }
   } else {
 
@@ -109,7 +109,7 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool special_zero
 
       } else if constexpr (shift_type == arm_shift_type::ROR) {
         // RRX: Rotate 1 bit and include Cin.
-        result = ((cpu.read_cpsr() & arm7tdmi::C) << (31 - arm7tdmi::C_SHIFT)) | (rm >> 1);
+        result = (carry_in << 31) | (rm >> 1);
         carry_out = rm & 1;
       }
     } else {
@@ -122,60 +122,51 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool special_zero
         shift_amount = ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
       }
 
-      // Esto posiblemente dé para otra lut y utilizar karnaugh para simplificar saltos ifs, pero de
-      // momento hay que tener algo funcando, pero me ha jodido el carry. Creo que es una idea muy
-      // certera.
+      if (shift_amount == 0)
+        return {rm, carry_out, carry_in};
+
       if constexpr (shift_type == arm_shift_type::LSL) {
-        if (shift_amount == 0) {
-          result = rm;
-        } else if (shift_amount < 32) {
-          carry_out = (rm >> (32 - shift_amount)) & 1;
-          result = rm << shift_amount;
-        } else if (shift_amount == 32) {
-          carry_out = rm & 1;
-          result = 0;
-        } else {
-          carry_out = 0;
-          result = 0;
+        if constexpr (bit4) {
+          if (shift_amount > 32)
+            return {0, 0, carry_in};
+
+          else if (shift_amount == 32)
+            return {0, static_cast<u8>(rm & 1), carry_in};
         }
+
+        carry_out = (rm >> (32 - shift_amount)) & 1;
+        result = rm << shift_amount;
 
       } else if constexpr (shift_type == arm_shift_type::LSR) {
-        if (shift_amount == 0) {
-          result = rm;
-        } else if (shift_amount < 32) {
-          result = rm >> shift_amount;
-          carry_out = (rm >> (shift_amount - 1)) & 1;
-        } else if (shift_amount == 32) {
-          result = 0;
-          carry_out = (rm >> 31) & 1;
-        } else {
-          result = 0;
-          carry_out = 0;
+        if constexpr (bit4) {
+          if (shift_amount > 32)
+            return {0, 0, carry_in};
+
+          else if (shift_amount == 32)
+            return {0, static_cast<u8>((rm >> 31) & 1), carry_in};
         }
+
+        result = rm >> shift_amount;
+        carry_out = (rm >> (shift_amount - 1)) & 1;
 
       } else if constexpr (shift_type == arm_shift_type::ASR) {
-        if (shift_amount == 0) {
-          result = rm;
-        } else if (shift_amount < 32) {
-          result = static_cast<u32>(static_cast<i32>(rm) >> shift_amount);
-          carry_out = (rm >> (shift_amount - 1)) & 1;
-        } else { // shift_amount >= 32
-          result = static_cast<u32>(static_cast<i32>(rm) >> 31);
-          carry_out = (rm >> 31) & 1;
+        if constexpr (bit4) {
+          if (shift_amount >= 32)
+            return {static_cast<u32>(static_cast<i32>(rm) >> 31), static_cast<u8>((rm >> 31) & 1),
+                    carry_in};
         }
 
+        result = static_cast<u32>(static_cast<i32>(rm) >> shift_amount);
+        carry_out = (rm >> (shift_amount - 1)) & 1;
+
       } else if constexpr (shift_type == arm_shift_type::ROR) {
-        if (shift_amount == 0) {
+        auto masked_shift{shift_amount & 0x1f};
+        if (masked_shift == 0) {
           result = rm;
+          carry_out = (rm >> 31) & 1;
         } else {
-          auto masked_shift{shift_amount & 0x1f};
-          if (masked_shift == 0) {
-            result = rm;
-            carry_out = (rm >> 31) & 1;
-          } else {
-            result = (rm >> masked_shift) | (rm << (32 - masked_shift));
-            carry_out = (rm >> (masked_shift - 1)) & 1;
-          }
+          result = std::rotr(rm, masked_shift);
+          carry_out = (rm >> (masked_shift - 1)) & 1;
         }
       }
     }
@@ -214,8 +205,8 @@ inline constexpr auto arm_fsr_operand2_i1_r0{arm_operand2_generator<true, false>
 /**
  * @brief Compile-time lookup table for operand2 evaluators.
  *
- * Maps the operand2 encoding of an ARM data-processing instruction to the corresponding specialized
- * operand2 instantiation.
+ * Maps the operand2 encoding of an ARM data-processing instruction to the corresponding
+ * specialized operand2 instantiation.
  *
  * The lut index is minimized using a Karnaugh-map reduction of the operand2 encoding bits,
  * reducing the number of required specializations to 14 cases.
@@ -232,7 +223,7 @@ inline constexpr auto arm_fsr_operand2_i1_r0{arm_operand2_generator<true, false>
  * @see arm7tdmi
  */
 inline constexpr auto arm_fsr_operand2_lut = []() consteval {
-  lut<arm_operand2_result (*)(arm7tdmi&, u32), 14,
+  lut<arm_operand2_result (*)(arm7tdmi&, u32), 1 << 4,
       +[](std::size_t idx) -> std::size_t {
         auto i{static_cast<bool>(ISA_ARM_FSR_I::get_raw(idx))};
         auto b4{static_cast<bool>(ISA_ARM_FSR_OPERAND2_4::get_raw(idx))};
@@ -277,7 +268,8 @@ inline constexpr auto arm_fsr_operand2_lut = []() consteval {
  * branches and optimize the generated code for each instruction variant.
  *
  * Depending on the template arguments, the generated implementation may update the CPSR flags,
- * write the result to the program counter, or implement flag-only instructions such as CMP or TST.
+ * write the result to the program counter, or implement flag-only instructions such as CMP or
+ * TST.
  *
  * @tparam opcode Data-processing opcode to execute.
  * @tparam s Whether the instruction updates the CPSR condition flags.
@@ -287,12 +279,13 @@ inline constexpr auto arm_fsr_operand2_lut = []() consteval {
  * @param inst Raw 32-bit ARM instruction.
  *
  * @note All instruction-specific decisions are resolved at compile time using `if constexpr`, so
- * the generated machine code contains only the logic required for the selected instruction variant
- * with least branches at execution-time.
+ * the generated machine code contains only the logic required for the selected instruction
+ * variant with least branches at execution-time.
  *
- * @warning Setting `rd_pc` when `opcode` is one of (`TST`, `TEQ`, `CMP`, `CMN`) is not a documented
- * behaviour in ARM. Because these opcodes only write side effects (by updating CPSR) and ignore
- * destination `rd` field. According, it is illegal to write that on assembly (`rd` contains trash).
+ * @warning Setting `rd_pc` when `opcode` is one of (`TST`, `TEQ`, `CMP`, `CMN`) is not a
+ * documented behaviour in ARM. Because these opcodes only write side effects (by updating CPSR)
+ * and ignore destination `rd` field. According, it is illegal to write that on assembly (`rd`
+ * contains trash).
  *
  * @warning If the instruction `opcode` is one of (`TST`, `TEQ`, `CMP`, `CMN`), then the flag S is
  * implicitly set. If else, it means it's another instruction type. This fucntion is not
