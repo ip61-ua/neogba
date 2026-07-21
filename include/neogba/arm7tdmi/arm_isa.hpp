@@ -236,8 +236,8 @@ inline constexpr auto arm_fsr_operand2_lut = []() consteval {
       +[](std::size_t idx) -> std::size_t {
         auto i{static_cast<bool>(ISA_ARM_FSR_I::get_raw(idx))};
         auto b4{static_cast<bool>(ISA_ARM_FSR_OPERAND2_4::get_raw(idx))};
-        auto t1{static_cast<bool>(ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(idx) & 0x1)};
-        auto t0{static_cast<bool>((ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(idx) & 0x2) >> 1)};
+        auto t0{static_cast<bool>(ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(idx) & 0x1)};
+        auto t1{static_cast<bool>((ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(idx) & 0x2) >> 1)};
         auto s_not_0{(ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(idx)) != 0};
         auto r_not_0{(ISA_ARM_FSR_OPERAND2_ROTATE::get(idx)) != 0};
 
