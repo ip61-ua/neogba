@@ -6,8 +6,15 @@
 
 using namespace neogba;
 
+struct operand2_test_param {
+  u32 inst;
+  arm_operand2_result (*caller)(arm7tdmi&, u32 inst);
+  u32 expected_result;
+  u8 expected_carry_out;
+};
+
 namespace {
-class operand2_test_fixture : public ::testing::Test {
+class operand2_test_fixture : public ::testing::TestWithParam<operand2_test_param> {
 protected:
   std::unique_ptr<arm7tdmi> cpu;
 
@@ -36,109 +43,28 @@ protected:
 };
 } // namespace
 
-TEST_F(operand2_test_fixture, arm_fsr_operand2_i1_r1_should_return_with_no_rotation) {
-  static auto inst001{ISA_ARM_FSR_TEMPLATE};
+TEST_P(operand2_test_fixture, arm_fsr_operand2) {
+  const auto& params = GetParam();
 
-  inst001 = ISA_ARM_FSR_I::set1(inst001);
-  inst001 = ISA_ARM_FSR_OPERAND2_IMM::set(inst001, 69);
-  inst001 = ISA_ARM_FSR_OPERAND2_ROTATE::set(inst001, 0);
+  auto op2 = params.caller(*cpu.get(), params.inst);
 
-  constexpr auto caller{arm_fsr_operand2_i1_r1};
-
-  auto op2 = caller(*cpu.get(), inst001);
-
-  ASSERT_EQ(69, op2.result);
-  ASSERT_EQ(0, op2.carry_out);
-  ASSERT_EQ(caller, arm_fsr_operand2_lut.get(inst001));
-};
-
-TEST_F(operand2_test_fixture, arm_fsr_operand2_i1_r0_should_return_with_rotated) {
-  static auto inst002{ISA_ARM_FSR_TEMPLATE};
-
-  inst002 = ISA_ARM_FSR_I::set1(inst002);
-  inst002 = ISA_ARM_FSR_OPERAND2_IMM::set(inst002, 3);
-  inst002 = ISA_ARM_FSR_OPERAND2_ROTATE::set(inst002, 1);
-
-  constexpr auto caller{arm_fsr_operand2_i1_r0};
-
-  auto op2 = caller(*cpu, inst002);
-
-  // result: (32 bits) (0x03 >> 2) -> 0xC0000000
-  // carry: bit[rotate - 1] == 1 de 0x03 -> 1
-  ASSERT_EQ(0xc0000000, op2.result);
-  ASSERT_EQ(1, op2.carry_out);
-  ASSERT_EQ(caller, arm_fsr_operand2_lut.get(inst002));
-};
-
-TEST_F(operand2_test_fixture, arm_fsr_operand2_i1_r0_should_return_with_rotated_and_no_carry) {
-  static auto inst003{ISA_ARM_FSR_TEMPLATE};
-
-  inst003 = ISA_ARM_FSR_I::set1(inst003);
-  inst003 = ISA_ARM_FSR_OPERAND2_IMM::set(inst003, 4);
-  inst003 = ISA_ARM_FSR_OPERAND2_ROTATE::set(inst003, 1);
-
-  constexpr auto caller{arm_fsr_operand2_i1_r0};
-
-  auto op2 = caller(*cpu, inst003);
-
-  ASSERT_EQ(1, op2.result);
-  ASSERT_EQ(0, op2.carry_out);
-  ASSERT_EQ(caller, arm_fsr_operand2_lut.get(inst003));
-};
-
-TEST_F(operand2_test_fixture,
-       arm_fsr_operand2_i0_40_z1_lsl_should_return_rm_without_modifying_carry) {
-  static auto inst004{ISA_ARM_FSR_TEMPLATE};
-
-  inst004 = ISA_ARM_FSR_I::set0(inst004);
-  inst004 = ISA_ARM_FSR_OPERAND2_4::set0(inst004);
-  inst004 = ISA_ARM_FSR_OPERAND2_RM::set(inst004, r5);
-  inst004 = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set(
-      inst004, static_cast<ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::ret_t>(arm_shift_type::LSL));
-
-  cpu->write_cpsr(arm7tdmi::C);
-
-  constexpr auto caller{arm_fsr_operand2_i0_40_z1_LSL};
-
-  auto op2 = caller(*cpu, inst004);
-
-  ASSERT_EQ(777, op2.result);
-  ASSERT_EQ(1, op2.carry_out);
-  ASSERT_EQ(caller, arm_fsr_operand2_lut.get(inst004));
+  ASSERT_EQ(params.expected_result, op2.result);
+  ASSERT_EQ(params.expected_carry_out, op2.carry_out);
+  ASSERT_EQ(params.caller, arm_fsr_operand2_lut.get(params.inst));
 }
 
-TEST_F(operand2_test_fixture, arm_fsr_operand2_i0_40_z1_lsr_should_behave_as_lsr32) {
-  static auto inst005{ISA_ARM_FSR_TEMPLATE};
+constexpr static u32 //
+    i001{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_I::set_high() | ISA_ARM_FSR_OPERAND2_IMM::set_high(69) |
+         ISA_ARM_FSR_OPERAND2_ROTATE::set_high(0)},
+    i002{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_I::set_high() | ISA_ARM_FSR_OPERAND2_IMM::set_high(3) |
+         ISA_ARM_FSR_OPERAND2_ROTATE::set_high(1)},
+    i003{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_I::set_high() | ISA_ARM_FSR_OPERAND2_IMM::set_high(4) |
+         ISA_ARM_FSR_OPERAND2_ROTATE::set_high(1)};
 
-  inst005 = ISA_ARM_FSR_I::set0(inst005);
-  inst005 = ISA_ARM_FSR_OPERAND2_4::set0(inst005);
-  inst005 = ISA_ARM_FSR_OPERAND2_RM::set(inst005, r1);
-  inst005 = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set(
-      inst005, static_cast<ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::ret_t>(arm_shift_type::LSR));
-
-  constexpr auto caller{arm_fsr_operand2_i0_40_z1_LSR};
-
-  auto op2 = caller(*cpu, inst005);
-
-  ASSERT_EQ(0, op2.result);
-  ASSERT_EQ(0, op2.carry_out);
-  ASSERT_EQ(caller, arm_fsr_operand2_lut.get(inst005));
-}
-
-TEST_F(operand2_test_fixture, arm_fsr_operand2_i0_40_z1_asr_should_sign_extend) {
-  static auto inst006{ISA_ARM_FSR_TEMPLATE};
-
-  inst006 = ISA_ARM_FSR_I::set0(inst006);
-  inst006 = ISA_ARM_FSR_OPERAND2_4::set0(inst006);
-  inst006 = ISA_ARM_FSR_OPERAND2_RM::set(inst006, r4);
-  inst006 = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set(
-      inst006, static_cast<ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::ret_t>(arm_shift_type::ASR));
-
-  constexpr auto caller{arm_fsr_operand2_i0_40_z1_ASR};
-
-  auto op2 = caller(*cpu, inst006);
-
-  ASSERT_EQ(0xffffffff, op2.result);
-  ASSERT_EQ(1, op2.carry_out);
-  ASSERT_EQ(caller, arm_fsr_operand2_lut.get(inst006));
-}
+INSTANTIATE_TEST_SUITE_P(  //
+    operand2_parametrized, //
+    operand2_test_fixture, //
+    ::testing::Values(     //
+        operand2_test_param{i001, arm_fsr_operand2_i1_r1, 69, 0},
+        operand2_test_param{i002, arm_fsr_operand2_i1_r0, 0xc0000000, 1},
+        operand2_test_param{i003, arm_fsr_operand2_i1_r0, 1, 0}));

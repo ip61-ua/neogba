@@ -1449,3 +1449,20 @@ De hecho, el cambio que hemos hecho en la creación de la tabla de operand2 que 
 table.put_raw(0b0100, arm_fsr_operand2_i0_40_z0_LSL);
 ```
 
+creo que me estoy volviendo un poco loco con crear toda una explosión explosiva de combinaciones de casos. Lo mejor en este caso es crear test parametrizados. Hay una alta repetición del mismo código que puñetero asco leer lo mismo y perderse. Por lo que considero que la mejor baza es crear como test plantilla.
+
+Google Test proporciona un mecanismo de hacer test parametrizados fácilmente. De esta forma no dependemos de una sintaxis sino de poner bien los valores.
+
+Además me gustaría aprovechar para añadir una nueva funcionalidad a los extractores del isa. Y es que veo esto un problema cuando creamos instrucciones. Lo cierto es que la creación actual es muy hacerlo recursivo y no podemos concatenarlo. Bueno sí que podemos. Pero se hace recursivo e igual puede a ver cierta dificultad a la hora de entender que instrucción se construye.
+
+``` c++
+// Ahora
+u32 inst = ISA_ARM_FSR_I::set1(ISA_ARM_FSR_OPERAND2_IMM::set(ISA_ARM_FSR_OPERAND2_ROTATE::set(templates, 2), 1));
+
+// Propuesta
+u32 inst = templates | ISA_ARM_FSR_I::set1() | ISA_ARM_FSR_OPERAND2_IMM::set(1) | ISA_ARM_FSR_OPERAND2_ROTATE::set(2);
+```
+
+Aunque esto sea mucho más claro de leer lo cierto sería muy complicado poner bits a cero. Pero para simplificar las cosas vamos a suponer ceros y por este método no interesa la limpieza. Para ejemplificarlo aún más todos estos nuevos métodos serán set_high() para demostrar que solo pone 1 y no borra nada.
+
+Hecho.
