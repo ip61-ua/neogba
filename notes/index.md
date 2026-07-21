@@ -1404,4 +1404,38 @@ $$2 \mathbin{\&} 13 \implies \mathtt{0b0010} \mathbin{\&} \mathtt{0b1101} = \mat
 
 En realidad el problema no era el acceso al std::array, pues maneja la manipulación de índices de fuera de sus alcances, pero en la nuestra implementación de la lut preferimos optar por desplazaminetos y máscaras para mayor velocidad. Sin embargo vamos a parchear esto precomputando una máscara con un algoritmo algo más enrevesado para computar la máscara máxima. En realidad no hace falta la máscara pero nos da una mínima garantía.
 
-Para solventar vamos a implementar un algoritmo que ejecute al inicio para computar esto.
+Para solventar vamos a implementar un algoritmo que ejecute al inicio para computar esto. 
+
+``` c++
+inline constexpr std::size_t compute_max_mask(std::size_t n) {
+  static_assert(max_length > 1, "You should not use LUT to store less than 2 elements!");
+  // static_assert(max_length < sizeof(std::size_t), "Too many items");
+
+  std::size_t mask{0x0};
+  auto is_not_powered_2{false};
+
+  for (std::size_t i{0}; i < sizeof(std::size_t); ++i) {
+    n <<= 1;
+    auto is_one_bit{n & 0x1};
+    auto is_more_than_one{(n << 1) != 0};
+
+    if (is_more_than_one || is_not_powered_2) {
+      mask |= 1 << i;
+      if (is_one_bit) {
+        is_not_powered_2 = true;
+      }
+      continue;
+    }
+
+    if (is_one_bit)
+      break;
+  }
+
+  return mask;
+};
+
+```
+
+Pero sin embargo ya una fórmula idomática de hacerlo y es usando `std::bit_ceil(max_length) - 1`.
+
+La idea es aquí de dada la longitud máxima de una lut, sacar la máscara de seguida unos que cubra todos los casos. Es perfecto para 1<<algo pero conplejo para números que no cumplan con la restricción.
