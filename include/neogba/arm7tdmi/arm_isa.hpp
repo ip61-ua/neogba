@@ -118,14 +118,14 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero =
       u32 shift_amount;
       if constexpr (bit4) {
         shift_amount = cpu.read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst)) & 0xff;
+        if (shift_amount == 0)
+          return {rm, carry_out, carry_in};
       } else {
         shift_amount = ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
+        // este jamás será cero porque ya lo fue y tiene 5 bits!
       }
 
       // aunque esto sea un if, lo cierto es que es común a todos y adelantamos la salida.
-      if (shift_amount == 0)
-        return {rm, carry_out, carry_in};
-
       if constexpr (shift_type == arm_shift_type::LSL) {
         if constexpr (bit4) {
           if (shift_amount > 32)
