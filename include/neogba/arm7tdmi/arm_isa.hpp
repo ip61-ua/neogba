@@ -64,10 +64,6 @@ struct arm_operand2_result {
  *
  * @return Evaluated operand2 together with its carry information.
  *
- * @note The selected operand2 variant is completely resolved at compile time
- *       using `if constexpr`, producing a dedicated implementation for each
- *       encoding.
- *
  * @see arm_shift_type
  * @see arm7tdmi
  */
@@ -188,6 +184,33 @@ arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
   return {result, carry_out, carry_in};
 }
 
+inline constexpr auto arm_fsr_operand2_i0_40_z1_LSL{
+    arm_operand2_generator<false, false, false, true, arm_shift_type::LSL>};
+inline constexpr auto arm_fsr_operand2_i0_40_z1_LSR{
+    arm_operand2_generator<false, false, false, true, arm_shift_type::LSR>};
+inline constexpr auto arm_fsr_operand2_i0_40_z1_ASR{
+    arm_operand2_generator<false, false, false, true, arm_shift_type::ASR>};
+inline constexpr auto arm_fsr_operand2_i0_40_z1_ROR{
+    arm_operand2_generator<false, false, false, true, arm_shift_type::ROR>};
+inline constexpr auto arm_fsr_operand2_i0_40_z0_LSL{
+    arm_operand2_generator<false, false, false, false, arm_shift_type::LSL>};
+inline constexpr auto arm_fsr_operand2_i0_40_z0_LSR{
+    arm_operand2_generator<false, false, false, false, arm_shift_type::LSR>};
+inline constexpr auto arm_fsr_operand2_i0_40_z0_ASR{
+    arm_operand2_generator<false, false, false, false, arm_shift_type::ASR>};
+inline constexpr auto arm_fsr_operand2_i0_40_z0_ROR{
+    arm_operand2_generator<false, false, false, false, arm_shift_type::ROR>};
+inline constexpr auto arm_fsr_operand2_i0_41_z0_LSL{
+    arm_operand2_generator<false, false, true, false, arm_shift_type::LSL>};
+inline constexpr auto arm_fsr_operand2_i0_41_z0_LSR{
+    arm_operand2_generator<false, false, true, false, arm_shift_type::LSR>};
+inline constexpr auto arm_fsr_operand2_i0_41_z0_ASR{
+    arm_operand2_generator<false, false, true, false, arm_shift_type::ASR>};
+inline constexpr auto arm_fsr_operand2_i0_41_z0_ROR{
+    arm_operand2_generator<false, false, true, false, arm_shift_type::ROR>};
+inline constexpr auto arm_fsr_operand2_i1_r1{arm_operand2_generator<true, true>};
+inline constexpr auto arm_fsr_operand2_i1_r0{arm_operand2_generator<true, false>};
+
 /**
  * @brief Compile-time lookup table for operand2 evaluators.
  *
@@ -227,20 +250,20 @@ inline constexpr auto arm_operand2_lut = []() consteval {
       }>
       table;
 
-  table.put_raw(0b0000, arm_operand2_generator<false, false, false, true, arm_shift_type::LSL>);
-  table.put_raw(0b0001, arm_operand2_generator<false, false, false, true, arm_shift_type::LSR>);
-  table.put_raw(0b0010, arm_operand2_generator<false, false, false, true, arm_shift_type::ASR>);
-  table.put_raw(0b0011, arm_operand2_generator<false, false, false, true, arm_shift_type::ROR>);
-  table.put_raw(0b0100, arm_operand2_generator<false, false, false, false, arm_shift_type::LSL>);
-  table.put_raw(0b0101, arm_operand2_generator<false, false, false, false, arm_shift_type::LSR>);
-  table.put_raw(0b0110, arm_operand2_generator<false, false, false, false, arm_shift_type::ASR>);
-  table.put_raw(0b0111, arm_operand2_generator<false, false, false, false, arm_shift_type::ROR>);
-  table.put_raw(0b1000, arm_operand2_generator<false, false, true, false, arm_shift_type::LSL>);
-  table.put_raw(0b1001, arm_operand2_generator<false, false, true, false, arm_shift_type::LSR>);
-  table.put_raw(0b1010, arm_operand2_generator<false, false, true, false, arm_shift_type::ASR>);
-  table.put_raw(0b1011, arm_operand2_generator<false, false, true, false, arm_shift_type::ROR>);
-  table.put_raw(0b1100, arm_operand2_generator<true, true>);
-  table.put_raw(0b1101, arm_operand2_generator<true, false>);
+  table.put_raw(0b0000, arm_fsr_operand2_i0_40_z1_LSL);
+  table.put_raw(0b0001, arm_fsr_operand2_i0_40_z1_LSR);
+  table.put_raw(0b0010, arm_fsr_operand2_i0_40_z1_ASR);
+  table.put_raw(0b0011, arm_fsr_operand2_i0_40_z1_ROR);
+  table.put_raw(0b0100, arm_fsr_operand2_i0_40_z0_LSL);
+  table.put_raw(0b0101, arm_fsr_operand2_i0_40_z0_LSR);
+  table.put_raw(0b0110, arm_fsr_operand2_i0_40_z0_ASR);
+  table.put_raw(0b0111, arm_fsr_operand2_i0_40_z0_ROR);
+  table.put_raw(0b1000, arm_fsr_operand2_i0_41_z0_LSL);
+  table.put_raw(0b1001, arm_fsr_operand2_i0_41_z0_LSR);
+  table.put_raw(0b1010, arm_fsr_operand2_i0_41_z0_ASR);
+  table.put_raw(0b1011, arm_fsr_operand2_i0_41_z0_ROR);
+  table.put_raw(0b1100, arm_fsr_operand2_i1_r1);
+  table.put_raw(0b1101, arm_fsr_operand2_i1_r0);
 
   return table;
 }();

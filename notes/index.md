@@ -1356,3 +1356,30 @@ Mis siguientes pasos son:
 4. Diseñar un esquema básico de memoria con chip. (mañana + 4 días)
 5. Preparar estado del arte
 6. Preparar preguntas y reunión.
+
+# 21 de julio
+
+con motivo de las celebraciones, el plan no sé cumplió para nada lol.
+
+Por tanto vamos a hacer hoy:
+
+1. Hacer testing de operand2 y de operaciones de arm fsr.
+2. Luego si esto va, crear una lut iniciar parcial para saber como direccionar estas operaciones. 
+3. Probarla.
+4. Diseñar un esquema básico de memoria con chip. (mañana + 4 días) (Vamos a intentarlo, o dejarlo planteado)
+
+Bien, para probar nuestras cosas debemos seguir un orden y por ello cabe recordar las dependencias que tendremos en un futuro.
+
+```
+
+instrucción en crudo y cpu -> [lut de instrucciones] -> [operación fsr] -> [lut de operand2] -> [operand2]
+
+```
+
+La idea de probar es que vamos a probar las dependencias que dependan menos primero. De forma que así aislaremos los fallos por niveles. Siendo que primero, probaremos operand2 y luego fsr. 
+
+Vamos a aprovechar el la estrategia de mocking para probar operand2 directamente desde su llamada de lut. De esta forma mataremos dos pájaros de un tiro, probaremos internamente cómo funciona operand2 y si la lut redirecciona a la que debe. Aunque para un tester más purista lo haría por separado, lo cierto es que aquí podemos considerar la implementación de operand2 y lut de operand2 como completa y es poco susceptible a cambios. Además que su forma principal de interacción es a través de la lut.
+
+Vamos a utilizar una fixture que construya la cpu y el estado del mockeo. El claro beneficio que tiene utilizar una megaplantilla es el rendimiento y que no hay una combinación explosiva de funciones a probar sino que podemos considerarlo todo como un algoritmo y por tanto resulta más fácil ver el transcurso del programa
+
+
