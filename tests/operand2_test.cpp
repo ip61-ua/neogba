@@ -43,49 +43,47 @@ TEST_F(operand2_test_fixture, arm_fsr_operand2_i1_r1_should_return_with_no_rotat
   inst001 = ISA_ARM_FSR_OPERAND2_IMM::set(inst001, 69);
   inst001 = ISA_ARM_FSR_OPERAND2_ROTATE::set(inst001, 0);
 
-  auto op2 = arm_fsr_operand2_i1_r1(*cpu.get(), inst001);
+  constexpr auto caller{arm_fsr_operand2_i1_r1};
+
+  auto op2 = caller(*cpu.get(), inst001);
 
   ASSERT_EQ(69, op2.result);
+  ASSERT_EQ(0, op2.carry_out);
+  ASSERT_EQ(caller, arm_fsr_operand2_lut.get(inst001));
 };
 
 TEST_F(operand2_test_fixture, arm_fsr_operand2_i1_r0_should_return_with_rotated) {
   static auto inst002{ISA_ARM_FSR_TEMPLATE};
 
-  constexpr u32 imm_val = 0x3;
-  constexpr u32 rotate_val = 1;
-
   inst002 = ISA_ARM_FSR_I::set1(inst002);
-  inst002 = ISA_ARM_FSR_OPERAND2_IMM::set(inst002, imm_val);
-  inst002 = ISA_ARM_FSR_OPERAND2_ROTATE::set(inst002, rotate_val);
+  inst002 = ISA_ARM_FSR_OPERAND2_IMM::set(inst002, 3);
+  inst002 = ISA_ARM_FSR_OPERAND2_ROTATE::set(inst002, 1);
 
-  auto op2 = arm_fsr_operand2_i1_r0(*cpu, inst002);
+  constexpr auto caller{arm_fsr_operand2_i1_r0};
+
+  auto op2 = caller(*cpu, inst002);
 
   // result: (32 bits) (0x03 >> 2) -> 0xC0000000
   // carry: bit[rotate - 1] == 1 de 0x03 -> 1
-  constexpr u32 expected_result = 0xC0000000;
-  constexpr u8 expected_carry = 1;
-
-  EXPECT_EQ(expected_result, op2.result);
-  EXPECT_EQ(expected_carry, op2.carry_out);
+  ASSERT_EQ(0xc0000000, op2.result);
+  ASSERT_EQ(1, op2.carry_out);
+  ASSERT_EQ(caller, arm_fsr_operand2_lut.get(inst002));
 };
 
 TEST_F(operand2_test_fixture, arm_fsr_operand2_i1_r0_should_return_with_rotated_and_no_carry) {
   static auto inst003{ISA_ARM_FSR_TEMPLATE};
 
-  constexpr u32 imm_val = 0x4;
-  constexpr u32 rotate_val = 1;
-
   inst003 = ISA_ARM_FSR_I::set1(inst003);
-  inst003 = ISA_ARM_FSR_OPERAND2_IMM::set(inst003, imm_val);
-  inst003 = ISA_ARM_FSR_OPERAND2_ROTATE::set(inst003, rotate_val);
+  inst003 = ISA_ARM_FSR_OPERAND2_IMM::set(inst003, 4);
+  inst003 = ISA_ARM_FSR_OPERAND2_ROTATE::set(inst003, 1);
 
-  auto op2 = arm_fsr_operand2_i1_r0(*cpu, inst003);
+  constexpr auto caller{arm_fsr_operand2_i1_r0};
 
-  constexpr u32 expected_result = 0x00000001;
-  constexpr u8 expected_carry = 0;
+  auto op2 = caller(*cpu, inst003);
 
-  EXPECT_EQ(expected_result, op2.result);
-  EXPECT_EQ(expected_carry, op2.carry_out);
+  ASSERT_EQ(1, op2.result);
+  ASSERT_EQ(0, op2.carry_out);
+  ASSERT_EQ(caller, arm_fsr_operand2_lut.get(inst003));
 };
 
 TEST_F(operand2_test_fixture,
@@ -100,10 +98,13 @@ TEST_F(operand2_test_fixture,
 
   cpu->write_cpsr(arm7tdmi::C);
 
-  auto op2 = arm_fsr_operand2_i0_40_z1_LSL(*cpu, inst004);
+  constexpr auto caller{arm_fsr_operand2_i0_40_z1_LSL};
 
-  EXPECT_EQ(777u, op2.result);
-  EXPECT_EQ(1u, op2.carry_out);
+  auto op2 = caller(*cpu, inst004);
+
+  ASSERT_EQ(777, op2.result);
+  ASSERT_EQ(1, op2.carry_out);
+  ASSERT_EQ(caller, arm_fsr_operand2_lut.get(inst004));
 }
 
 TEST_F(operand2_test_fixture, arm_fsr_operand2_i0_40_z1_lsr_should_behave_as_lsr32) {
@@ -115,9 +116,13 @@ TEST_F(operand2_test_fixture, arm_fsr_operand2_i0_40_z1_lsr_should_behave_as_lsr
   inst005 = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set(
       inst005, static_cast<ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::ret_t>(arm_shift_type::LSR));
 
-  auto op2 = arm_fsr_operand2_i0_40_z1_LSR(*cpu, inst005);
+  constexpr auto caller{arm_fsr_operand2_i0_40_z1_LSR};
 
-  EXPECT_EQ(0u, op2.result);
+  auto op2 = caller(*cpu, inst005);
+
+  ASSERT_EQ(0, op2.result);
+  ASSERT_EQ(0, op2.carry_out);
+  ASSERT_EQ(caller, arm_fsr_operand2_lut.get(inst005));
 }
 
 TEST_F(operand2_test_fixture, arm_fsr_operand2_i0_40_z1_asr_should_sign_extend) {
@@ -133,6 +138,7 @@ TEST_F(operand2_test_fixture, arm_fsr_operand2_i0_40_z1_asr_should_sign_extend) 
 
   auto op2 = caller(*cpu, inst006);
 
-  EXPECT_EQ(0xffffffffu, op2.result);
-  EXPECT_EQ(caller, arm_fsr_operand2_lut.get(inst006));
+  ASSERT_EQ(0xffffffff, op2.result);
+  ASSERT_EQ(1, op2.carry_out);
+  ASSERT_EQ(caller, arm_fsr_operand2_lut.get(inst006));
 }

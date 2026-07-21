@@ -1438,4 +1438,14 @@ inline constexpr std::size_t compute_max_mask(std::size_t n) {
 
 Pero sin embargo ya una fórmula idomática de hacerlo y es usando `std::bit_ceil(max_length) - 1`.
 
-La idea es aquí de dada la longitud máxima de una lut, sacar la máscara de seguida unos que cubra todos los casos. Es perfecto para 1<<algo pero conplejo para números que no cumplan con la restricción.
+La idea es aquí de dada la longitud máxima de una lut, sacar la máscara de seguida unos que cubra todos los casos. Es perfecto para 1<<algo pero conplejo para números que no cumplan con la restricción. Esta forma idomática nos ahorra crear una prueba unitaria adicional por lo que siempre que podemos reciclar piezas de otras personas mejor, porque menos tocará revisar. Esta es una de las buenas prácticas de programación y del Software en general. Además este incidente ha servido para remarcar la importancia de las pruebas, porque son lo que realmente nos moldea a arreglar decisiones de errores poco evidentes o imperceptibles.
+
+Volviendo a las pruebas, voy a rellenar las de operand2 con sus comprobaciones para el acceso por la lut y garantizar así la disponibilidad del código.
+Además esto demuestra una vez más que el echo comparar funciones es posibles puesto que son punteros simplemente y no realizan copias raras e interminables del código y asignando nuevos códigos. Esto es lo que yo me temía que ocurrise por toda la tontería de copias, movimiento y operadores invisibles de c++, pero no ha sido así.
+
+De hecho, el cambio que hemos hecho en la creación de la tabla de operand2 que consiste en extraer del lambda la creación de funciones adhoc ha tenido cero impacto en espacio, puesto que la tabla tenía que estar compuesta de punteros sí o sí, y su extracción facilita las pruebas. 
+
+``` c++
+table.put_raw(0b0100, arm_fsr_operand2_i0_40_z0_LSL);
+```
+
