@@ -1398,4 +1398,10 @@ Vale he encontrado un bug en la cpu y es que no accede bien a los registros `act
 
 Por otro lado estoy pensando que podríamos seguir matando dos pájaros de un tiro. Y es comprobar que la operación de computar el contenido de operand2 ha ido bien e inmediatamente después ver si en la lut coincide el puntero.
 
-He notado otro fallo en la normalización de índice para la lut de operand2. Los bits de n1 n2 del shift type están dados la vuelta. (lol). Y luego que la máscara máxima de la lut era mal computada si el número no esta uno desplazado n.
+He notado otro fallo en la normalización de índice para la lut de operand2. Los bits de n1 n2 del shift type están dados la vuelta. (lol). Y luego que la máscara máxima de la lut era mal computada si el número no esta uno desplazado n. Este último problema no hubiera surgido si no hubiéramos optado por & en lugar %. 
+
+$$2 \mathbin{\&} 13 \implies \mathtt{0b0010} \mathbin{\&} \mathtt{0b1101} = \mathtt{0b0000} \implies 0$$
+
+En realidad el problema no era el acceso al std::array, pues maneja la manipulación de índices de fuera de sus alcances, pero en la nuestra implementación de la lut preferimos optar por desplazaminetos y máscaras para mayor velocidad. Sin embargo vamos a parchear esto precomputando una máscara con un algoritmo algo más enrevesado para computar la máscara máxima. En realidad no hace falta la máscara pero nos da una mínima garantía.
+
+Para solventar vamos a implementar un algoritmo que ejecute al inicio para computar esto.

@@ -16,6 +16,8 @@ namespace neogba {
  *
  * Can be used for Karnaugh-map reduction also by modifying normalizer function.
  *
+ * @note It's recomended to set maximum storage length as n given 1 << n.
+ *
  * @tparam store_t Stored element type.
  * @tparam max_length Number of entries in the table.
  * @tparam normalizer Compile-time function used to normalize lookup indices.
@@ -25,7 +27,33 @@ template <typename store_t, std::size_t max_length,
               +[](std::size_t idx) -> std::size_t { return idx; }>
 class lut {
 protected:
-  const std::size_t MAX_MASK{max_length - 1};
+  inline constexpr std::size_t compute_max_mask(std::size_t n) {
+    static_assert(max_length > 1, "You should not use LUT to store less than 2 elements!");
+    // static_assert(max_length < sizeof(std::size_t), "Too many items");
+
+    std::size_t mask{0x0};
+    auto is_not_powered_2{false};
+
+    for (std::size_t i{0}; i < sizeof(std::size_t); ++i) {
+      n <<= 1;
+      auto is_one_bit{n & 0x1};
+      auto is_more_than_one{(n << 1) != 0};
+
+      if (is_more_than_one || is_not_powered_2) {
+        mask |= 1 << i;
+        if (is_one_bit) {
+          is_not_powered_2 = true;
+        }
+        continue;
+      }
+
+      if (is_one_bit)
+        break;
+    }
+
+    return mask;
+  };
+  const std::size_t MAX_MASK{compute_max_mask(max_length)};
   std::array<store_t, max_length> storage{};
   constexpr std::size_t fill_recursive(std::size_t base, std::size_t mask, store_t what, bool high,
                                        std::size_t bit = 0) {
