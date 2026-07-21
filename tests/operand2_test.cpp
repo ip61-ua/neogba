@@ -129,7 +129,10 @@ TEST_F(operand2_test_fixture, arm_fsr_operand2_i0_40_z1_asr_should_sign_extend) 
   inst006 = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set(
       inst006, static_cast<ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::ret_t>(arm_shift_type::ASR));
 
-  auto op2 = arm_fsr_operand2_i0_40_z1_ASR(*cpu, inst006);
+  constexpr auto caller{arm_fsr_operand2_i0_40_z1_ASR};
+
+  auto op2 = caller(*cpu, inst006);
 
   EXPECT_EQ(0xffffffffu, op2.result);
+  EXPECT_EQ(caller, arm_fsr_operand2_lut.get(inst006));
 }
