@@ -20,8 +20,8 @@ template <typename instruction_t, typename return_t, u8 n_shift, instruction_t b
 struct isa_field {
   using ins_t = instruction_t;
   using ret_t = return_t;
-  static constexpr u8 shift = n_shift;
-  static constexpr ins_t mask = bit_mask;
+  static constexpr u8 shift{n_shift};
+  static constexpr ins_t mask{bit_mask};
 
   /**
    * @brief Extracts the field value from an instruction.
@@ -42,6 +42,16 @@ struct isa_field {
    */
   [[nodiscard]] static inline constexpr ins_t set(ins_t instruction, ret_t value) {
     return ((instruction) & (~mask)) | ((value << shift) & mask);
+  }
+
+  /**
+   * @brief Adds binary ones the field value within an instruction.
+   *
+   * @param value Raw value to set of the field.
+   * @return That original value shifted and masked.
+   */
+  [[nodiscard]] static inline constexpr ins_t set_high(ret_t value) {
+    return (value << shift) & mask;
   }
 };
 
@@ -137,6 +147,13 @@ struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)>
   [[nodiscard]] static constexpr ins_t toggle(ins_t instruction) {
     return instruction ^ isa_field_bool::mask;
   }
+
+  /**
+   * @brief Adds binary one in the field value within an instruction.
+   *
+   * @return That bit shifted and masked.
+   */
+  [[nodiscard]] static inline constexpr ins_t set_high() { return isa_field_bool::mask; }
 };
 
 /**
@@ -162,8 +179,8 @@ struct isa_field_split : isa_field<instruction_t, return_t, n_shift, bit_mask> {
   using ret_t = return_t;
   using ins_t = instruction_t;
 
-  static constexpr u8 join = join_shift;
-  static constexpr instruction_t mask2 = bit_mask2;
+  static constexpr u8 join{join_shift};
+  static constexpr instruction_t mask2{bit_mask2};
 
   /**
    * @brief Extracts the combined field value.
@@ -187,6 +204,16 @@ struct isa_field_split : isa_field<instruction_t, return_t, n_shift, bit_mask> {
     auto val = static_cast<ins_t>(value);
     return (instruction & ~(isa_field_split::mask | mask2)) | ((val) & (mask2)) |
            ((val << join) & isa_field_split::mask);
+  }
+
+  /**
+   * @brief Adds binary ones the field value within an instruction.
+   *
+   * @param value Raw value to set of the field.
+   * @return That original value shifted and masked.
+   */
+  [[nodiscard]] static inline constexpr ins_t set_high(ret_t value) {
+    return ((value) & (mask2)) | ((value << join) & isa_field_split::mask);
   }
 };
 } // namespace
@@ -240,7 +267,7 @@ enum class arm_shift_type : u8 {
   ROR = 0b11,
 };
 
-constexpr u32 ISA_ARM_FSR_TEMPLATE{0x02000000u};
+constexpr u32 ISA_ARM_FSR_TEMPLATE{0x00000000u};
 using ISA_ARM_FSR_I = /*                   */ isa_field_bool<u32, 25>;
 using ISA_ARM_FSR_OPCODE = /*              */ isa_field_delayed<u32, u8, 21>;
 using ISA_ARM_FSR_S = /*                   */ isa_field_bool<u32, 20>;
