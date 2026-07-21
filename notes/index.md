@@ -1466,3 +1466,60 @@ u32 inst = templates | ISA_ARM_FSR_I::set1() | ISA_ARM_FSR_OPERAND2_IMM::set(1) 
 Aunque esto sea mucho más claro de leer lo cierto sería muy complicado poner bits a cero. Pero para simplificar las cosas vamos a suponer ceros y por este método no interesa la limpieza. Para ejemplificarlo aún más todos estos nuevos métodos serán set_high() para demostrar que solo pone 1 y no borra nada.
 
 Hecho.
+
+Entonces ya una vez visto como hacer tests parametrizados definamos los casos nuevamente porque de tanto hacer he perdido el hilo y creo que es necesario tener esto para hoy.
+
+siendo op2<...>= `template <bool i, bool rotate_zero, bool bit4, bool special_zero_shift, arm_shift_type shift_type>`
+
+0. op2<1, 1>, c = any -> imm y c = any.
+
+1. op2<1, 0>, c = 0 -> imm rot y c = 0.
+2. op2<1, 0>, c = 1 -> imm rot y c = 1.
+
+3. op2<0, x, 0, 1, lsl>, c = any -> rm y c = any.
+
+4. op2<0, x, 0, 1, lsr>, c = 1 -> 0 y c = 1.
+5. op2<0, x, 0, 1, lsr>, c = 0 -> 0 y c = 0.
+
+6. op2<0, x, 0, 1, asr>, c = 0 -> asr #0 rm y c = 0.
+7. op2<0, x, 0, 1, asr>, c = 1 -> asr #0 rm y c = 1.
+
+8. op2<0, x, 0, 1, ror>, c = 0 -> ror #0 rm y c = 0.
+9. op2<0, x, 0, 1, ror>, c = 1 -> ror #0 rm y c = 1.
+
+10. op2<0, x, 1, x, lsl>, c = any, rs = 0 -> rm y c = any.
+11. op2<0, x, 1, x, lsl>, c = 1, rs < 32 -> rm shifted rs y c = 1.
+12. op2<0, x, 1, x, lsl>, c = 0, rs < 32 -> rm shifted rs y c = 0.
+13. op2<0, x, 1, x, lsl>, c = 1, rs = 32 -> 0 y c = 1.
+14. op2<0, x, 1, x, lsl>, c = 0, rs = 32 -> 0 y c = 0.
+15. op2<0, x, 1, x, lsl>, c = any, rs > 32 -> 0 y c = 0.
+
+16. op2<0, x, 0, 0, lsl>, c = 0, shiftamount < 32 -> rm shifted shiftamount y c = 0.
+17. op2<0, x, 0, 0, lsl>, c = 1, shiftamount < 32 -> rm shifted shiftamount y c = 1.
+
+18. op2<0, x, 1, x, lsr>, c = any, rs = 0 -> rm y c = any.
+19. op2<0, x, 1, x, lsr>, c = 1, rs < 32 -> rm shifted rs y c = 1.
+20. op2<0, x, 1, x, lsr>, c = 0, rs < 32 -> rm shifted rs y c = 0.
+21. op2<0, x, 1, x, lsr>, c = 1, rs = 32 -> 0 y c = 1.
+22. op2<0, x, 1, x, lsr>, c = 0, rs = 32 -> 0 y c = 0.
+23. op2<0, x, 1, x, lsr>, c = any, rs > 32 -> 0 y c = 0.
+
+24. op2<0, x, 0, 0, asr>, c = any, shiftamount = 0 -> rm y c = any.
+25. op2<0, x, 0, 0, asr>, c = 1, shiftamount < 32 -> rm shifted shiftamount y c = 1.
+26. op2<0, x, 0, 0, asr>, c = 0, shiftamount < 32 -> rm shifted shiftamount y c = 0.
+27. op2<0, x, 0, 0, asr>, c = 1, shiftamount >= 32 -> rm shifted shiftamount y c = 1.
+28. op2<0, x, 0, 0, asr>, c = 0, shiftamount >= 32 -> rm shifted shiftamount y c = 0.
+
+29. op2<0, x, 0, 0, ror>, c = any, shiftamount == 0 -> rm y c = any.
+30. op2<0, x, 0, 0, ror>, c = 1, shiftamount >= 32 -> rm y c = 1.
+31. op2<0, x, 0, 0, ror>, c = 1, shiftamount < 32 -> rm shifted shiftamount y c = 1.
+32. op2<0, x, 0, 0, ror>, c = 0, shiftamount < 32 -> rm shifted shiftamount y c = 0.
+
+Gracias a estas pruebas, he detectado problemas en la recuperación de funciones de la lut 24, 29 y 30.
+Los tres casos pertenecen a i = 0 bit4 = 0 `shift_amount` != 0 ? y pero en la instrucción sale como `shift_amount` == 0.
+Es decir, le estamos pidiendo hacer una operación para la en teoría no debería ser capaz.
+Esta es una errata de copiar y pegar 999 test. Es más de hecho vemos que en esos test no hay concatenación de SHIFT_AMOU de ningún tipo y por lo tanto es 0. Además hay que sumarle que un número de 5 bit no puede exceder los 32. Esta condición ocurre cuando I=0, Bit4=0 porque tiempre será 0 siempre que lo hiciese. Estos dos últimos comentados por lo tanto 
+
+He optado por optimizar mejor el código de operand2 para aprovechar mejor la comprobación de bit4 y suponer inmediatos de 5 bits y utilizando rotaciones estándar. He apalicado estrategias de adelantar o atrasar y simplicación de código común. Además con suerte la arquitectura del procesador a la hora de cargar el `shift_amount` tenga un flag automático de Z como ARM (recursivo). 
+
+Aquí sinceramente me he asegurado que los diferrentes provedores de IA, digan si es una implementación certera, pedí ayuda para los casos pero son puñetero desastre. He cogido papel y lápiz y me he puesto a dibujar un grafo de CFG para tenerlo a mano y dejarme de tonterías. Y de paso así no me engaño por la sintaxis de las variables y voy straight forward. Considero que este es también uno de los aspectos que generan confusión y

@@ -67,7 +67,7 @@ struct arm_operand2_result {
  * @see arm_shift_type
  * @see arm7tdmi
  */
-template <bool i, bool rotate_zero = false, bool bit4 = false, bool special_zero_shift = false,
+template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero = false,
           arm_shift_type shift_type = arm_shift_type::LSL>
 [[nodiscard]] arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
   auto carry_out{static_cast<u8>((cpu.read_cpsr() & arm7tdmi::C) >> arm7tdmi::C_SHIFT)};
@@ -91,7 +91,7 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool special_zero
     // auto shift_type{ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(inst)};
     // auto four{ISA_ARM_FSR_OPERAND2_4::get(inst)};
 
-    constexpr bool is_special_case{!bit4 && special_zero_shift};
+    constexpr bool is_special_case{!bit4 && shift_zero};
 
     if constexpr (is_special_case) {
       if constexpr (shift_type == arm_shift_type::LSL) {
@@ -122,6 +122,7 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool special_zero
         shift_amount = ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
       }
 
+      // aunque esto sea un if, lo cierto es que es común a todos y adelantamos la salida.
       if (shift_amount == 0)
         return {rm, carry_out, carry_in};
 
@@ -160,14 +161,14 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool special_zero
         carry_out = (rm >> (shift_amount - 1)) & 1;
 
       } else if constexpr (shift_type == arm_shift_type::ROR) {
+
         auto masked_shift{shift_amount & 0x1f};
-        if (masked_shift == 0) {
-          result = rm;
-          carry_out = (rm >> 31) & 1;
-        } else {
-          result = std::rotr(rm, masked_shift);
-          carry_out = (rm >> (masked_shift - 1)) & 1;
+        if constexpr (bit4) {
+          if (masked_shift == 0)
+            return {rm, static_cast<u8>((rm >> 31) & 1), carry_in};
         }
+        result = std::rotr(rm, masked_shift);
+        carry_out = (rm >> (masked_shift - 1)) & 1;
       }
     }
   }
