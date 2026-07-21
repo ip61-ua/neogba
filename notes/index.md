@@ -1395,3 +1395,5 @@ Vamos a empezar con los casos especiales y luego seguimos con resto. Los casos e
 
 
 Vale he encontrado un bug en la cpu y es que no accede bien a los registros `active_registers` por medio del depurador. Vale mala mía, me he olvidado de poner el usr mode mano porque este también cambia los registros. y claro todos los del active son cero porque apuntan al primer elemento. y ningún otro es alterado.
+
+Por otro lado estoy pensando que podríamos seguir matando dos pájaros de un tiro. Y es comprobar que la operación de computar el contenido de operand2 ha ido bien e inmediatamente después ver si en la lut coincide el puntero.

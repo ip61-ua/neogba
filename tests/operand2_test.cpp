@@ -90,16 +90,46 @@ TEST_F(operand2_test_fixture, arm_fsr_operand2_i1_r0_should_return_with_rotated_
 
 TEST_F(operand2_test_fixture,
        arm_fsr_operand2_i0_40_z1_lsl_should_return_rm_without_modifying_carry) {
-  static auto inst{ISA_ARM_FSR_TEMPLATE};
+  static auto inst004{ISA_ARM_FSR_TEMPLATE};
 
-  inst = ISA_ARM_FSR_I::set0(inst);
-  inst = ISA_ARM_FSR_OPERAND2_4::set0(inst);
-  inst = ISA_ARM_FSR_OPERAND2_RM::set(inst, r5);
+  inst004 = ISA_ARM_FSR_I::set0(inst004);
+  inst004 = ISA_ARM_FSR_OPERAND2_4::set0(inst004);
+  inst004 = ISA_ARM_FSR_OPERAND2_RM::set(inst004, r5);
+  inst004 = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set(
+      inst004, static_cast<ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::ret_t>(arm_shift_type::LSL));
 
   cpu->write_cpsr(arm7tdmi::C);
 
-  auto op2 = arm_fsr_operand2_i0_40_z1_LSL(*cpu, inst);
+  auto op2 = arm_fsr_operand2_i0_40_z1_LSL(*cpu, inst004);
 
   EXPECT_EQ(777u, op2.result);
   EXPECT_EQ(1u, op2.carry_out);
+}
+
+TEST_F(operand2_test_fixture, arm_fsr_operand2_i0_40_z1_lsr_should_behave_as_lsr32) {
+  static auto inst005{ISA_ARM_FSR_TEMPLATE};
+
+  inst005 = ISA_ARM_FSR_I::set0(inst005);
+  inst005 = ISA_ARM_FSR_OPERAND2_4::set0(inst005);
+  inst005 = ISA_ARM_FSR_OPERAND2_RM::set(inst005, r1);
+  inst005 = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set(
+      inst005, static_cast<ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::ret_t>(arm_shift_type::LSR));
+
+  auto op2 = arm_fsr_operand2_i0_40_z1_LSR(*cpu, inst005);
+
+  EXPECT_EQ(0u, op2.result);
+}
+
+TEST_F(operand2_test_fixture, arm_fsr_operand2_i0_40_z1_asr_should_sign_extend) {
+  static auto inst006{ISA_ARM_FSR_TEMPLATE};
+
+  inst006 = ISA_ARM_FSR_I::set0(inst006);
+  inst006 = ISA_ARM_FSR_OPERAND2_4::set0(inst006);
+  inst006 = ISA_ARM_FSR_OPERAND2_RM::set(inst006, r4);
+  inst006 = ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set(
+      inst006, static_cast<ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::ret_t>(arm_shift_type::ASR));
+
+  auto op2 = arm_fsr_operand2_i0_40_z1_ASR(*cpu, inst006);
+
+  EXPECT_EQ(0xffffffffu, op2.result);
 }
