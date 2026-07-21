@@ -1391,5 +1391,7 @@ Para probar `arm_fsr_operand2_i1_r0` necesitamos solo un caso dado que no tiene 
 
 Ya hemos terminado con i=1, ahora vamos i=0:
 
-Vamos a empezar con los casos especiales y luego seguimos con resto. Los casos especiales siempre tendrán el bit 4 a cero. Y presisaremos de 3 casos más otros 4 para comprobar la acticación del carryout, con excepción del lsl.
+Vamos a empezar con los casos especiales y luego seguimos con resto. Los casos especiales siempre tendrán el bit 4 a uno. Y presisaremos de 3 casos más otros 4 para comprobar la activación del carryout, con excepción del lsl.
 
+
+Vale he encontrado un bug en la cpu y es que no accede bien a los registros `active_registers` por medio del depurador. Vale mala mía, me he olvidado de poner el usr mode mano porque este también cambia los registros. y claro todos los del active son cero porque apuntan al primer elemento. y ningún otro es alterado.

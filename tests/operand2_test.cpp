@@ -18,6 +18,7 @@ protected:
   void SetUp() override {
     cpu = std::make_unique<arm7tdmi>();
     cpu->empty_registers();
+    cpu->set_mode(arm7tdmi::MODE_USR);
     cpu->write_active_register(r1, 0x1);
     cpu->write_active_register(r2, 0x2);
     cpu->write_active_register(r3, -1);
@@ -29,7 +30,6 @@ protected:
     cpu->write_active_register(r9, (1 << 9) - 1);
     cpu->write_active_register(r10, (1 << 10) - 1);
     cpu->write_active_register(r11, 42);
-    cpu->set_mode(arm7tdmi::MODE_USR);
   }
 
   void TearDown() override {}
@@ -65,8 +65,8 @@ TEST_F(operand2_test_fixture, arm_fsr_operand2_i1_r0_should_return_with_rotated)
   constexpr u32 expected_result = 0xC0000000;
   constexpr u8 expected_carry = 1;
 
-  EXPECT_EQ(op2.result, expected_result);
-  EXPECT_EQ(op2.carry_out, expected_carry);
+  EXPECT_EQ(expected_result, op2.result);
+  EXPECT_EQ(expected_carry, op2.carry_out);
 };
 
 TEST_F(operand2_test_fixture, arm_fsr_operand2_i1_r0_should_return_with_rotated_and_no_carry) {
@@ -84,6 +84,22 @@ TEST_F(operand2_test_fixture, arm_fsr_operand2_i1_r0_should_return_with_rotated_
   constexpr u32 expected_result = 0x00000001;
   constexpr u8 expected_carry = 0;
 
-  EXPECT_EQ(op2.result, expected_result);
-  EXPECT_EQ(op2.carry_out, expected_carry);
+  EXPECT_EQ(expected_result, op2.result);
+  EXPECT_EQ(expected_carry, op2.carry_out);
 };
+
+TEST_F(operand2_test_fixture,
+       arm_fsr_operand2_i0_40_z1_lsl_should_return_rm_without_modifying_carry) {
+  static auto inst{ISA_ARM_FSR_TEMPLATE};
+
+  inst = ISA_ARM_FSR_I::set0(inst);
+  inst = ISA_ARM_FSR_OPERAND2_4::set0(inst);
+  inst = ISA_ARM_FSR_OPERAND2_RM::set(inst, r5);
+
+  cpu->write_cpsr(arm7tdmi::C);
+
+  auto op2 = arm_fsr_operand2_i0_40_z1_LSL(*cpu, inst);
+
+  EXPECT_EQ(777u, op2.result);
+  EXPECT_EQ(1u, op2.carry_out);
+}
