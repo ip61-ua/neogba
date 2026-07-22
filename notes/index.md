@@ -1552,4 +1552,27 @@ Empezamos por una comprobación exhaustiva en donde buscaremos ir cada bifurcaci
 
 Tampoco vamos a considerar comprobar las banderas de forma conjunta porque esto daría otra combinación peligrosa de casos. Este código a diferencia del de operand2, no tiene tantas bifurcaciones por lo que valdrán pocos casos completos para la primera fase.
 
-Sin embargo debemos construir la lut parcial.
+Sin embargo debemos construir la lut parcial, antes.
+
+Empecemos por lo de siempre, analizar qué variables tenemos a simplificar.
+
+opcode tiene 4 bits -> 16 combinaciones.
+s es 1 bit -> 2 combinaciones.
+rd_pc es 1 bit -> 2 combinaciones
+
+El hecho de considerar los 4 bits de campo de registro destino como un booleano fue motivado por el tratamiento de casos especiales. Esto es posible porque el campo rd es fijo tiene siempre el mismo significado sin que pueda variar y desenbocar en casos.
+
+Sin embargo y dado que tenemos una combinación de 48 + 8 casos resulta que para poder identificar inequívocamente esos 56 casos precisamos de como mínimo de 6 bits como mínimo para diferenciar esos casos. Cosa la cual ya cubrimos con esos 4 + 1 + 1 bits de variables. Entonces queda ahora organizar las funciones dentro de la lut. Excepcionalmente conincidirá en gran medida en el orden en el que se muestran, puesto al poco cambio que hay que hacer. 
+
+Cabe resaltar que este cálculo es así porque no tenemos variables que colisiones y/o que dependan entre ellas como sí ocurría en operand2. 
+
+Otra mejora a futuro consistiría en reducir las luts, juntándolas. Por ejemplo: AMD FSR y cómputo de operand2. Esto es demomento bastante plausible puesto que si confirme al buen desarollo del progama, vemos que la única dependencia, podríamos considerar su fusión. Aunque bajo este prisma, cabe resaltar que esto resulta en una clara fragilidad para las pruebas unitarias si lo hacemos a lo bruto. Aunque a cambio obtendríamos un código con los mínimos saltos. Pero en oposición tendríamos un bloque de código infernal de mantener. 
+
+Propongo que en el futuro traslademos los códigos de plantilla de operand2 junto a los de fsr. Pero a la hora construir la plantilla de fsr construyamos dentro la plantilla operand2 y mantengamos operand2 para las pruebas. Ahora bien hacer esto implica que deje de tener sentido tener una lut de operand2 porque no es código que vaya a producción. 
+
+Ello pese al "atractivo", puede tener penalizaciones en el binario final como problemas de caché o tamaño del binario final.
+Porque combinar 6 bits + variables de operand2 puede dar lugar a una combinación radioactiva de casos a considerar.
+
+Pero esto ya será para el Ivan del mañana.
+
+Lo que vamos a hacer es a extraer las variables y juntarlas en en código para que quepan en 1 << 6.
