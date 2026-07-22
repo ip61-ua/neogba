@@ -312,7 +312,10 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
                                 opcode == arm_fsr_opcode::CMP || opcode == arm_fsr_opcode::CMN)};
   constexpr auto is_inverted_sub{opcode == arm_fsr_opcode::RSB || opcode == arm_fsr_opcode::RSC};
 
-  constexpr auto is_move{opcode != arm_fsr_opcode::MOV && opcode != arm_fsr_opcode::MVN};
+  constexpr auto is_not_move{opcode != arm_fsr_opcode::MOV && opcode != arm_fsr_opcode::MVN};
+
+  constexpr auto is_sum{opcode == arm_fsr_opcode::ADD or opcode == arm_fsr_opcode::ADC or
+                        opcode == arm_fsr_opcode::CMN};
 
   // Retrieve values
   u8 rd_idx;
@@ -325,7 +328,7 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
   else
     rd_idx = ISA_ARM_FSR_RD::get(inst);
 
-  if constexpr (is_move)
+  if constexpr (is_not_move)
     op1 = cpu.read_active_register(rn_idx);
 
   auto op2{arm_fsr_operand2_lut.invoke(inst, cpu, inst)};
@@ -379,11 +382,6 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
         // set_cpsr(mask, values) sobrescribe solo estos `mask`
         cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C, z | n | c);
       } else {
-
-        // another meta template info
-        constexpr auto is_sum{opcode == arm_fsr_opcode::ADD or opcode == arm_fsr_opcode::ADC or
-                              opcode == arm_fsr_opcode::CMN};
-
         auto c{static_cast<u32>(res >> 32)}; // (res >> 32) & 1 es 1 o 0.
         auto v{~(op1 ^ op2.result)};
 
@@ -472,70 +470,69 @@ inline constexpr auto arm_lut = []() consteval {
         return (opcode << 2) | s << 1 | rd_pc;
       }>
       table;
+  constexpr auto code_lambda = [](arm_fsr_opcode opcode, bool s = false,
+                                  bool rd_pc = false) -> std::size_t {
+    return (static_cast<std::size_t>(opcode) << 2) | (static_cast<std::size_t>(s) << 1) |
+           static_cast<std::size_t>(rd_pc);
+  };
 
-  constexpr auto code_lambda{
-      [](arm_fsr_opcode opcode, bool s = false, bool rd_pc = false) -> std::size_t {
-        // <arm_fsr_opcode opcode, bool s = false, bool rd_pc = false>
-        return (static_cast<std::size_t>(opcode) << 2) | s << 1 | rd_pc;
-      }};
+  table.put_raw(code_lambda(arm_fsr_opcode::AND), arm_AND_notS_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::EOR), arm_EOR_notS_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::SUB), arm_SUB_notS_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::RSB), arm_RSB_notS_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::ADD), arm_ADD_notS_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::ADC), arm_ADC_notS_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::SBC), arm_SBC_notS_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::RSC), arm_RSC_notS_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::ORR), arm_ORR_notS_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::MOV), arm_MOV_notS_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::BIC), arm_BIC_notS_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::MVN), arm_MVN_notS_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::AND, true), arm_AND_S_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::EOR, true), arm_EOR_S_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::SUB, true), arm_SUB_S_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::RSB, true), arm_RSB_S_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::ADD, true), arm_ADD_S_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::ADC, true), arm_ADC_S_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::SBC, true), arm_SBC_S_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::RSC, true), arm_RSC_S_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::ORR, true), arm_ORR_S_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::MOV, true), arm_MOV_S_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::BIC, true), arm_BIC_S_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::MVN, true), arm_MVN_S_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::AND, true, true), arm_AND_S_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::EOR, true, true), arm_EOR_S_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::SUB, true, true), arm_SUB_S_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::RSB, true, true), arm_RSB_S_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::ADD, true, true), arm_ADD_S_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::ADC, true, true), arm_ADC_S_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::SBC, true, true), arm_SBC_S_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::RSC, true, true), arm_RSC_S_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::ORR, true, true), arm_ORR_S_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::MOV, true, true), arm_MOV_S_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::BIC, true, true), arm_BIC_S_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::MVN, true, true), arm_MVN_S_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::AND, false, true), arm_AND_notS_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::EOR, false, true), arm_EOR_notS_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::SUB, false, true), arm_SUB_notS_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::RSB, false, true), arm_RSB_notS_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::ADD, false, true), arm_ADD_notS_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::ADC, false, true), arm_ADC_notS_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::SBC, false, true), arm_SBC_notS_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::RSC, false, true), arm_RSC_notS_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::ORR, false, true), arm_ORR_notS_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::MOV, false, true), arm_MOV_notS_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::BIC, false, true), arm_BIC_notS_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::MVN, false, true), arm_MVN_notS_RdPC);
 
-  table.fill(code_lambda(arm_fsr_opcode::AND), arm_AND_notS_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::EOR), arm_EOR_notS_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::SUB), arm_SUB_notS_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::RSB), arm_RSB_notS_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::ADD), arm_ADD_notS_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::ADC), arm_ADC_notS_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::SBC), arm_SBC_notS_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::RSC), arm_RSC_notS_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::ORR), arm_ORR_notS_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::MOV), arm_MOV_notS_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::BIC), arm_BIC_notS_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::MVN), arm_MVN_notS_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::AND, true), arm_AND_S_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::EOR, true), arm_EOR_S_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::SUB, true), arm_SUB_S_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::RSB, true), arm_RSB_S_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::ADD, true), arm_ADD_S_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::ADC, true), arm_ADC_S_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::SBC, true), arm_SBC_S_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::RSC, true), arm_RSC_S_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::ORR, true), arm_ORR_S_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::MOV, true), arm_MOV_S_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::BIC, true), arm_BIC_S_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::MVN, true), arm_MVN_S_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::AND, true, true), arm_AND_S_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::EOR, true, true), arm_EOR_S_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::SUB, true, true), arm_SUB_S_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::RSB, true, true), arm_RSB_S_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::ADD, true, true), arm_ADD_S_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::ADC, true, true), arm_ADC_S_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::SBC, true, true), arm_SBC_S_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::RSC, true, true), arm_RSC_S_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::ORR, true, true), arm_ORR_S_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::MOV, true, true), arm_MOV_S_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::BIC, true, true), arm_BIC_S_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::MVN, true, true), arm_MVN_S_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::AND, false, true), arm_AND_notS_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::EOR, false, true), arm_EOR_notS_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::SUB, false, true), arm_SUB_notS_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::RSB, false, true), arm_RSB_notS_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::ADD, false, true), arm_ADD_notS_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::ADC, false, true), arm_ADC_notS_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::SBC, false, true), arm_SBC_notS_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::RSC, false, true), arm_RSC_notS_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::ORR, false, true), arm_ORR_notS_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::MOV, false, true), arm_MOV_notS_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::BIC, false, true), arm_BIC_notS_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::MVN, false, true), arm_MVN_notS_RdPC);
-
-  table.fill(code_lambda(arm_fsr_opcode::TST, true), arm_TST_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::TEQ, true), arm_TEQ_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::CMP, true), arm_CMP_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::CMN, true), arm_CMN_notRdPC);
-  table.fill(code_lambda(arm_fsr_opcode::TST, true, true), arm_TST_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::TEQ, true, true), arm_TEQ_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::CMP, true, true), arm_CMP_RdPC);
-  table.fill(code_lambda(arm_fsr_opcode::CMN, true, true), arm_CMN_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::TST, true), arm_TST_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::TEQ, true), arm_TEQ_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::CMP, true), arm_CMP_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::CMN, true), arm_CMN_notRdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::TST, true, true), arm_TST_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::TEQ, true, true), arm_TEQ_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::CMP, true, true), arm_CMP_RdPC);
+  table.put_raw(code_lambda(arm_fsr_opcode::CMN, true, true), arm_CMN_RdPC);
 
   return table;
 }();
