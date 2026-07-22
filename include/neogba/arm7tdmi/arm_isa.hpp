@@ -361,7 +361,7 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
 
   // Side effects
   if constexpr (s) {
-    if constexpr (rd_pc) {
+    if constexpr (rd_pc and can_write_rd) {
       cpu.write_cpsr(cpu.read_spsr());
 
     } else {
@@ -379,7 +379,7 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
       } else {
 
         // another meta template info
-        constexpr auto is_sum{opcode == arm_fsr_opcode::ADD || opcode == arm_fsr_opcode::ADC ||
+        constexpr auto is_sum{opcode == arm_fsr_opcode::ADD or opcode == arm_fsr_opcode::ADC or
                               opcode == arm_fsr_opcode::CMN};
 
         auto c{static_cast<u32>(res >> 32)}; // (res >> 32) & 1 es 1 o 0.

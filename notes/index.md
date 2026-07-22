@@ -1523,3 +1523,33 @@ Esta es una errata de copiar y pegar 999 test. Es más de hecho vemos que en eso
 He optado por optimizar mejor el código de operand2 para aprovechar mejor la comprobación de bit4 y suponer inmediatos de 5 bits y utilizando rotaciones estándar. He apalicado estrategias de adelantar o atrasar y simplicación de código común. Además con suerte la arquitectura del procesador a la hora de cargar el `shift_amount` tenga un flag automático de Z como ARM (recursivo). 
 
 Aquí sinceramente me he asegurado que los diferrentes provedores de IA, digan si es una implementación certera, pedí ayuda para los casos pero son puñetero desastre. He cogido papel y lápiz y me he puesto a dibujar un grafo de CFG para tenerlo a mano y dejarme de tonterías. Y de paso así no me engaño por la sintaxis de las variables y voy straight forward. Considero que este es también uno de los aspectos que generan confusión. En esta ocasión no he considerado el carry como una salida boleana 
+
+# 22 de julio
+
+Parece que la cosa se ha alargado y he terminado de probar esto hoy.
+
+<operand2.pdf>
+
+Quiero remarcar que ha sido muy importante revisitar el código desde el POV de probar las cosas, porque considero que ahora tengo las ideas más claras de como va porque he visto más plausible optimizar ciertos aspectos que no había visto anteriormente. Tales aspectos que he replanteado en no implementar otra lut a futuro para cada caso de rotación. Creo que optimizarlo y dibujarlo antes ha sido claro para ver donde estaban los fallos.
+
+Muchas cuestiones son de lógica que evaluándola podemos estar simplificando redundancias.
+
+Vamos con la planificación.
+
+1. Probar operaciones de arm fsr. (hoy)
+2. Luego si esto va, crear una lut iniciar parcial para saber como direccionar estas operaciones. (hoy-mañana)
+3. Probarla. (mañana)
+4. Diseñar un esquema básico de memoria con chip. (mañana + 4 días)
+5. Preparar estado del arte
+6. Preparar preguntas y reunión.
+
+Procedamos con los puntos 1 2 y 3 juntos. Creo que es una buena estrategia de integración como hicimos antes.
+
+Lo primero que procedí a realizar es revisar posibles huecos en le implementación genérica. A parte de los caveats que y conozco como la lectura y escritura de pc. Sin embargo este aspecto es el que menos preocupe pese a que falte comprobar, lo cierto es que en el futuro podemos gestionar este caso cuando tengamos el flujo funcionancionando.
+
+En esta ocasión vamos a adoptar una estategia un tanto diferente de comprobar. No vamos a comprobar siempre lo mismo.
+Empezamos por una comprobación exhaustiva en donde buscaremos ir cada bifurcación. CON EXCEPCIÓN de no pasar por el bloque de perform operation, porque generaría una combinación loca de casos a probar. Y luego comprobaremos la combinación loca pasando una vez para comprobar el acceso a lut y el estado de pc con parametrizados. En esta segunda fase de chequeos, no interesa comprobar tanto sus caminos así como sí interesa ver cada operación y su resultado así como sí ha podido cambiar las banderas correctamente.
+
+Tampoco vamos a considerar comprobar las banderas de forma conjunta porque esto daría otra combinación peligrosa de casos. Este código a diferencia del de operand2, no tiene tantas bifurcaciones por lo que valdrán pocos casos completos para la primera fase.
+
+Sin embargo debemos construir la lut parcial.
