@@ -29,7 +29,10 @@ protected:
 
     cpu->write_active_register(r9, 0xffffffff);
     cpu->write_active_register(r7, 0x00000022);
-    cpu->write_active_register(r8, 0);
+    cpu->write_active_register(r7, 0x00000022);
+    cpu->write_active_register(r1, 3);
+    cpu->write_active_register(r2, 32);
+    cpu->write_active_register(r3, 33);
   }
 
   void TearDown() override {}
@@ -78,9 +81,41 @@ constexpr static u32 //
          ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ASR))},
     i010{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
          ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::set_high(1) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ROR))}
+         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ROR))},
 
-;
+    i011{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
+         ISA_ARM_FSR_OPERAND2_RS::set_high(r2) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
+         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ROR))},
+    i012{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
+         ISA_ARM_FSR_OPERAND2_RS::set_high(r1) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
+         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ROR))},
+
+    i013{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
+         ISA_ARM_FSR_OPERAND2_RS::set_high(r3) | ISA_ARM_FSR_OPERAND2_RM::set_high(r9) |
+         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ASR))},
+    i014{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
+         ISA_ARM_FSR_OPERAND2_RS::set_high(r1) | ISA_ARM_FSR_OPERAND2_RM::set_high(r9) |
+         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ASR))},
+
+    i015{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
+         ISA_ARM_FSR_OPERAND2_RS::set_high(r3) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
+         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSR))},
+    i016{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
+         ISA_ARM_FSR_OPERAND2_RS::set_high(r2) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
+         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSR))},
+    i017{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
+         ISA_ARM_FSR_OPERAND2_RS::set_high(r1) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
+         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSR))},
+
+    i018{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
+         ISA_ARM_FSR_OPERAND2_RS::set_high(r3) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
+         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSL))},
+    i019{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
+         ISA_ARM_FSR_OPERAND2_RS::set_high(r2) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
+         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSL))},
+    i020{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
+         ISA_ARM_FSR_OPERAND2_RS::set_high(r1) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
+         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSL))};
 
 INSTANTIATE_TEST_SUITE_P(  //
     operand2_parametrized, //
@@ -100,7 +135,7 @@ INSTANTIATE_TEST_SUITE_P(  //
         // 5. -i | -bit4 | z | ROR
         operand2_test_param{i005, arm_fsr_operand2_i0_40_z1_ROR, 0x7fffffff, 1, 0},
 
-        // 6. -i | bit4 | -z | any | [rs] = 0
+        // 6. -i | bit4 | any | any | [rs] = 0
         operand2_test_param{i006, arm_fsr_operand2_i0_41_z0_ROR, 0x22, 0, 0},
 
         // 7. -i | -bit4 | -z | lsl.
@@ -111,7 +146,29 @@ INSTANTIATE_TEST_SUITE_P(  //
         operand2_test_param{i009, arm_fsr_operand2_i0_40_z0_ASR, 0xffffffff, 1, 0},
         // 10. -i | -bit4 | -z | ror.
         operand2_test_param{i010, arm_fsr_operand2_i0_40_z0_ROR,
-                            std::rotr(static_cast<u32>(0x22), 1), 0, 1}
+                            std::rotr(static_cast<u32>(0x22), 1), 0, 1},
 
-        ) //
-);
+        // 11. -i | bit4 | any | ror | [rs] != 0 | masked == 0
+        operand2_test_param{i011, arm_fsr_operand2_i0_41_z0_ROR, 0x22, 0, 0},
+        // 12. -i | bit4 | any | ror | [rs] != 0 | masked != 0
+        operand2_test_param{i012, arm_fsr_operand2_i0_41_z0_ROR,
+                            std::rotr(static_cast<u32>(0x22), 3), 0, 0},
+
+        // 13. -i | bit4 | any | asr | [rs] != 0 | [rs] >= 32
+        operand2_test_param{i013, arm_fsr_operand2_i0_41_z0_ASR, 0xffffffff, 1, 0},
+        // 14. -i | bit4 | any | asr | [rs] != 0 | [rs] < 32
+        operand2_test_param{i014, arm_fsr_operand2_i0_41_z0_ASR, 0xffffffff, 1, 0},
+
+        // 15. -i | bit4 | any | lsr | [rs] != 0 | [rs] > 32
+        operand2_test_param{i015, arm_fsr_operand2_i0_41_z0_LSR, 0, 0, 0},
+        // 16. -i | bit4 | any | lsr | [rs] != 0 | [rs] == 32
+        operand2_test_param{i016, arm_fsr_operand2_i0_41_z0_LSR, 0, 0, 0},
+        // 17. -i | bit4 | any | lsr | [rs] != 0 | [rs] < 32
+        operand2_test_param{i017, arm_fsr_operand2_i0_41_z0_LSR, 0x22 >> 3, 0, 0},
+
+        // 18. -i | bit4 | any | lsl | [rs] != 0 | [rs] > 32
+        operand2_test_param{i018, arm_fsr_operand2_i0_41_z0_LSL, 0, 0, 0},
+        // 19. -i | bit4 | any | lsl | [rs] != 0 | [rs] == 32
+        operand2_test_param{i019, arm_fsr_operand2_i0_41_z0_LSL, 0, 0, 0},
+        // 20. -i | bit4 | any | lsl | [rs] != 0 | [rs] < 32
+        operand2_test_param{i020, arm_fsr_operand2_i0_41_z0_LSL, 0x22 << 3, 0, 0}));
