@@ -312,6 +312,8 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
                                 opcode == arm_fsr_opcode::CMP || opcode == arm_fsr_opcode::CMN)};
   constexpr auto is_inverted_sub{opcode == arm_fsr_opcode::RSB || opcode == arm_fsr_opcode::RSC};
 
+  constexpr auto is_move{opcode != arm_fsr_opcode::MOV && opcode != arm_fsr_opcode::MVN};
+
   // Retrieve values
   u8 rd_idx;
   u32 op1;
@@ -323,7 +325,7 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
   else
     rd_idx = ISA_ARM_FSR_RD::get(inst);
 
-  if constexpr (opcode != arm_fsr_opcode::MOV && opcode != arm_fsr_opcode::MVN)
+  if constexpr (is_move)
     op1 = cpu.read_active_register(rn_idx);
 
   auto op2{arm_fsr_operand2_lut.invoke(inst, cpu, inst)};
