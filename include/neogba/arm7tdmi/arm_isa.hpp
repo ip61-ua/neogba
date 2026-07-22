@@ -302,7 +302,6 @@ inline constexpr auto arm_fsr_operand2_lut = []() consteval {
  */
 template <arm_fsr_opcode opcode, bool s = false, bool rd_pc = false>
 void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
-
   // Meta template variables
   constexpr auto is_logical{opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::EOR ||
                             opcode == arm_fsr_opcode::TST || opcode == arm_fsr_opcode::TEQ ||
@@ -311,9 +310,7 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
   constexpr auto can_write_rd{!(opcode == arm_fsr_opcode::TST || opcode == arm_fsr_opcode::TEQ ||
                                 opcode == arm_fsr_opcode::CMP || opcode == arm_fsr_opcode::CMN)};
   constexpr auto is_inverted_sub{opcode == arm_fsr_opcode::RSB || opcode == arm_fsr_opcode::RSC};
-
   constexpr auto is_not_move{opcode != arm_fsr_opcode::MOV && opcode != arm_fsr_opcode::MVN};
-
   constexpr auto is_sum{opcode == arm_fsr_opcode::ADD or opcode == arm_fsr_opcode::ADC or
                         opcode == arm_fsr_opcode::CMN};
 
