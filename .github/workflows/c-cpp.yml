@@ -20,5 +20,5 @@ jobs:
           sudo apt-get install -y build-essential g++-14 libgtest-dev libgmock-dev
 
       - name: Compile and test.
-        run: make test
+        run: make test CXX=g++-14
 
