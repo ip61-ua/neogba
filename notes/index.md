@@ -1585,3 +1585,5 @@ Luego lo adjunto. Pero he tenido tenido que aplicar algún refactor para garanti
 
 Por otra parte he decido añadir despliegue automático en github para facilitar al tutor la revisión de pruebas...
 Le he pillado el truco a hacer test parametrizados porque resultan muy eficientes de construir.
+
+<cfg_fsr.pdf>
