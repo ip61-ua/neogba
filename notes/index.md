@@ -1576,3 +1576,9 @@ Porque combinar 6 bits + variables de operand2 puede dar lugar a una combinació
 Pero esto ya será para el Ivan del mañana.
 
 Lo que vamos a hacer es a extraer las variables y juntarlas en en código para que quepan en 1 << 6.
+
+Vale hecho.
+
+Como afrontamos hacer el test: Yo diría que la misma manera. Parametrizados. Porque ya realiza todas las comprobaciones pertinentes al momento. Voy a hacer el grafo para ver qué pruebas hacer.
+
+Luego lo adjunto. Pero he tenido tenido que aplicar algún refactor para garantizar mejor lectura de código. Luego también he utilizado para usar put_raw.
