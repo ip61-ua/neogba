@@ -17,7 +17,7 @@ struct fsr_test_param {
   u8 rm;
 
   u32 initial_rd;
-  u32 initial_rn;
+  u32 initial_rn{0};
   u32 initial_rm;
 
   bool initial_c{false};
@@ -118,8 +118,7 @@ INSTANTIATE_TEST_SUITE_P( //
     fsr_parametrized,     //
     fsr_test_fixture,     //
     ::testing::Values(
-        //
-
+        // Caso 0
         fsr_test_param{.mode = arm7tdmi::MODE_FIQ,
                        .s = true,
                        .opcode = arm_fsr_opcode::MOV,
@@ -141,6 +140,142 @@ INSTANTIATE_TEST_SUITE_P( //
                        .expected_z = false,
                        .expected_v = true,
                        .expected_n = true,
-                       .expected_rd = 0x80000000}
+                       .expected_rd = 0x80000000},
+
+        // Caso 1
+        fsr_test_param{.mode = arm7tdmi::MODE_FIQ,
+                       .s = false,
+                       .opcode = arm_fsr_opcode::RSB,
+                       .caller = arm_RSB_notS_RdPC,
+                       .rd = pc,
+                       .rn = r6,
+                       .rm = r9,
+
+                       .initial_rd = 0x4,
+                       .initial_rn = 777,
+                       .initial_rm = 0x80000000,
+
+                       .initial_c = true,
+                       .initial_z = true,
+                       .initial_v = true,
+                       .initial_n = false,
+
+                       // CMP 100, 100 -> restar = 0 (Z=1, N=0, C=1, V=0)
+                       .expected_c = true,
+                       .expected_z = true,
+                       .expected_v = true,
+                       .expected_n = false,
+                       .expected_rd = 0x7ffffcf7},
+
+        // Caso 2
+        // rd_pc=false, !is_not_move=false, is_inverted=false, can_write_rd=false, s=true
+        fsr_test_param{.mode = arm7tdmi::MODE_USR,
+                       .s = true,
+                       .opcode = arm_fsr_opcode::CMP,
+                       .caller = arm_CMP_notRdPC,
+                       .rd = r4,
+                       .rn = r2,
+                       .rm = r3,
+
+                       .initial_rd = 0x12345678,
+                       .initial_rn = 100,
+                       .initial_rm = 100,
+
+                       .initial_c = false,
+                       .initial_z = false,
+                       .initial_v = false,
+                       .initial_n = false,
+
+                       .expected_c = true,
+                       .expected_z = true,
+                       .expected_v = false,
+                       .expected_n = false,
+                       .expected_rd = 0x12345678},
+
+        // Caso 3
+        // rd_pc=false, !is_not_move=false, is_inverted=false, can_write_rd=true, s=true,
+        // !is_sum=true is_logical=false
+        fsr_test_param{.mode = arm7tdmi::MODE_SYS,
+                       .s = true,
+                       .opcode = arm_fsr_opcode::ADD,
+                       .caller = arm_ADD_S_notRdPC,
+                       .rd = r0,
+                       .rn = r1,
+                       .rm = r2,
+
+                       .initial_rd = 0x0,
+                       .initial_rn = 0xffffffff, // op1 (-1)
+                       .initial_rm = 0x00000001, // op2 (1)
+
+                       .initial_c = false,
+                       .initial_z = false,
+                       .initial_v = false,
+                       .initial_n = false,
+
+                       // 0xffffffff + 1 = 0x00000000 con Carry
+                       .expected_c = true,
+                       .expected_z = true,
+                       .expected_v = false,
+                       .expected_n = false,
+                       .expected_rd = 0x00000000},
+
+        // Caso 4
+        // s = true, rd_pc = true, can_write_rd = true -> CPSR = SPSR
+        fsr_test_param{.mode = arm7tdmi::MODE_FIQ,
+                       .s = true,
+                       .opcode = arm_fsr_opcode::MOV,
+                       .caller = arm_MOV_S_RdPC,
+                       .rd = pc,
+                       .rn = r0,
+                       .rm = r1,
+
+                       .initial_rd = 0x0,
+                       .initial_rm = 0x08000000,
+
+                       .check_full_cpsr = true,
+                       .expected_rd = 0x08000000,
+                       .expected_cpsr = 0x10,
+
+                       .initial_spsr = 0x10},
+
+        // Caso 5
+        // not is_sum = true, s = true, can_write_rd = true
+        fsr_test_param{.mode = arm7tdmi::MODE_USR,
+                       .s = true,
+                       .opcode = arm_fsr_opcode::SUB,
+                       .caller = arm_SUB_S_notRdPC,
+                       .rd = r0,
+                       .rn = r1,
+                       .rm = r2,
+
+                       .initial_rd = 0x0,
+                       .initial_rn = 10,
+                       .initial_rm = 20, // 10 - 20 = -10 (0xfffffff6)
+
+                       .expected_c = false,
+                       .expected_z = false,
+                       .expected_v = false,
+                       .expected_n = true,
+                       .expected_rd = 0xfffffff6},
+
+        // Caso 6
+        // is_logical = true, can_write_rd = false, s = true
+        fsr_test_param{.mode = arm7tdmi::MODE_USR,
+                       .s = true,
+                       .opcode = arm_fsr_opcode::TST,
+                       .caller = arm_TST_notRdPC,
+                       .rd = r0,
+                       .rn = r1,
+                       .rm = r2,
+
+                       .initial_rd = 0x1234,
+                       .initial_rn = 0b1010,
+                       .initial_rm = 0b0101,
+
+                       .expected_c = false,
+                       .expected_z = true,
+                       .expected_v = false,
+                       .expected_n = false,
+                       .expected_rd = 0x1234}
 
         ));
