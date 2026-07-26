@@ -1,4 +1,5 @@
 #include "neogba/types.hpp"
+#include <algorithm>
 #include <array>
 #include <bit>
 #include <cstddef>
@@ -93,7 +94,16 @@ public:
   using const_iterator = typename std::array<store_t, max_length>::const_iterator;
   constexpr std::size_t norm_idx(std::size_t idx) const { return normalizer(idx) & MAX_MASK; }
 
-  constexpr std::array<store_t, max_length> data() const { return storage; }
+  constexpr iterator begin() noexcept { return storage.begin(); }
+  constexpr iterator end() noexcept { return storage.end(); }
+
+  constexpr const_iterator begin() const noexcept { return storage.begin(); }
+  constexpr const_iterator end() const noexcept { return storage.end(); }
+
+  constexpr const_iterator cbegin() const noexcept { return storage.cbegin(); }
+  constexpr const_iterator cend() const noexcept { return storage.cend(); }
+
+  constexpr std::array<store_t, max_length>& data() { return storage; }
   constexpr store_t get(std::size_t idx) const { return storage[norm_idx(idx)]; }
 
   template <typename... Args>
@@ -141,12 +151,13 @@ public:
    * @return Number of entries written.
    */
   constexpr std::size_t fill_range(std::size_t from, std::size_t to, store_t what) {
-    std::size_t f{norm_idx(from)}, t{norm_idx(to)}, n{};
-    for (auto i{f}; i < t; ++i) {
-      put_raw(i, what);
-      n++;
-    }
-    return n;
+    if (from >= to)
+      return 0;
+
+    auto f{norm_idx(from)}, count{to - from}, t{std::min(f + count, max_length)};
+    std::fill(storage.begin() + f, storage.begin() + t, what);
+
+    return t - f;
   }
 
   /**
@@ -168,13 +179,7 @@ public:
   }
 
   constexpr std::size_t length() const { return max_length; };
-  constexpr std::size_t count_stored(store_t what) const {
-    std::size_t n{};
-    for (const auto& elem : storage)
-      if (elem == what)
-        n++;
-    return n;
-  }
+  constexpr std::size_t count_stored(store_t what) const { return std::ranges::count(*this, what); }
 };
 
 } // namespace neogba
