@@ -7,7 +7,10 @@ namespace neogba {
 class memory_bus;
 
 struct imemory {
+protected:
   memory_bus* bus{nullptr};
+
+public:
   virtual u32 read(u8 size, u32 addr) const = 0;
   virtual bool write(u8 size, u32 addr, u32 contents) = 0;
   virtual void reset() = 0;
@@ -25,8 +28,10 @@ template <std::size_t bytes_length,
           },
           bool check_bounds = false>
 struct memory : imemory {
+private:
   lut<u8, bytes_length, normalizer> bytes;
 
+public:
   lut<u8, bytes_length, normalizer>& data() { return bytes; }
 
   virtual ~memory() = default;
@@ -97,7 +102,6 @@ protected:
       bytes.fill(addr, contents);
 
     } else if constexpr (size_requested == 16) {
-
       if constexpr (check_bounds)
         if (is_offset_exceeded(addr + 1))
           return false;
