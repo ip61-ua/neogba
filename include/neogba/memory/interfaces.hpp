@@ -19,14 +19,12 @@ public:
   inline void deattach() { bus = nullptr; }
 };
 
-template <std::size_t bytes_length,
-          std::size_t (*normalizer)(std::size_t addr) = [](std::size_t addr) -> auto {
-            return addr & 0xffff;
-          }>
+template <std::size_t bytes_length, std::size_t (*normalizer)(std::size_t addr) =
+                                        [](std::size_t addr) { return addr & 0xffff; }>
 struct memory : imemory {
   lut<u8, bytes_length, normalizer> bytes;
 
-  virtual u32 read(u8 size, u32 addr) const override { int_read<size>(addr); }
+  virtual u32 read(u8 size, u32 addr) const override { return int_read<size>(addr); }
   virtual bool write(u8 size, u32 addr, u32 contents) override {
     return int_write<size>(addr, contents);
   }
