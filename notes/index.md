@@ -1587,3 +1587,163 @@ Por otra parte he decido añadir despliegue automático en github para facilitar
 Le he pillado el truco a hacer test parametrizados porque resultan muy eficientes de construir.
 
 <cfg_fsr.pdf>
+
+# 26 de julio
+
+Bueno, hoy es el último día anterior a la reunión con Fran. Ayer tomé el día libre para despejarme un poco y salir a recorrer la ciudad. Sin embargo, en todo ese trayecto he estado planteando el diseño de la memoria. Aunque no llegué a nada concluyente porque me quedé en qué información persiste en el bus de memoria.
+
+En un principio, mi idea de cómo implementar el bus de memoria es utilizar la abstracción de la lut. Puesto que proporciona las herramientas necesarias de normalización de índices para el enrutamiento de direcciones. Desde este punto de vista el bus no solo sería un mero enrutador sino que ahora podríamos dar una interfaz de funciones relacionadas con la gestión de memoria.
+
+Pero claro, según lo que pensado es que necesito una inicialización previa. Y aunque es cierto que podemos hacer un singleton y precocinar los datos con un consteval en tiempos de compilación.
+
+Ahora bien, qué almacenamos?
+
+Supongamos que un chip de memoria es sí en realidad algo variable. Algo de lo que podamos sacar variantes de la misma cosa. Es decir que es heredable con sistema de clases, objetos e instancias. Y con métodos si acaso abstractos para dejar muy claro que no es instanciable directamente.
+
+En c++, no podemos guardar abstractos estáticamente y tampoco implementarlos de forma ad hoc. C++ solo trabaja con tipos concretos. Pero podemos trabajar con punteros de tipos concretos y de tipos abstractos. Esto es lógico por la forma en la que pudésemos implementar con c. El tradeoff de este mecanismo es la indirección, para acceder al método de un chip de memoria tengo que pasar por bus de memoria luego dar la memoria demandada y accionar un método que debe ser averiguado cual es. Esto es la típica consecuencia de usar punteros.
+
+Si vemos cómo se hace en C, quizás podamos entender mejor cómo son los métodos virtuales. Para hacer OOP en C típicamente se hace este código. Aunque en el fondo no se aleja mucho de lo que en el fondo hace c++.
+
+``` c
+
+// C23
+
+struct A {
+	int number;
+	char s;
+};
+
+char getS(struct A* this) {
+	return this->s;
+}
+
+void setNumber(struct A* this, int number) {
+    this->number = number;
+}
+
+// código cliente.
+
+struct A a = {69, 8}; 
+constexpr auto s = getS(&a);
+setS(&a, 42);
+
+```
+
+Este es un código complemente válido para el estándar de c. Vemos aquí el modo de usar métodos: nos obliga a conocer la referencia/puntero del objeto con que queremos interactuar por cada método. Esto puede ser más o menos conveniente la sintaxis, pero el concepto es el mismo. Ahora planteemos ¿cómo haríamos herencia?. Cabe recalcar que c++ permite herencia múltiple. En el heredado, vamos añadir un método y una propiedad.
+
+Para reflejar extresamente que es una herencia (no vale reescribir A):
+
+``` c
+
+// C23
+
+struct A {
+	int number;
+	char s;
+};
+
+char getS(struct A* this) {
+	return this->s;
+}
+
+void setNumber(struct A* this, int number) {
+    this->number = number;
+}
+
+struct B {
+	struct A a;
+	int q;
+};
+
+void metodo1(struct B* this) {
+	this->q += this->a.number;
+}
+
+// código cliente.
+
+struct B b = {{69, 8}, 1}; 
+constexpr auto s = getS(&(b.a));
+setS(&(b.a), 42);
+metodo1(&b);
+
+```
+
+Bajo implementación ya vemos que aparecen incovenientes de sintaxis muy serios. Siendo que es obligatorio que el cliente conozca la estructura interna para saber a qué método llamar. No podemos hacer otra forma porque en c una función se distingue por su nombre y no por sus parámetros como sí ocurre en c++. De hecho, en el fondo c++ trabaja así pero oculta el mecanismo de obsfuscación de nombres. Siendo que en realidad cuando hacemos b.setB en realidad ese método es un `setB_didjqi2hfibiu3iuf2hf` que hace lo de a pero conviertiendo a a lo que interese. De hecho a este problema se le conoce como name mangling. C++ incrusta en el binario pseudo nombres de las funciones que necesite. Por eso, típicamente para garantizar la interoperabilidad con otros lenguajes desde c++ se permite usar un extern "C". De hecho la herencia múltiple tiene también una crítica muy consistente y es que su manejo se hace por nombres y tipos de atributos. Siendo que puede haber problemas si heremos dos clases que tengan misma signatura y nombre. Aunque creo que por ese motivo tenemos el resolutor de ámbito. Pero si no conocemos las implementaciones a fondo, es posible que omitamos de largo este problema. En cambio, en C el manejo de esta serie cuestiones es base a ser más explicito: teniendo que indicar el método a que invocar y según a qué parte aplicar.
+
+Una forma de hacer interfaces es:
+
+``` c
+
+struct IElement {
+    const char* (getText)(*)();
+    void (setText)(*)(const char*);
+}
+
+```
+
+Pese a lo que pueda parecer de primera vista, esto actua más como una colección de funciones que podemos asignar o cambiar por otras a nuestra conveniencia que una clase al uso, puesto que pierde el contexto variante de this. Que se podría añadir pero quedaría limitado a un tipo en concreto. En contraposición, este mecanismo sí nos permitiría reciclar signaturas pero deberemos antes crear una función sin colisión.
+
+Bueno que al caso, qué vamos a meter dentro de nuestro bus? Memoria. Bien. ¿Cómo? con punteros.
+
+A la hora de trabajar con punteros en c++ tenemos varias opciones:
+
+- `reference_wrapper`: referencias no nulas
+- punteros crudos: tradicional
+- `unique_ptr`: puntero con semática de propietario
+- `shared_ptr`: puntero con semática de propietario múltiple
+
+la primera de las opciones ofrecidas por el lenguaje es la menos atractiva puesto que obliga inicializar todo en el contenedor por defecto al menos. No admite nulos. Cosa que en una primera intancia no interesa perder porque estamos haciendo la implementación por pasos y podemos no completarla toda de una. Además con la contrucción por defecto de nulos podemos darle un significado.
+
+los punteros crudos son lo más genérico con menos restricciones.
+
+`unique_ptr` es un candidato muy bueno pero no admite memoria hermana que nos puede interesar para reflejar que ciertas partes de memoria pertenecen al mismo chip.
+
+`shared_ptr` es una opción interesante puesto que internamente maneja las intancia activas.
+
+En ambos casos cuando ya la referencia al bloque no se puede usar, automáticamente el destructor es accionado. Lo cual resulta convenientemente cómodo sin escribir destructores. No obtante, añade overhead que puede penalizar en tamaño y rendimiento.
+
+Bien.
+
+Creo que iremos con los puteros crudos porque considero que podemos emular muy bien siguiendo las restricciones impuestas. La semántica de propietario la podemos hacer verbal, siendo que solo en el bus de memoria de pueda destruir o crear cuando toque y siempre va a ser través de este la interacción de la cpu y otros componentes. Bus de memoria es el experto de información en direccionamiento. Y dada esta naturaleza y el uso de la abstracción de la lut, podemos ahorrarnos algo de overhead reutilizando procedimientos de la lut. Podemos incorporar mecanismos de seguridad contra double free, preguntando cuantos punteros hay iguales en la lut, borrar y luego pedirle a la lut que los remplace por nulos. Además de que en la gba hay huecos vacíos sin usar. 
+
+Creo que es un mecanismo muy robusto.
+
+Ahora plateemos como será la interación de lectura y escritura.
+
+En sí, el bus de memoria es algo que existe y sirve para interconectar. En "preproyecto", hice un sistema de memoria pero resultaba muy desastre, porque tenías el bus en la cpu. Y luego otra estructura que era la información del bus que llegaba a las memorias. Es como si fuera el bus de la cpu exclusivamente, y ello derivaba en un problema de incoherencia de interfaces. Sin embargo, vamos a plantearlo diferente.
+
+Debemos pensar que cuando hablamos de un chip de memoria no siempre podremos realizar las mismas operaciones. Dudo mucho que algún componente chip pueda escribir en la cpu. Porque sí la Cpu es una memoria muy especial que solo ella puede escribirse a sí mismo, pero el resto no puede escribir en ella. La cpu solo pide y le dan. La cpu es maestro y el resto esclavos. Pero tampoco es del todo así. La cpu por memoria lo único que tiene son registros. Pero tampoco el resto son del todo esclavos si tomamos en consideración el dma. En este último no vamos a entrar.
+
+Otro ejemplo que refleja esta extraña naturaleza de que es una memoria comunicada al bus pero no es una en sentido tradicional de un lista de bytes si vemos el uso. La PPU es el encargado de dibujar. Un contraejemplo es la WRAM que se trata de una memoria normal y corriente.
+
+Entonces tenemos dos tipos de memorias: una tonta sin lógica (propósito: contener información) y otra vitamizada con código adicional. Pero todas ellas deben seguir las interfaces de memoria.
+
+Pasemos ahora a la implemntación.
+
+
+
+problema: añadimos al bus una memoria y esta es una supermemoria que quiere comunicarse con otra o autoescribirse porque es así de chula.
+
+qué es mejor?
+
+-variable global
+-variable inyectable por parámetro.
+
+interesa que al memory bus le metemos una memoria y queremos desde la memoria escribir a otra dirección de memoria (otro chip o a no nosotros mismos)
+
+
+evidentemente, es de primero de informatica que la segunda: testing y declaración de comunicación
+
+he usado lut en lugar de array por vitaminar la estrutura con métodos que creo que pueden ser convinventes.
+
+problema: la lut y array incrusta el tipo de dato como array<1> != array<2>. 
+ojo que -flto es una optimización que trata de eliminar la desvirtualización si es usada una vez solo.
+
+solución: no me importa, no merece la pena dar variabilidad a esa cosa, porque solo habrá una y será la de gba.
+
+IMPOTANTE:
+
+dado que memory bus maneja putneros todo lo haya dentro si está en el heap va a estar todo ahí si es variable y da igual . que -> porque ocupan lo mismo
+
+
+añado métodos de búsqueda, iteradores. Así nos alineamos al estándar de la biblioteca std.
