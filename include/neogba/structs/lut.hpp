@@ -161,8 +161,8 @@ public:
   }
 
   /**
-   * @brief Fills every default-initialized entry.
    *
+   * @brief Fills every default-initialized entry.
    * Entries already containing a value are left unchanged.
    *
    * @return Number of entries written.

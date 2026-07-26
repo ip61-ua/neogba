@@ -13,26 +13,26 @@ public:
   virtual u32 read(u8 size, u32 addr) const = 0;
   virtual bool write(u8 size, u32 addr, u32 contents) = 0;
   virtual void reset() = 0;
-  virtual u32 length() const = 0;
+  virtual std::size_t length() const = 0;
 
   inline void attach(memory_bus* bus_attached) { bus = bus_attached; }
   inline void deattach() { bus = nullptr; }
 };
 
-template <u32 bytes_length,
-          std::size_t (*normalizer)(std::size_t addr) = [](u32 addr) -> u32 {
+template <std::size_t bytes_length,
+          std::size_t (*normalizer)(std::size_t addr) = [](std::size_t addr) -> auto {
             return addr & 0xffff;
           }>
 struct memory : imemory {
   lut<u8, bytes_length, normalizer> bytes;
 
-  virtual u32 read(u8 size, u32 addr) { int_read<size>(addr); }
+  virtual u32 read(u8 size, u32 addr) const override { int_read<size>(addr); }
   virtual bool write(u8 size, u32 addr, u32 contents) override {
     return int_write<size>(addr, contents);
   }
 
   virtual void reset() override { int_reset(); }
-  constexpr u32 length() const final override { return bytes_length; }
+  constexpr std::size_t length() const final override { return bytes_length; }
 
 protected:
   void int_reset() { bytes.fill(u8{}); };
