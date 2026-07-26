@@ -85,6 +85,12 @@ protected:
   }
 
 public:
+  using value_type = store_t;
+  using size_type = std::size_t;
+  using reference = store_t&;
+  using const_reference = const store_t&;
+  using iterator = typename std::array<store_t, max_length>::iterator;
+  using const_iterator = typename std::array<store_t, max_length>::const_iterator;
   constexpr std::size_t norm_idx(std::size_t idx) const { return normalizer(idx) & MAX_MASK; }
 
   constexpr std::array<store_t, max_length> data() const { return storage; }
