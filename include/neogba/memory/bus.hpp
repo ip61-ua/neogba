@@ -4,7 +4,7 @@
 namespace neogba {
 
 class memory_bus {
-  lut<imemory*, 1 << 8, [](std::size_t addr) -> auto { return addr >> 24; }> ms;
+  lut<imemory*, 1 << 8, +[](std::size_t addr) -> auto { return (addr >> 24); }> ms;
 
 public:
   inline bool is_null(u32 addr) const { return ms.get(addr) == 0; }
