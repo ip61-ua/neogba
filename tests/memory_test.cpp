@@ -9,7 +9,8 @@ namespace {
 // tenemos 8 bits más altos -> índice.
 // tenemos 32 - 8 bits más bajos -> despl (24).
 // esta mem ocupa 2^16 bytes
-struct ram_stub : public memory<1 << 15> {};
+struct ram_stub
+    : public memory<1 << 15, [](std::size_t addr) -> auto { return addr & 0xffff; }, true> {};
 
 class bus_test : public ::testing::Test {
 protected:
@@ -29,6 +30,10 @@ protected:
 };
 
 } // namespace
+
+TEST_F(bus_test, length_should_tell_truth_about_its_size) {
+  ASSERT_EQ(ram->data().length(), ram->length());
+}
 
 TEST_F(bus_test, read_and_is_null_and_write_empty_memory_should_return_bad_value_or_do_not_allow) {
   u32 addr{0x100'0000};
@@ -57,8 +62,22 @@ TEST_F(bus_test, read_and_write_endianess_in_bounds_should_be_great_when_no_anom
 
   ASSERT_EQ(0, bus->read(8, addr));
   ASSERT_EQ(true, bus->write(32, addr, value));
+  ASSERT_EQ(value, bus->read(32, addr));
+  ASSERT_EQ(value & 0xff, bus->read(8, addr));
+  ASSERT_EQ(value & 0xffff, bus->read(16, addr));
+  ASSERT_EQ((value & 0xff'0000) >> 16, bus->read(8, addr + 2));
+}
+
+TEST_F(bus_test, read_and_write_out_of_bounds_should_be_resilient) {
+  u32 addr{0x100'0000};
+  u32 fake_addr{addr + (1 << 15)};
+  u32 value{123456};
+
+  bus->attach(addr, ram.get());
+
+  ASSERT_EQ(true, bus->write(32, addr, value));
   ASSERT_EQ(123456, bus->read(32, addr));
-  ASSERT_EQ(123456 & 0xff, bus->read(8, addr));
-  ASSERT_EQ(123456 & 0xffff, bus->read(16, addr));
-  ASSERT_EQ((123456 & 0xff'0000) >> 16, bus->read(8, addr + 2));
+
+  ASSERT_EQ(false, bus->write(32, fake_addr, value));
+  ASSERT_EQ(0, bus->read(32, fake_addr));
 }

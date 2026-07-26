@@ -22,7 +22,8 @@ struct imemory {
 template <std::size_t bytes_length,
           std::size_t (*normalizer)(std::size_t addr) = [](std::size_t addr) -> auto {
             return addr & 0xffff;
-          }>
+          },
+          bool check_bounds = false>
 struct memory : imemory {
   lut<u8, bytes_length, normalizer> bytes;
 
@@ -31,6 +32,7 @@ struct memory : imemory {
   virtual ~memory() = default;
 
   virtual u32 read(u8 size, u32 addr) const override {
+
     switch (size) {
     case 8:
       return int_read<8>(addr);
@@ -58,46 +60,63 @@ struct memory : imemory {
 protected:
   void int_reset() { bytes.fill(u8{}); };
 
-  constexpr bool is_offset_exceeded(u32 offset) const { return offset >= bytes_length; }
+  constexpr bool is_offset_exceeded(u32 addr) const { return normalizer(addr) >= bytes_length; }
 
-  template <u8 size_requested> constexpr u32 int_read(u32 offset) const {
+  template <u8 size_requested> constexpr u32 int_read(u32 addr) const {
+
     if constexpr (size_requested == 8) {
-      return static_cast<u32>(bytes.get(offset));
+      if constexpr (check_bounds)
+        if (is_offset_exceeded(addr))
+          return 0;
+
+      return static_cast<u32>(bytes.get(addr));
 
     } else if constexpr (size_requested == 16) {
-      return (static_cast<u32>(bytes.get(offset + 1)) << 8) | static_cast<u32>(bytes.get(offset));
+      if constexpr (check_bounds)
+        if (is_offset_exceeded(addr + 1))
+          return 0;
+
+      return (static_cast<u32>(bytes.get(addr + 1)) << 8) | static_cast<u32>(bytes.get(addr));
 
     } else {
-      return (static_cast<u32>(bytes.get(offset + 3)) << 24) |
-             (static_cast<u32>(bytes.get(offset + 2)) << 16) |
-             (static_cast<u32>(bytes.get(offset + 1)) << 8) | static_cast<u32>(bytes.get(offset));
+      if constexpr (check_bounds)
+        if (is_offset_exceeded(addr + 2))
+          return 0;
+
+      return (static_cast<u32>(bytes.get(addr + 3)) << 24) |
+             (static_cast<u32>(bytes.get(addr + 2)) << 16) |
+             (static_cast<u32>(bytes.get(addr + 1)) << 8) | static_cast<u32>(bytes.get(addr));
     }
   }
 
-  template <u8 size_requested, bool check_bounds = false> bool int_write(u32 offset, u32 contents) {
-    if constexpr (size_requested == 8) {
+  template <u8 size_requested> bool int_write(u32 addr, u32 contents) {
 
-      bytes.fill(offset, contents);
+    if constexpr (size_requested == 8) {
+      if constexpr (check_bounds)
+        if (is_offset_exceeded(addr))
+          return false;
+
+      bytes.fill(addr, contents);
 
     } else if constexpr (size_requested == 16) {
 
       if constexpr (check_bounds)
-        if (is_offset_exceeded(offset + 1))
+        if (is_offset_exceeded(addr + 1))
           return false;
 
-      bytes.fill(offset, contents);
-      bytes.fill(offset + 1, contents >> 8);
+      bytes.fill(addr, contents);
+      bytes.fill(addr + 1, contents >> 8);
 
     } else {
 
       if constexpr (check_bounds)
-        if (is_offset_exceeded(offset + 3))
+        if (is_offset_exceeded(addr + 3))
           return false;
 
-      bytes.fill(offset, contents);
-      bytes.fill(offset + 1, contents >> 8);
-      bytes.fill(offset + 2, contents >> 16);
-      bytes.fill(offset + 3, contents >> 24);
+      bytes.fill(addr, contents);
+      bytes.fill(addr + 1, contents >> 8);
+      bytes.fill(addr + 2, contents >> 16);
+      bytes.fill(addr + 3, contents >> 24);
     }
 
     return true;
