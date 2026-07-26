@@ -30,4 +30,10 @@ protected:
 
 } // namespace
 
-TEST_F(bus_test, read_empty) { ASSERT_EQ(1, 1); }
+TEST_F(bus_test, read_and_is_null_and_write_empty_memory_should_return_bad_value_or_do_not_allow) {
+  u32 addr{0x1000000};
+
+  ASSERT_EQ(false, bus->write(8, addr, 1));
+  ASSERT_EQ(true, bus->is_null(addr));
+  ASSERT_EQ(0, bus->read(8, addr));
+}
