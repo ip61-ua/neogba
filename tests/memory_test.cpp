@@ -84,3 +84,31 @@ TEST_F(bus_test, read_and_write_out_of_bounds_should_be_resilient) {
   ASSERT_EQ(false, bus->write(32, addr - 1, value));
   ASSERT_EQ(0, bus->read(32, addr - 1));
 }
+
+TEST_F(bus_test, read_write_should_behave_equal_when_mirrorring_memories) {
+  u32 addr{0x100'0000};
+  u32 addr2{0xf00'0000};
+  u32 fake_addr{addr + (1 << 15)};
+  u32 value{123456};
+
+  bus->attach(addr, ram.get());
+  bus->attach(addr2, ram.get());
+
+  ASSERT_EQ(true, bus->write(32, addr, value));
+  ASSERT_EQ(123456, bus->read(32, addr));
+  ASSERT_EQ(123456, bus->read(32, addr2));
+  ASSERT_EQ(true, bus->write(32, addr, 777));
+  ASSERT_EQ(777, bus->read(32, addr));
+
+  ASSERT_EQ(false, bus->write(32, fake_addr, value));
+  ASSERT_EQ(0, bus->read(32, fake_addr));
+  ASSERT_EQ(false, bus->write(32, addr - 1, value));
+  ASSERT_EQ(0, bus->read(32, addr - 1));
+
+  fake_addr = addr2 + (1 << 15);
+
+  ASSERT_EQ(false, bus->write(32, fake_addr, value));
+  ASSERT_EQ(0, bus->read(32, fake_addr));
+  ASSERT_EQ(false, bus->write(32, addr - 1, value));
+  ASSERT_EQ(0, bus->read(32, addr - 1));
+}
