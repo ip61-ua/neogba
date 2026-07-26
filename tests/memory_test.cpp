@@ -37,3 +37,12 @@ TEST_F(bus_test, read_and_is_null_and_write_empty_memory_should_return_bad_value
   ASSERT_EQ(true, bus->is_null(addr));
   ASSERT_EQ(0, bus->read(8, addr));
 }
+
+TEST_F(bus_test, attach_memory_should_inform_ram_it_is_attached_now) {
+  u32 addr{0x1000000};
+
+  ASSERT_EQ(nullptr, ram->bus);
+  bus->attach(addr, ram.get());
+
+  ASSERT_EQ(bus.get(), ram->bus);
+}
