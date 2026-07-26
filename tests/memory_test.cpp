@@ -80,4 +80,7 @@ TEST_F(bus_test, read_and_write_out_of_bounds_should_be_resilient) {
 
   ASSERT_EQ(false, bus->write(32, fake_addr, value));
   ASSERT_EQ(0, bus->read(32, fake_addr));
+
+  ASSERT_EQ(false, bus->write(32, addr - 1, value));
+  ASSERT_EQ(0, bus->read(32, addr - 1));
 }

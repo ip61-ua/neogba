@@ -63,12 +63,11 @@ protected:
   constexpr bool is_offset_exceeded(u32 addr) const { return normalizer(addr) >= bytes_length; }
 
   template <u8 size_requested> constexpr u32 int_read(u32 addr) const {
+    if constexpr (check_bounds)
+      if (is_offset_exceeded(addr))
+        return 0;
 
     if constexpr (size_requested == 8) {
-      if constexpr (check_bounds)
-        if (is_offset_exceeded(addr))
-          return 0;
-
       return static_cast<u32>(bytes.get(addr));
 
     } else if constexpr (size_requested == 16) {
@@ -90,12 +89,11 @@ protected:
   }
 
   template <u8 size_requested> bool int_write(u32 addr, u32 contents) {
+    if constexpr (check_bounds)
+      if (is_offset_exceeded(addr))
+        return false;
 
     if constexpr (size_requested == 8) {
-      if constexpr (check_bounds)
-        if (is_offset_exceeded(addr))
-          return false;
-
       bytes.fill(addr, contents);
 
     } else if constexpr (size_requested == 16) {
@@ -108,7 +106,6 @@ protected:
       bytes.fill(addr + 1, contents >> 8);
 
     } else {
-
       if constexpr (check_bounds)
         if (is_offset_exceeded(addr + 3))
           return false;
