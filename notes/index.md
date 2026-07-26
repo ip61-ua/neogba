@@ -1784,3 +1784,5 @@ virtual bool write(u8 size, u32 addr, u32 contents) override {
 porque size debe ser conocido en tiempo de compilación.!!! debe ir un imediato entre `<>` y no una variable en tiempo de ejecución. ¿bulo sobre que pueda ejecutarse en tiempo ejecución y recutilizar las funciones construidas y dar cabida a una indirección o lut?
 
 otro error que desconocía de c++ es que para funciones virtuales hace falta poner el destructor aunque no haga absolutamente nada, y exigir que sea por defecto explícitamente.
+
+external linkage -> problema con lambdas porque si clase { - template<lambda> } el lincado de ese interno lambda genera confusión sobre generar código. El estándar exige que el lincado dependa de factores externos enlugar de algo interno como dentro namespace y dentro de una clase y enluvuelto de lambda.  
