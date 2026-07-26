@@ -1747,3 +1747,38 @@ dado que memory bus maneja putneros todo lo haya dentro si está en el heap va a
 
 
 añado métodos de búsqueda, iteradores. Así nos alineamos al estándar de la biblioteca std.
+
+
+
+``` c++
+
+
+  virtual u32 read(u8 size, u32 addr) const override { return int_read<size>(addr); }
+  virtual bool write(u8 size, u32 addr, u32 contents) override {
+    return int_write<size>(addr, contents);
+  }
+
+
+
+// versus
+
+
+virtual u32 read(u8 size, u32 addr) const override {
+  switch (size) {
+    case 8:  return int_read<8>(addr);
+    case 16: return int_read<16>(addr);
+    default: return int_read<32>(addr);
+  }
+}
+
+virtual bool write(u8 size, u32 addr, u32 contents) override {
+  switch (size) {
+    case 8:  return int_write<8>(addr, contents);
+    case 16: return int_write<16>(addr, contents);
+    default: return int_write<32>(addr, contents);
+  }
+}
+
+```
+
+porque size debe ser conocido en tiempo de compilación.!!! debe ir un imediato entre <> y no una variable en tiempo de ejecución. ¿bulo sobre que pueda ejecutarse en tiempo ejecución y recutilizar las funciones construidas y dar cabida a una indirección o lut?
