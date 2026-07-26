@@ -17,6 +17,8 @@ public:
 
   inline void attach(memory_bus* bus_attached) { bus = bus_attached; }
   inline void deattach() { bus = nullptr; }
+
+  virtual ~imemory() = default;
 };
 
 template <std::size_t bytes_length,
@@ -25,6 +27,8 @@ template <std::size_t bytes_length,
           }>
 struct memory : imemory {
   lut<u8, bytes_length, normalizer> bytes;
+
+  virtual ~memory() = default;
 
   virtual u32 read(u8 size, u32 addr) const override {
     switch (size) {
