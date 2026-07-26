@@ -31,7 +31,7 @@ protected:
 } // namespace
 
 TEST_F(bus_test, read_and_is_null_and_write_empty_memory_should_return_bad_value_or_do_not_allow) {
-  u32 addr{0x1000000};
+  u32 addr{0x100'0000};
 
   ASSERT_EQ(false, bus->write(8, addr, 1));
   ASSERT_EQ(true, bus->is_null(addr));
@@ -39,10 +39,26 @@ TEST_F(bus_test, read_and_is_null_and_write_empty_memory_should_return_bad_value
 }
 
 TEST_F(bus_test, attach_memory_should_inform_ram_it_is_attached_now) {
-  u32 addr{0x1000000};
+  u32 addr{0x100'0000};
 
   ASSERT_EQ(nullptr, ram->bus);
+  ASSERT_EQ(true, bus->is_null(addr));
   bus->attach(addr, ram.get());
 
+  ASSERT_EQ(false, bus->is_null(addr));
   ASSERT_EQ(bus.get(), ram->bus);
+}
+
+TEST_F(bus_test, read_and_write_endianess_in_bounds_should_be_great_when_no_anomal_actions) {
+  u32 addr{0x100'0000};
+  u32 value{123456};
+
+  bus->attach(addr, ram.get());
+
+  ASSERT_EQ(0, bus->read(8, addr));
+  ASSERT_EQ(true, bus->write(32, addr, value));
+  ASSERT_EQ(123456, bus->read(32, addr));
+  ASSERT_EQ(123456 & 0xff, bus->read(8, addr));
+  ASSERT_EQ(123456 & 0xffff, bus->read(16, addr));
+  ASSERT_EQ((123456 & 0xff'0000) >> 16, bus->read(8, addr + 2));
 }

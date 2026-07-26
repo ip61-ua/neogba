@@ -1786,3 +1786,6 @@ porque size debe ser conocido en tiempo de compilación.!!! debe ir un imediato 
 otro error que desconocía de c++ es que para funciones virtuales hace falta poner el destructor aunque no haga absolutamente nada, y exigir que sea por defecto explícitamente.
 
 external linkage -> problema con lambdas porque si clase { - template<lambda> } el lincado de ese interno lambda genera confusión sobre generar código. El estándar exige que el lincado dependa de factores externos enlugar de algo interno como dentro namespace y dentro de una clase y enluvuelto de lambda.  
+
+
+ACABO DE ACORDARME QUE PUEDES USAR COMAS PARA SEPARAR NÚMEROS EN BINARIO, HEX. Me acordaba de forma de rust que era con _ pero ahora caigo que en C23 también incluyeron eso concretamente. 
