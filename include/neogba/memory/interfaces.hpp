@@ -6,10 +6,8 @@ namespace neogba {
 
 class memory_bus;
 
-class imemory {
+struct imemory {
   memory_bus* bus{nullptr};
-
-public:
   virtual u32 read(u8 size, u32 addr) const = 0;
   virtual bool write(u8 size, u32 addr, u32 contents) = 0;
   virtual void reset() = 0;
@@ -27,6 +25,8 @@ template <std::size_t bytes_length,
           }>
 struct memory : imemory {
   lut<u8, bytes_length, normalizer> bytes;
+
+  lut<u8, bytes_length, normalizer>& data() { return bytes; }
 
   virtual ~memory() = default;
 
