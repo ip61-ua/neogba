@@ -51,7 +51,7 @@ protected:
 
   //     if (is_one_bit)
   //       break;
-  //   }
+  //
 
   //   return mask;
   // };
@@ -106,6 +106,7 @@ public:
   constexpr std::array<store_t, max_length>& data() { return storage; }
   constexpr store_t get(std::size_t idx) const { return storage[norm_idx(idx)]; }
 
+  /// std::invoke
   template <typename... Args>
     requires std::invocable<store_t, Args...>
   constexpr decltype(auto) invoke(std::size_t idx, Args&&... params) const {
