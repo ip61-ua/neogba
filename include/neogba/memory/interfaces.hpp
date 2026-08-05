@@ -35,7 +35,6 @@ public:
   lut<u8, bytes_length, normalizer>& data() { return bytes; }
 
   virtual ~memory() = default;
-
   virtual u32 read(u8 size, u32 addr) const override {
 
     switch (size) {

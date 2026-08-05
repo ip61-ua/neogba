@@ -1,0 +1,59 @@
+#include "neogba/arm7tdmi/cpu.hpp"
+#include "neogba/arm7tdmi/isa.hpp"
+#include "neogba/memory/bus.hpp"
+#include <gtest/gtest.h>
+
+using namespace neogba;
+
+namespace {
+
+struct ram_stub
+    : public memory<1 << 15, [](std::size_t addr) -> auto { return addr & 0xffff; }, true> {
+  inline memory_bus* get_bus() { return bus; }
+};
+
+class cpu_basic_lifecycle_test : public ::testing::Test {
+protected:
+  std::unique_ptr<memory_bus> bus;
+  std::unique_ptr<ram_stub> ram;
+  std::unique_ptr<arm7tdmi> cpu;
+
+  static constexpr u32 RAM_BASE_ADDR = 0x0300'0000;
+
+  void SetUp() override {
+    bus = std::make_unique<memory_bus>();
+    ram = std::make_unique<ram_stub>();
+
+    bus->attach(RAM_BASE_ADDR, ram.get());
+    cpu = std::make_unique<arm7tdmi>();
+    cpu->bus = bus.get();
+    cpu->reset();
+  }
+
+  void TearDown() override {}
+};
+
+} // namespace
+
+TEST_F(cpu_basic_lifecycle_test, fetches_decodes_and_executes_sequential_arm_instructions) {
+  constexpr u32 i0 = ISA_ARM_FSR_TEMPLATE | ISA_ARM_COND::set_high(static_cast<u8>(arm_cond::AL)) |
+                     ISA_ARM_FSR_OPCODE::set_high(static_cast<u8>(arm_fsr_opcode::MOV)) |
+                     ISA_ARM_FSR_RD::set_high(r1) | ISA_ARM_FSR_I::set_high() |
+                     ISA_ARM_FSR_OPERAND2_IMM::set_high(42u),
+                i1 = ISA_ARM_FSR_TEMPLATE | ISA_ARM_COND::set_high(static_cast<u8>(arm_cond::AL)) |
+                     ISA_ARM_FSR_OPCODE::set_high(static_cast<u8>(arm_fsr_opcode::MOV)) |
+                     ISA_ARM_FSR_RD::set_high(r2) | ISA_ARM_FSR_I::set_high() |
+                     ISA_ARM_FSR_OPERAND2_IMM::set_high(69u);
+
+  ASSERT_TRUE(bus->write(32, RAM_BASE_ADDR, i0));
+  ASSERT_TRUE(bus->write(32, RAM_BASE_ADDR + 4, i1));
+  cpu->write_raw_register(pc, RAM_BASE_ADDR);
+
+  cpu->step();
+  EXPECT_EQ(cpu->read_active_register(r1), 42u);
+  EXPECT_EQ(cpu->read_raw_register(pc), RAM_BASE_ADDR + 4);
+
+  cpu->step();
+  EXPECT_EQ(cpu->read_active_register(r2), 69u);
+  EXPECT_EQ(cpu->read_raw_register(pc), RAM_BASE_ADDR + 8);
+}
