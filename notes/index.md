@@ -1789,3 +1789,32 @@ external linkage -> problema con lambdas porque si clase { - template<lambda> } 
 
 
 ACABO DE ACORDARME QUE PUEDES USAR COMAS PARA SEPARAR NÚMEROS EN BINARIO, HEX. Me acordaba de forma de rust que era con _ pero ahora caigo que en C23 también incluyeron eso concretamente. 
+
+# 5 de agosto
+
+Tras una semana y pico de "descansito" vuelvo al TFG. He tenido ya primera reunión. Hay que corregir y avanzar en la memoria del tfg. Pero de momento, me gustaría dejarlo un poco para el final porque quiero empezar retomando la parte de implementación. Primeramente aplicando algunas de las sugerencias que me ha dicho Fran en esta reunión.
+
+Una de las sugerencias es hacer que  sea más idiomático:
+
+  ``` c++
+  /// lut.hpp
+  template <typename... Args>
+    requires std::invocable<store_t, Args...>
+  constexpr decltype(auto) invoke(std::size_t idx, Args&&... params) const {
+      return get(idx)(std::forward<Args>(params)...);
+  }
+  ```
+
+siendo que se utilice `std::invoke`. Este mecanismo resuelve llamadas más generales.
+
+
+
+De desarrollo
+    Ciclo de ejecución de la CPU funcional
+        Fetch-Decode-Execute
+    Añadir las instrucciones de carga (para que no sea necesario settear a mano los registros).
+    Ver cómo funciona el DMA
+
+
+ALU lógicas del modo ARM.
+Memoria con clases.

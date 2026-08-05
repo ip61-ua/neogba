@@ -4,6 +4,7 @@
 #include <bit>
 #include <cstddef>
 #include <cstdio>
+#include <functional>
 
 namespace neogba {
 
@@ -106,11 +107,10 @@ public:
   constexpr std::array<store_t, max_length>& data() { return storage; }
   constexpr store_t get(std::size_t idx) const { return storage[norm_idx(idx)]; }
 
-  /// std::invoke
   template <typename... Args>
     requires std::invocable<store_t, Args...>
   constexpr decltype(auto) invoke(std::size_t idx, Args&&... params) const {
-    return get(idx)(std::forward<Args>(params)...);
+    return std::invoke(get(idx), std::forward<Args>(params)...);
   }
 
   constexpr void put_raw(std::size_t raw_idx, store_t what) { storage[raw_idx] = what; }
