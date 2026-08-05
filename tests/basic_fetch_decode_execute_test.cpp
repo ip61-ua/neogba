@@ -36,12 +36,12 @@ protected:
 } // namespace
 
 TEST_F(cpu_basic_lifecycle_test, fetches_decodes_and_executes_sequential_arm_instructions) {
-  constexpr u32 i0 = ISA_ARM_FSR_TEMPLATE | ISA_ARM_COND::set_high(static_cast<u8>(arm_cond::AL)) |
-                     ISA_ARM_FSR_OPCODE::set_high(static_cast<u8>(arm_fsr_opcode::MOV)) |
+  constexpr u32 i0 = ISA_ARM_FSR_TEMPLATE | ISA_ARM_COND::set_high(arm_cond::AL) |
+                     ISA_ARM_FSR_OPCODE::set_high(arm_fsr_opcode::MOV) |
                      ISA_ARM_FSR_RD::set_high(r1) | ISA_ARM_FSR_I::set_high() |
                      ISA_ARM_FSR_OPERAND2_IMM::set_high(42u),
-                i1 = ISA_ARM_FSR_TEMPLATE | ISA_ARM_COND::set_high(static_cast<u8>(arm_cond::AL)) |
-                     ISA_ARM_FSR_OPCODE::set_high(static_cast<u8>(arm_fsr_opcode::MOV)) |
+                i1 = ISA_ARM_FSR_TEMPLATE | ISA_ARM_COND::set_high(arm_cond::AL) |
+                     ISA_ARM_FSR_OPCODE::set_high(arm_fsr_opcode::MOV) |
                      ISA_ARM_FSR_RD::set_high(r2) | ISA_ARM_FSR_I::set_high() |
                      ISA_ARM_FSR_OPERAND2_IMM::set_high(69u);
 

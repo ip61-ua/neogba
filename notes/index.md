@@ -1932,3 +1932,4 @@ Ahora si quiero leer un valor en crudo del pc están las operaciones del estilo 
 
 Ahora tengo que arreglar los test para que no fallen por este motivo.
 
+He decidido reorganizar los extractores field porque creo que pueden utilizarse en el futuro como en DMA. He aprovechado para meter métodos auxiliares.

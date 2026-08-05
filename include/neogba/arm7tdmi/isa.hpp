@@ -1,222 +1,7 @@
 #pragma once
-#include "neogba/types.hpp"
+#include "neogba/fields.hpp"
 
 namespace neogba {
-
-namespace {
-
-/**
- * @brief Describes a contiguous bit field within an instruction encoding.
- *
- * Provides compile-time utilities to extract and insert a bit or bits field using a mask and shift
- * value.
- *
- * @tparam instruction_t Instruction type. `u32` for ARM. `u16` for Thumb.
- * @tparam return_t Type returned by the extracted field.
- * @tparam n_shift Least significant bit position of the field.
- * @tparam bit_mask Bit mask identifying the field.
- */
-template <typename instruction_t, typename return_t, u8 n_shift, instruction_t bit_mask = 0xfu>
-struct isa_field {
-  using ins_t = instruction_t;
-  using ret_t = return_t;
-  static constexpr u8 shift{n_shift};
-  static constexpr ins_t mask{bit_mask};
-
-  /**
-   * @brief Extracts the field value from an instruction.
-   *
-   * @param instruction Raw 32-bit ARM instruction.
-   * @return Retrieved value from instruction.
-   */
-  [[nodiscard]] static inline constexpr ret_t get(ins_t instruction) {
-    return static_cast<ret_t>(((instruction) & (mask)) >> shift);
-  }
-
-  /**
-   * @brief Replaces the field value within an instruction.
-   *
-   * @param instruction Raw 32-bit ARM instruction.
-   * @param value Raw value to set in the field.
-   * @return Copy of the instruction and replaced field.
-   */
-  [[nodiscard]] static inline constexpr ins_t set(ins_t instruction, ret_t value) {
-    return ((instruction) & (~mask)) | ((value << shift) & mask);
-  }
-
-  /**
-   * @brief Adds binary ones the field value within an instruction.
-   *
-   * @param value Raw value to set of the field.
-   * @return That original value shifted and masked.
-   */
-  [[nodiscard]] static inline constexpr ins_t set_high(ret_t value) {
-    return (value << shift) & mask;
-  }
-};
-
-/**
- * @brief Convenient wrapper for fields defined by an unshifted mask.
- *
- * The supplied mask is automatically shifted by `n_shift` before creating the underlying
- * `isa_field`.
- *
- * @tparam instruction_t Instruction type.
- * @tparam return_t Extracted value type.
- * @tparam n_shift Least significant bit position of the field.
- * @tparam base_mask Unshifted field mask.
- *
- * @see isa_field
- */
-template <typename instruction_t, typename return_t, u8 n_shift, instruction_t base_mask = 0xfu>
-struct isa_field_delayed : isa_field<instruction_t, return_t, n_shift, (base_mask << n_shift)> {};
-
-/**
- * @brief Specialization for single-bit instruction fields.
- *
- * Provides boolean accessors and convenience operations for manipulating individual bits.
- *
- * @tparam instruction_t Instruction type.
- * @tparam n_shift Bit position.
- *
- * @see isa_field
- */
-template <typename instruction_t, u8 n_shift>
-struct isa_field_bool : isa_field<instruction_t, bool, n_shift, (1u << n_shift)> {
-  using ins_t = instruction_t;
-
-  /**
-   * @brief Returns the bit as a boolean value.
-   *
-   * @param instruction Raw 32-bit ARM instruction.
-   * @return Retrieved boolean from instruction.
-   */
-  [[nodiscard]] static constexpr bool get(ins_t instruction) {
-    return ((instruction)&isa_field_bool::mask) != 0;
-  }
-
-  /**
-   * @brief Returns the bit as a 8 bit unsigned value.
-   *
-   * @param instruction Raw 32-bit ARM instruction.
-   * @return Retrieved bit as 8 bit unsigned from instruction, but masked and shifted.
-   */
-  [[nodiscard]] static constexpr u8 get_raw(ins_t instruction) {
-    return ((instruction)&isa_field_bool::mask) >> n_shift;
-  }
-
-  /**
-   * @brief Sets or clears the bit given an instruction.
-   *
-   * @param instruction Raw 32-bit ARM instruction.
-   * @param value Sets if `true`, clears if `false`.
-   * @return Copy of the instruction with the bit changed.
-   */
-  [[nodiscard]] static constexpr ins_t set(ins_t instruction, bool value) {
-    return ((instruction) & (~isa_field_bool::mask)) | (value ? isa_field_bool::mask : 0);
-  }
-
-  /**
-   * @brief Clears the bit given an instruction.
-   *
-   * @param instruction Raw 32-bit ARM instruction.
-   * @return Copy of the instruction with bit cleared.
-   */
-  [[nodiscard]] static constexpr ins_t set0(ins_t instruction) {
-    return instruction & ~isa_field_bool::mask;
-  }
-
-  /**
-   * @brief Sets the bit given an instruction.
-   *
-   * @param instruction Raw 32-bit ARM instruction.
-   * @return Copy of the instruction with bit set.
-   */
-  [[nodiscard]] static constexpr ins_t set1(ins_t instruction) {
-    return instruction | isa_field_bool::mask;
-  }
-
-  /**
-   * @brief Toggles the bit given an instruction.
-   *
-   * toggle `true` becomes `false` and viceversa.
-   *
-   * @param instruction Raw 32-bit ARM instruction.
-   * @return Copy of the instruction with bit toggled.
-   */
-  [[nodiscard]] static constexpr ins_t toggle(ins_t instruction) {
-    return instruction ^ isa_field_bool::mask;
-  }
-
-  /**
-   * @brief Adds binary one in the field value within an instruction.
-   *
-   * @return That bit shifted and masked.
-   */
-  [[nodiscard]] static inline constexpr ins_t set_high() { return isa_field_bool::mask; }
-};
-
-/**
- * @brief Describes an instruction field split across two bit ranges.
- *
- * Some instruction encodings store a logical value in two non-contiguous bit fields. This helper
- * represents them as a single contiguous value.
- *
- * Supose that A = a2,x,a0.
- *
- * @tparam instruction_t Instruction type.
- * @tparam return_t Extracted value type.
- * @tparam n_shift Unused by this specialization's extraction logic but kept for compatibility with
- * `isa_field`. This value represents the least significant bit position of the field a0 in out
- * example.
- * @tparam bit_mask Upper bit range.
- * @tparam bit_mask2 Lower bit range.
- * @tparam join_shift Number of bits separating both ranges.
- */
-template <typename instruction_t, typename return_t, u8 n_shift, instruction_t bit_mask,
-          instruction_t bit_mask2, u8 join_shift>
-struct isa_field_split : isa_field<instruction_t, return_t, n_shift, bit_mask> {
-  using ret_t = return_t;
-  using ins_t = instruction_t;
-
-  static constexpr u8 join{join_shift};
-  static constexpr instruction_t mask2{bit_mask2};
-
-  /**
-   * @brief Extracts the combined field value.
-   *
-   * @param instruction Raw 32-bit ARM instruction.
-   * @return Retrieved combined value from instruction.
-   */
-  [[nodiscard]] static constexpr ret_t get(ins_t instruction) {
-    return static_cast<ret_t>(((instruction & isa_field_split::mask) >> join) |
-                              (instruction & mask2));
-  }
-
-  /**
-   * @brief Stores a combined value into both bit ranges.
-   *
-   * @param instruction Raw 32-bit ARM instruction.
-   * @param value Combined raw value to set in split fields.
-   * @return Copy of the instruction and replaced field.
-   */
-  [[nodiscard]] static constexpr ins_t set(ins_t instruction, ret_t value) {
-    auto val = static_cast<ins_t>(value);
-    return (instruction & ~(isa_field_split::mask | mask2)) | ((val) & (mask2)) |
-           ((val << join) & isa_field_split::mask);
-  }
-
-  /**
-   * @brief Adds binary ones the field value within an instruction.
-   *
-   * @param value Raw value to set of the field.
-   * @return That original value shifted and masked.
-   */
-  [[nodiscard]] static inline constexpr ins_t set_high(ret_t value) {
-    return ((value) & (mask2)) | ((value << join) & isa_field_split::mask);
-  }
-};
-} // namespace
 
 /// ARM
 enum class arm_cond : u8 {
@@ -238,7 +23,7 @@ enum class arm_cond : u8 {
   NV = 0b1111,
 };
 
-using ISA_ARM_COND = isa_field_delayed<u32, u8, 28>;
+using ISA_ARM_COND = field_delayed<u32, u8, 28, 0xfu, arm_cond>;
 
 /// Data processing and FSR transfer
 enum class arm_fsr_opcode : u8 {
@@ -268,33 +53,33 @@ enum class arm_shift_type : u8 {
 };
 
 constexpr u32 ISA_ARM_FSR_TEMPLATE{0x00000000u};
-using ISA_ARM_FSR_I = /*                   */ isa_field_bool<u32, 25>;
-using ISA_ARM_FSR_OPCODE = /*              */ isa_field_delayed<u32, u8, 21>;
-using ISA_ARM_FSR_S = /*                   */ isa_field_bool<u32, 20>;
-using ISA_ARM_FSR_RN = /*                  */ isa_field_delayed<u32, u8, 16>;
-using ISA_ARM_FSR_RD = /*                  */ isa_field_delayed<u32, u8, 12>;
-using ISA_ARM_FSR_OPERAND2 = /*            */ isa_field<u32, u16, 0, ((1u << 12) - 1)>;
-using ISA_ARM_FSR_OPERAND2_SHIFT = /*      */ isa_field_delayed<u32, u16, 4, 0xffu>;
-using ISA_ARM_FSR_OPERAND2_4 = /*          */ isa_field_bool<u32, 4>;
-using ISA_ARM_FSR_OPERAND2_SHIFT_TYPE = /* */ isa_field_delayed<u32, u8, 5, 0x3u>;
-using ISA_ARM_FSR_OPERAND2_SHIFT_AMOU = /* */ isa_field_delayed<u32, u8, 7, 0x1fu>;
-using ISA_ARM_FSR_OPERAND2_RS = /*         */ isa_field_delayed<u32, u8, 8>;
-using ISA_ARM_FSR_OPERAND2_RM = /*         */ isa_field<u32, u8, 0>;
+using ISA_ARM_FSR_I = /*                   */ field_bool<u32, 25>;
+using ISA_ARM_FSR_OPCODE = /*              */ field_delayed<u32, u8, 21, 0xfu, arm_fsr_opcode>;
+using ISA_ARM_FSR_S = /*                   */ field_bool<u32, 20>;
+using ISA_ARM_FSR_RN = /*                  */ field_delayed<u32, u8, 16>;
+using ISA_ARM_FSR_RD = /*                  */ field_delayed<u32, u8, 12>;
+using ISA_ARM_FSR_OPERAND2 = /*            */ field<u32, u16, 0, ((1u << 12) - 1)>;
+using ISA_ARM_FSR_OPERAND2_SHIFT = /*      */ field_delayed<u32, u16, 4, 0xffu>;
+using ISA_ARM_FSR_OPERAND2_4 = /*          */ field_bool<u32, 4>;
+using ISA_ARM_FSR_OPERAND2_SHIFT_TYPE = /* */ field_delayed<u32, u8, 5, 0x3u, arm_shift_type>;
+using ISA_ARM_FSR_OPERAND2_SHIFT_AMOU = /* */ field_delayed<u32, u8, 7, 0x1fu>;
+using ISA_ARM_FSR_OPERAND2_RS = /*         */ field_delayed<u32, u8, 8>;
+using ISA_ARM_FSR_OPERAND2_RM = /*         */ field<u32, u8, 0>;
 using ISA_ARM_FSR_OPERAND2_ROTATE = /*     */ ISA_ARM_FSR_OPERAND2_RS;
-using ISA_ARM_FSR_OPERAND2_IMM = /*        */ isa_field<u32, u8, 0, 0xffu>;
+using ISA_ARM_FSR_OPERAND2_IMM = /*        */ field<u32, u8, 0, 0xffu>;
 
 /// Multiply
 constexpr u32 ISA_ARM_MULTIPLY_TEMPLATE{0x00000090u};
-using ISA_ARM_MULTIPLY_A = /*              */ isa_field_bool<u32, 21>;
+using ISA_ARM_MULTIPLY_A = /*              */ field_bool<u32, 21>;
 using ISA_ARM_MULTIPLY_S = /*              */ ISA_ARM_FSR_S;
 using ISA_ARM_MULTIPLY_RD = /*             */ ISA_ARM_FSR_RN;
 using ISA_ARM_MULTIPLY_RN = /*             */ ISA_ARM_FSR_RD;
-using ISA_ARM_MULTIPLY_RS = /*             */ isa_field_delayed<u32, u8, 8>;
-using ISA_ARM_MULTIPLY_RM = /*             */ isa_field_delayed<u32, u8, 0>;
+using ISA_ARM_MULTIPLY_RS = /*             */ field_delayed<u32, u8, 8>;
+using ISA_ARM_MULTIPLY_RM = /*             */ field_delayed<u32, u8, 0>;
 
 /// Multiply long
 constexpr u32 ISA_ARM_LONG_TEMPLATE{0x00800090u};
-using ISA_ARM_LONG_U = /*                  */ isa_field_bool<u32, 22>;
+using ISA_ARM_LONG_U = /*                  */ field_bool<u32, 22>;
 using ISA_ARM_LONG_A = /*                  */ ISA_ARM_MULTIPLY_A;
 using ISA_ARM_LONG_S = /*                  */ ISA_ARM_MULTIPLY_S;
 using ISA_ARM_LONG_RDHI = /*               */ ISA_ARM_MULTIPLY_RD;
@@ -315,14 +100,14 @@ using ISA_ARM_EXCHANGE_RN = ISA_ARM_MULTIPLY_RM;
 
 /// Halfword data transfer, register offset
 constexpr u32 ISA_ARM_HALFREG_TEMPLATE{0x00000090u};
-using ISA_ARM_HALFREG_P = /*               */ isa_field_bool<u32, 24>;
-using ISA_ARM_HALFREG_U = /*               */ isa_field_bool<u32, 23>;
+using ISA_ARM_HALFREG_P = /*               */ field_bool<u32, 24>;
+using ISA_ARM_HALFREG_U = /*               */ field_bool<u32, 23>;
 using ISA_ARM_HALFREG_W = /*               */ ISA_ARM_MULTIPLY_A;
 using ISA_ARM_HALFREG_L = /*               */ ISA_ARM_FSR_S;
 using ISA_ARM_HALFREG_RN = /*              */ ISA_ARM_FSR_RN;
 using ISA_ARM_HALFREG_RD = /*              */ ISA_ARM_FSR_RD;
-using ISA_ARM_HALFREG_S = /*               */ isa_field_bool<u32, 6>;
-using ISA_ARM_HALFREG_H = /*               */ isa_field_bool<u32, 5>;
+using ISA_ARM_HALFREG_S = /*               */ field_bool<u32, 6>;
+using ISA_ARM_HALFREG_H = /*               */ field_bool<u32, 5>;
 using ISA_ARM_HALFREG_RM = /*              */ ISA_ARM_MULTIPLY_RM;
 
 /// Halfword data transfer, immediate offset
@@ -335,9 +120,8 @@ using ISA_ARM_HALFIMM_RN = /*              */ ISA_ARM_FSR_RN;
 using ISA_ARM_HALFIMM_RD = /*              */ ISA_ARM_FSR_RD;
 using ISA_ARM_HALFIMM_S = /*               */ ISA_ARM_HALFREG_S;
 using ISA_ARM_HALFIMM_H = /*               */ ISA_ARM_HALFREG_H;
-using ISA_ARM_HALFIMM_OFFSET =
-    isa_field_split<u32, u8, ISA_ARM_MULTIPLY_RS::shift, ISA_ARM_MULTIPLY_RS::mask,
-                    ISA_ARM_MULTIPLY_RM::mask, 4>;
+using ISA_ARM_HALFIMM_OFFSET = field_split<u32, u8, ISA_ARM_MULTIPLY_RS::shift,
+                                           ISA_ARM_MULTIPLY_RS::mask, ISA_ARM_MULTIPLY_RM::mask, 4>;
 
 /// Single data transfer
 constexpr u32 ISA_ARM_SINGLETRANS_TEMPLATE{0x06000000u};
@@ -361,12 +145,12 @@ using ISA_ARM_BLOCKTRANS_S = /*            */ ISA_ARM_SWAP_B;
 using ISA_ARM_BLOCKTRANS_W = /*            */ ISA_ARM_HALFIMM_W;
 using ISA_ARM_BLOCKTRANS_L = /*            */ ISA_ARM_HALFIMM_L;
 using ISA_ARM_BLOCKTRANS_RN = /*           */ ISA_ARM_HALFIMM_RN;
-using ISA_ARM_BLOCKTRANS_REGISTERLIST = /* */ isa_field<u32, u16, 0, 0xffffu>;
+using ISA_ARM_BLOCKTRANS_REGISTERLIST = /* */ field<u32, u16, 0, 0xffffu>;
 
 /// Branch
 constexpr u32 ISA_ARM_BRANCH_TEMPLATE{0x0a000000u};
 using ISA_ARM_BRANCH_L = /*                */ ISA_ARM_HALFIMM_P;
-using ISA_ARM_BRANCH_OFFSET = /*           */ isa_field<u32, u32, 0, 0xffffffu>;
+using ISA_ARM_BRANCH_OFFSET = /*           */ field<u32, u32, 0, 0xffffffu>;
 
 /// Coprocessor data transfer
 constexpr u32 ISA_ARM_COPROCTRANS_P_TEMPLATE{0x0b000000u};
@@ -378,20 +162,20 @@ using ISA_ARM_COPROCTRANS_L = /*           */ ISA_ARM_HALFIMM_L;
 using ISA_ARM_COPROCTRANS_RN = /*          */ ISA_ARM_HALFIMM_RN;
 using ISA_ARM_COPROCTRANS_CRD = /*         */ ISA_ARM_FSR_RD;
 using ISA_ARM_COPROCTRANS_CPSHARP = /*     */ ISA_ARM_MULTIPLY_RS;
-using ISA_ARM_COPROCTRANS_OFFSET = /*      */ isa_field<u32, u8, 0, 0xffu>;
+using ISA_ARM_COPROCTRANS_OFFSET = /*      */ field<u32, u8, 0, 0xffu>;
 
 /// Coprocessor data operation
 constexpr u32 ISA_ARM_COPROCOP_TEMPLATE{0x0e000000u};
-using ISA_ARM_COPROCOP_CPOPC = /*     */ isa_field_delayed<u32, u8, 21>;
+using ISA_ARM_COPROCOP_CPOPC = /*     */ field_delayed<u32, u8, 21>;
 using ISA_ARM_COPROCOP_CRN = /*       */ ISA_ARM_HALFIMM_RN;
 using ISA_ARM_COPROCOP_CRD = /*       */ ISA_ARM_FSR_RD;
 using ISA_ARM_COPROCOP_CPSHARP = /*   */ ISA_ARM_MULTIPLY_RS;
-using ISA_ARM_COPROCOP_CP = /*        */ isa_field_delayed<u32, u8, 5, 0x7u>;
+using ISA_ARM_COPROCOP_CP = /*        */ field_delayed<u32, u8, 5, 0x7u>;
 using ISA_ARM_COPROCOP_CRM = /*       */ ISA_ARM_MULTIPLY_RM;
 
 /// Coprocessor register transfer
 constexpr u32 ISA_ARM_COPROCREGTRANS_TEMPLATE{0x0e000010u};
-using ISA_ARM_COPROCREGTRANS_CPOPC = /*  */ isa_field_delayed<u32, u8, 21, 0x7u>;
+using ISA_ARM_COPROCREGTRANS_CPOPC = /*  */ field_delayed<u32, u8, 21, 0x7u>;
 using ISA_ARM_COPROCREGTRANS_L = /*      */ ISA_ARM_SINGLETRANS_L;
 using ISA_ARM_COPROCREGTRANS_CRN = /*    */ ISA_ARM_COPROCOP_CRN;
 using ISA_ARM_COPROCREGTRANS_RD = /*     */ ISA_ARM_COPROCOP_CRD;
@@ -401,53 +185,53 @@ using ISA_ARM_COPROCREGTRANS_CRM = /*    */ ISA_ARM_COPROCOP_CRM;
 
 /// Software interrupt
 constexpr u32 ISA_ARM_SWINT_TEMPLATE{0x0f000000u};
-using ISA_ARM_SWINT_SWI = /*       */ isa_field<u32, u32, 0, 0xffffffu>;
+using ISA_ARM_SWINT_SWI = /*       */ field<u32, u32, 0, 0xffffffu>;
 
 /// Thumb
 
 /// Format 01 - Move shifted register
 constexpr u16 ISA_THUMB_01_TEMPLATE{0x0000u};
-using ISA_THUMB_01_OP = /*             */ isa_field_delayed<u16, u8, 11, 0x3u>;
-using ISA_THUMB_01_OFFSET5 = /*        */ isa_field_delayed<u16, u8, 6, 0x1fu>;
-using ISA_THUMB_01_RS = /*             */ isa_field_delayed<u16, u8, 3, 0x7u>;
-using ISA_THUMB_01_RD = /*             */ isa_field<u16, u8, 0, 0x7u>;
+using ISA_THUMB_01_OP = /*             */ field_delayed<u16, u8, 11, 0x3u>;
+using ISA_THUMB_01_OFFSET5 = /*        */ field_delayed<u16, u8, 6, 0x1fu>;
+using ISA_THUMB_01_RS = /*             */ field_delayed<u16, u8, 3, 0x7u>;
+using ISA_THUMB_01_RD = /*             */ field<u16, u8, 0, 0x7u>;
 
 /// Format 02 - Add and substract
 constexpr u16 ISA_THUMB_02_TEMPLATE{0x1c00u};
-using ISA_THUMB_02_OP = /*             */ isa_field_bool<u16, 9>;
-using ISA_THUMB_02_RNOFFSET3 = /*      */ isa_field_delayed<u16, u8, 6, 0x7u>;
+using ISA_THUMB_02_OP = /*             */ field_bool<u16, 9>;
+using ISA_THUMB_02_RNOFFSET3 = /*      */ field_delayed<u16, u8, 6, 0x7u>;
 using ISA_THUMB_02_RS = /*             */ ISA_THUMB_01_RS;
 using ISA_THUMB_02_RD = /*             */ ISA_THUMB_01_RD;
 
 /// Format 03 - Move, compare, add, and subtract immediate
 constexpr u16 ISA_THUMB_03_TEMPLATE{0x2000u};
 using ISA_THUMB_03_OP = /*             */ ISA_THUMB_01_OP;
-using ISA_THUMB_03_RD = /*             */ isa_field_delayed<u16, u8, 8, 0x7u>;
-using ISA_THUMB_03_OFFSET8 = /*        */ isa_field<u16, u8, 0, 0xffu>;
+using ISA_THUMB_03_RD = /*             */ field_delayed<u16, u8, 8, 0x7u>;
+using ISA_THUMB_03_OFFSET8 = /*        */ field<u16, u8, 0, 0xffu>;
 
 /// Format 04 - ALU operation
 constexpr u16 ISA_THUMB_04_TEMPLATE{0x4000u};
-using ISA_THUMB_04_OP = /*             */ isa_field_delayed<u16, u8, 6, 0xfu>;
+using ISA_THUMB_04_OP = /*             */ field_delayed<u16, u8, 6, 0xfu>;
 using ISA_THUMB_04_RS = /*             */ ISA_THUMB_01_RS;
 using ISA_THUMB_04_RD = /*             */ ISA_THUMB_01_RD;
 
 /// Format 05 - High register operations and branch exchange
 constexpr u16 ISA_THUMB_05_TEMPLATE{0x4400u};
-using ISA_THUMB_05_OP = /*             */ isa_field_delayed<u16, u8, 8, 0x7u>;
-using ISA_THUMB_05_H1 = /*             */ isa_field_bool<u16, 7>;
-using ISA_THUMB_05_H2 = /*             */ isa_field_bool<u16, 6>;
+using ISA_THUMB_05_OP = /*             */ field_delayed<u16, u8, 8, 0x7u>;
+using ISA_THUMB_05_H1 = /*             */ field_bool<u16, 7>;
+using ISA_THUMB_05_H2 = /*             */ field_bool<u16, 6>;
 using ISA_THUMB_05_RSHS = /*           */ ISA_THUMB_01_RS;
 using ISA_THUMB_05_RDHD = /*           */ ISA_THUMB_01_RD;
 
 /// Format 06 - PC-relative load
 constexpr u16 ISA_THUMB_06_TEMPLATE{0x4800u};
 using ISA_THUMB_06_RD = /*             */ ISA_THUMB_03_RD;
-using ISA_THUMB_06_WORD8 = /*          */ isa_field<u16, u8, 0, 0xffu>;
+using ISA_THUMB_06_WORD8 = /*          */ field<u16, u8, 0, 0xffu>;
 
 /// Format 07 - Load and store with relative offset
 constexpr u16 ISA_THUMB_07_TEMPLATE{0x5000u};
-using ISA_THUMB_07_L = /*              */ isa_field_bool<u16, 11>;
-using ISA_THUMB_07_B = /*              */ isa_field_bool<u16, 10>;
+using ISA_THUMB_07_L = /*              */ field_bool<u16, 11>;
+using ISA_THUMB_07_B = /*              */ field_bool<u16, 10>;
 using ISA_THUMB_07_RO = /*             */ ISA_THUMB_02_RNOFFSET3;
 using ISA_THUMB_07_RB = /*             */ ISA_THUMB_01_RS;
 using ISA_THUMB_07_RD = /*             */ ISA_THUMB_01_RD;
@@ -462,7 +246,7 @@ using ISA_THUMB_08_RD = /*             */ ISA_THUMB_07_RD;
 
 /// Format 09 - Load and store with immediate offset
 constexpr u16 ISA_THUMB_09_TEMPLATE{0x6000u};
-using ISA_THUMB_09_B = /*              */ isa_field_bool<u16, 12>;
+using ISA_THUMB_09_B = /*              */ field_bool<u16, 12>;
 using ISA_THUMB_09_L = /*              */ ISA_THUMB_07_L;
 using ISA_THUMB_09_OFFSET5 = /*        */ ISA_THUMB_01_OFFSET5;
 using ISA_THUMB_09_RB = /*             */ ISA_THUMB_01_RS;
@@ -489,13 +273,13 @@ using ISA_THUMB_12_WORD8 = /*          */ ISA_THUMB_11_WORD8;
 
 /// Format 13 - Add offset to stack pointer
 constexpr u16 ISA_THUMB_13_TEMPLATE{0xb000u};
-using ISA_THUMB_13_S = /*              */ isa_field_bool<u16, 7>;
-using ISA_THUMB_13_SWORD7 = /*         */ isa_field<u16, u8, 0, 0x7fu>;
+using ISA_THUMB_13_S = /*              */ field_bool<u16, 7>;
+using ISA_THUMB_13_SWORD7 = /*         */ field<u16, u8, 0, 0x7fu>;
 
 /// Format 14 - Push and pop registers
 constexpr u16 ISA_THUMB_14_TEMPLATE{0xb400u};
 using ISA_THUMB_14_L = /*              */ ISA_THUMB_11_L;
-using ISA_THUMB_14_R = /*              */ isa_field_bool<u16, 8>;
+using ISA_THUMB_14_R = /*              */ field_bool<u16, 8>;
 using ISA_THUMB_14_RLIST = /*          */ ISA_THUMB_11_WORD8;
 
 /// Format 15 - Multiple load and store
@@ -506,16 +290,16 @@ using ISA_THUMB_15_RLIST = /*          */ ISA_THUMB_12_WORD8;
 
 /// Format 16 - Conditional branch
 constexpr u16 ISA_THUMB_16_TEMPLATE{0xd000u};
-using ISA_THUMB_16_COND = /*           */ isa_field_delayed<u16, u8, 8>;
+using ISA_THUMB_16_COND = /*           */ field_delayed<u16, u8, 8>;
 using ISA_THUMB_16_SOFTSET8 = /*       */ ISA_THUMB_12_WORD8;
 
 /// Format 17 - Software interrupt
 constexpr u16 ISA_THUMB_17_TEMPLATE{0xdf00u};
-using ISA_THUMB_17_VALUE8 = /*         */ isa_field<u16, u8, 0, 0xffu>;
+using ISA_THUMB_17_VALUE8 = /*         */ field<u16, u8, 0, 0xffu>;
 
 /// Format 18 - Unconditional branch
 constexpr u16 ISA_THUMB_18_TEMPLATE{0xe000u};
-using ISA_THUMB_18_OFFSET11 = /*       */ isa_field<u16, u16, 0, 0x7ffu>;
+using ISA_THUMB_18_OFFSET11 = /*       */ field<u16, u16, 0, 0x7ffu>;
 
 /// Format 19 - Long branch with link
 constexpr u16 ISA_THUMB_19_TEMPLATE = {0xf000u};
