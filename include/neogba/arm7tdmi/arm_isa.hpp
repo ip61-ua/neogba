@@ -534,4 +534,6 @@ inline constexpr auto arm_lut = []() consteval {
   return table;
 }();
 
+inline void execute_arm(arm7tdmi& cpu, u32 inst) { arm_lut.invoke(inst, cpu, inst); }
+
 } // namespace neogba
