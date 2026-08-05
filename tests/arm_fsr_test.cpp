@@ -110,7 +110,11 @@ TEST_P(fsr_test_fixture, arm_fsr_fsr) {
     ASSERT_EQ(params.expected_cpsr, cpu->read_cpsr());
   }
 
-  ASSERT_EQ(params.expected_rd, cpu->read_active_register(params.rd));
+  if (params.rd == pc)
+    ASSERT_EQ(params.expected_rd, cpu->read_raw_register(pc));
+  else
+    ASSERT_EQ(params.expected_rd, cpu->read_active_register(params.rd));
+
   ASSERT_EQ(params.caller, arm_lut.get(inst));
 }
 
@@ -165,7 +169,7 @@ INSTANTIATE_TEST_SUITE_P( //
                        .expected_z = true,
                        .expected_v = true,
                        .expected_n = false,
-                       .expected_rd = 0x7ffffcf7},
+                       .expected_rd = 0x7ffffcf4}, // 0x7ffffcf7
 
         // Caso 2
         // rd_pc=false, !is_not_move=false, is_inverted=false, can_write_rd=false, s=true

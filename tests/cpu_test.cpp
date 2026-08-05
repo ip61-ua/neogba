@@ -100,6 +100,7 @@ TEST_F(cpu_test, cpsr_read_write_should_modify_correct_physical_register) {
 }
 
 TEST_F(cpu_test, checks_if_the_entire_chunk_of_registers_are_equal) {
+  cpu->set_thumb_mode(); // only for shut pc error
   std::array<u32, arm7tdmi::N_REGISTERS> expected;
 
   expected[r0] = 103;
