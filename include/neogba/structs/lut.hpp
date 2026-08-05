@@ -1,3 +1,4 @@
+#pragma once
 #include "neogba/types.hpp"
 #include <algorithm>
 #include <array>
