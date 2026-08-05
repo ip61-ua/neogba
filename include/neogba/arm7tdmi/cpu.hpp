@@ -1,4 +1,5 @@
 #pragma once
+#include "neogba/memory/bus.hpp"
 #include "neogba/types.hpp"
 #include <array>
 
@@ -89,38 +90,42 @@ struct arm7tdmi {
   std::array<u32, N_REGISTERS> registers;
   std::array<u8, N_ACTIVE_REGISTERS> active_registers;
 
-  [[nodiscard]] inline u32 read_raw_register(u8 reg) const { return registers[reg]; }
+  u32 instruction_size{32}, instruction_incrementator{4};
 
+  void (*execute)(arm7tdmi& cpu, u32 inst){nullptr};
+
+  memory_bus* bus{nullptr};
+
+  [[nodiscard]] inline u32 read_raw_register(u8 reg) const { return registers[reg]; }
   inline void write_raw_register(u8 reg, u32 value) { registers[reg] = value; }
 
   [[nodiscard]] inline u32 read_active_register(u8 reg) const {
-    return registers[active_registers[reg]];
+    return reg == pc ? read_pc() : registers[active_registers[reg]];
+  }
+  inline void write_active_register(u8 reg, u32 value) {
+    if (reg == pc)
+      write_pc(value);
+    else
+      registers[active_registers[reg]] = value;
   }
 
-  inline void write_active_register(u8 reg, u32 value) { registers[active_registers[reg]] = value; }
-
-  [[nodiscard]] inline u32 read_pc() const { return registers[pc]; }
-
-  inline void write_pc(u32 new_pc) { registers[pc] = new_pc; }
+  [[nodiscard]] inline u32 read_pc() const {
+    return registers[pc] + (instruction_incrementator << 1);
+  }
+  inline void write_pc(u32 new_pc) { registers[pc] = new_pc & ~(instruction_incrementator - 1); }
 
   [[nodiscard]] inline u32 read_cpsr() const { return registers[cpsr]; }
-
   inline void write_cpsr(u32 new_cpsr) { registers[cpsr] = new_cpsr; }
-
   [[nodiscard]] inline bool is_cpsr(u32 mask, u32 bits) const {
     return (registers[cpsr] & mask) == bits;
   }
 
   inline void clear_cpsr(u32 mask) { registers[cpsr] &= ~mask; }
-
   inline void set_cpsr(u32 mask, u32 bits) { registers[cpsr] = (registers[cpsr] & ~mask) | bits; }
-
   [[nodiscard]] inline u32 read_spsr() const { return read_active_register(spsr); }
-
   inline void write_spsr(u32 new_spsr) { write_active_register(spsr, new_spsr); }
 
   [[nodiscard]] inline bool is_mode(u8 mode) const { return (registers[cpsr] & M) == mode; }
-
   void set_mode(u8 mode, bool update_cpsr = true);
 
   [[nodiscard]] inline static u8 get_idx_registers_preset_by_mode(u8 mode) {
@@ -132,6 +137,10 @@ struct arm7tdmi {
   void empty_registers();
 
   void reset();
+
+  void set_arm_mode();
+  void set_thumb_mode();
+  void step();
 };
 
 } // namespace neogba

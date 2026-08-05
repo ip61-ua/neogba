@@ -1807,14 +1807,128 @@ Una de las sugerencias es hacer que  sea más idiomático:
 
 siendo que se utilice `std::invoke`. Este mecanismo resuelve llamadas más generales.
 
+Habrá alguna que otra cosilla más pero de momento quiero ya empezar a aporrear teclas que pienso que es lo más fácil para retomar el hábito.
 
+Los objetivos que hemos definido para la siguiente reunión es:
 
 De desarrollo
-    Ciclo de ejecución de la CPU funcional
-        Fetch-Decode-Execute
-    Añadir las instrucciones de carga (para que no sea necesario settear a mano los registros).
-    Ver cómo funciona el DMA
+
+- Ciclo de ejecución de la CPU funcional
+  - Fetch-Decode-Execute
+- Añadir las instrucciones de carga (para que no sea necesario settear a mano los registros).
+- Ver cómo funciona el DMA
+
+Hasta ahora tenemos hecho esto:
+
+- ALU lógicas del modo ARM.
+- Memoria con clases.
+
+Bien, vamos a razonar el orden de como vamos a hacer esto. Veamos. El ciclo de ejecución de la CPU funcional es una cosa que depende fundamentalmente otras cuestiones a comprobar: 1) que el valor de PC sea el correcto para cada instrucción, 2) ¿cómo inicializar y terminar el flujo? 3) Si al dar el salto, ejecuta lo del salto 4) El acceso a memoria para la recuperación de instrucciones. Siendo que la 4 es una cuestión relacionada con la memoria. Además el segundo aspecto de "Añadir las instrucciones de carga (para que no sea necesario settear a mano los registros)." es también dependiente de 1) lo bien que esté implementada la memoria y de 2) las instrucciones y decodificación del opcode.
+
+Sin embargo el DMA es el único que depende de exclusivamente de la memoria. Empezaremos por este al tener menos dependencias.
 
 
-ALU lógicas del modo ARM.
-Memoria con clases.
+https://gbadev.net/tonc/dma.html
+¿que es el dma?
+El acceso directo a memoria es un controlador que es utilizado para la transferencia rápida de datos de una memoria a otra. DMA toma el control del bus de memoria, efectúa las operaciones de memoria pertinentes y devuelve el control a la CPU.
+
+Existen 4 canales de DMA:
+- 0: el de más alta prioridad, CPU <-> IWRAM.
+- 1 y 2: Sonido.
+- 3: el de menor prioridad, para propósito general.
+
+En la teoría la CPU para indicar que quiere utilizar el mecanismo de DMA debe indicar los datos al controlador:
+
+- Destino `REG_DMAxDAD`
+- Origen  `REG_DMAxSAD`
+- Cantidad
+- Cuando
+
+El controlador DMA tiene registros para indicar estos campos. El registro de control `REG_DMAxCNT` indica la cantidad a transferir y otras habilitar otras características del DMA. Indicando la actualización de las direcciones de destino y fuente después de cada bloque transferido
+
+Pese a que todos sean de 32 bits, el registro de control es usual verlo dividido en dos de 16 bit. Siendo dos usos uno para el control como tal y otro para cantidad de transferencia. 
+
+| 31   | 30  | 29, 28 | 27 | 26   | 25  | 24, 23 | 22, 21 | 20 .. 16 | 15 .. 0 |
+|------|-----|--------|----|------|-----|--------|--------|----------|---------|
+| `En` | `I` | `TM`   | -  | `CS` | `R` | `SA`   | `DA`   | -        | `N`     |
+
+Deglosando tenemos que
+
+- `N` es el número de iteraciones a transferir.
+- `DA` ajusta la dirección destino. Pudiendo significar:
+  - `DMA_DST_INC` (00) incrementa tras cada transferencia. 
+  - `DMA_DST_DEC` (01) decrementa tras cada transferencia.
+  - `DMA_DST_FIXED` (10) fija
+  - `DMA_DST_RELOAD` (11) incrementa y restablece registro al finalizar.
+- `SA` ajusta lo mismo que `DA` pero apara la dirección fuente.
+  - No tiene (11).
+- `DMA_REPEAT` repite las transferencias por cada VBlank o HBlank según el timing.
+- `CS` indica el tamaño del bloque a transferir (32 si está en 1) si no es 16.
+- `TM` especifica cuando transferir.
+  - `DMA_NOW` (00) inmediatamente.
+  - `DMA_AT_VBLANK` (01) al inicio de VBlank
+  - `DMA_AT_HBLANK` (10) al inicio de HBlank
+- `DMA_AT_REFRESH` (11) sin uso en la gba
+- `I` Interrumpir al terminar.
+- `En` Habilitar DMA para este canal.
+
+Modo de Timing,¿Cuándo inicia?,Comportamiento sin DMA_REPEAT,Comportamiento con DMA_REPEAT
+Immediate (00),Al instanciar DMA_ENABLE,Realiza N copias de golpe y se desactiva.,Ignorado / No tiene sentido práctico.
+VBlank (01),Al inicio de la sincronía vertical,Realiza N copias de golpe durante el VBlank y se apaga.,Realiza N copias en cada frame (útil para actualizar OAM/Sprites).
+HBlank (10),Al inicio de cada línea horizontal,Realiza N copias de golpe en el primer HBlank y se apaga.,"Se dispara en cada línea, copiando N elementos por línea."
+Special (11),Evento de hardware (ej. FIFO de Sonido o Display FIFO en DMA3),Transfiere bloques de audio/vídeo a medida que el hardware los solicita.,Mantiene el flujo de audio/vídeo constante en segundo plano.
+
+
+Vale. Cambio de planes esto es demasiado complejo.
+
+Mala decisión haber empezado por aquí vamos a continuar por una parte interesante como lo es el ciclo de vida del programa Fetch-Decode-Execute. AL fin y al cabo la lectura de instrucciones no se hace por DMA. Aunque puede ser de interés trabajar con la caché.
+
+Empecé por definir estas funciones en la cpu!
+
+``` c++
+void set_arm_mode();
+void set_thumb_mode();
+void step();
+```
+
+De forma que eliminemos el overhead de comprobar por cada instrucción si estamos en modo thumb o no.
+
+``` c++
+void arm7tdmi::reset() {
+  this->empty_registers();
+  this->write_cpsr(I | F);
+  this->set_mode(MODE_SVC);
+  this->set_arm_mode();
+  this->write_pc(EXCEPTION_RESET);
+}
+
+void arm7tdmi::set_arm_mode() {
+  this->instruction_size = 32;
+  this->instruction_incrementator = 4;
+  this->execute = execute_arm;
+  this->clear_cpsr(T);
+}
+
+void arm7tdmi::set_thumb_mode() {
+  this->instruction_size = 16;
+  this->instruction_incrementator = 2;
+  this->execute = nullptr; // dumb!
+  this->set_cpsr(T, T);
+}
+
+void arm7tdmi::step() {
+  auto current_pc{this->read_raw_register(pc)};
+
+  auto inst{this->bus->read(this->instruction_size, current_pc)};
+  this->write_pc(current_pc + this->instruction_incrementator);
+
+  std::invoke(this->execute, *this, inst);
+}
+```
+
+Ahora he decidido que `read_pc` y `write_pc` no sean solo atajos directos a la interacción de registros sino que contengan las restricciones necesarias del modo de cpu en el que estén. Alineamiento y si se usan en como fuente de instrucción.
+
+Ahora si quiero leer un valor en crudo del pc están las operaciones del estilo `*_raw_*`. Reflejando mejor este propósito.
+
+Ahora tengo que arreglar los test para que no fallen por este motivo.
+
