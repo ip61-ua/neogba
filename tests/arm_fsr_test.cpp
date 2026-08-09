@@ -1,6 +1,4 @@
-#include "neogba/arm7tdmi/arm_isa.hpp"
-#include "neogba/arm7tdmi/cpu.hpp"
-#include "neogba/arm7tdmi/isa.hpp"
+#include "neogba/arm7tdmi/isa/arm_mode/fsr.hpp"
 #include <gtest/gtest.h>
 #include <memory>
 

@@ -1974,3 +1974,22 @@ Veámos la imagen completa:
 
 ¿porque operand2 tiene la tabla también? fácil. operand2 solo tiene el propósito de hacer operand2. Y exclusivamente eso. Operand2 solo lo usa fsr. mientras que fsr se utilizará en conjunto con otros tipos de instrucciones.
 
+Ahora toca arreglar errores otros para que se pueda usar de esta nueva forma.
+
+Vale. Cmabio de planes.
+
+He pensado en concentrar ambos sets de instrucciones thumb y arm en uno solo include. siendo que hacer `#include "neogba/arm7tdmi/isa/include.hpp"` sea suficiente para hacerse a todo el sistema.
+
+Por qué hacer esto?
+Por que así solo se ven los executes de ambos modos. Y evitar así toda la morralla de luts, 30000 funciones.
+Y luego por cada isa particular definir la lut autoevaluada y definir el execute en un fichero para delimitar sus responsabilidades.
+
+claro pero hay un problema.
+
+Y es que nuestro mocking lo hacemos mirando en la tabla lut por lo que deberíamos exponer de alguna forma esto para testing.
+
+``` c++
+// arm_fsr_test.cpp
+ASSERT_EQ(params.caller, arm_lut.get(inst));
+```
+

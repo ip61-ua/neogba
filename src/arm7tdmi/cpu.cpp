@@ -1,6 +1,6 @@
 #include "neogba/arm7tdmi/cpu.hpp"
-#include "neogba/arm7tdmi/arm_isa.hpp"
-#include "neogba/arm7tdmi/isa.hpp"
+#include "neogba/arm7tdmi/isa/constants.hpp"
+#include "neogba/arm7tdmi/isa/include.hpp"
 #include <functional>
 
 using namespace neogba;
