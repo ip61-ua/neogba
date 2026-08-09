@@ -1933,3 +1933,44 @@ Ahora si quiero leer un valor en crudo del pc están las operaciones del estilo 
 Ahora tengo que arreglar los test para que no fallen por este motivo.
 
 He decidido reorganizar los extractores field porque creo que pueden utilizarse en el futuro como en DMA. He aprovechado para meter métodos auxiliares.
+
+# 9 de agosto
+
+Volvemos a la carga tras algo de inactividad. Dado el poco tiempo que tengo ahora para esto porque lo voy a dedicar en ocio. He estado pensando en refactorizar algunas cuestiones antes de proceder con lo tocho.
+
+Veámos la imagen completa:
+
+- Tenemos como objetivos pendientes:
+  - DMA
+  - Carga/almacenamiento
+  - Memoria
+	
+- Creo que tenemos una estructura bastante rara:
+
+	``` text
+/home/ibai/Projects/neogba/include/neogba/arm7tdmi:
+  drwxr-xr-x. 1 ibai ibai    50 jul 21 12:22 .
+  drwxr-xr-x. 1 ibai ibai    80 ago  5 19:53 ..
+  -rw-rw-r--. 1 ibai ibai 26054 ago  5 20:23 arm_isa.hpp
+  -rw-rw-r--. 1 ibai ibai  5019 ago  5 18:20 cpu.hpp
+  -rw-rw-r--. 1 ibai ibai 13678 ago  5 20:23 isa.hpp
+	```
+
+	-  La cual creo que sería muy conveniente dividirla.
+	- `isa.hpp` realmente contiene constantes y métodos de ayuda.
+	- sin embargo, `arm_isa.hpp` es todo un monstruo que tiene lógica de tablas, creación de funciones, plantillas.
+		- es como que este archivo aglomera demasiadas cosas.
+		- siendo que al paginar el archivo de una pasada complica que seguir el rastro al depurar un error.
+
+- Por tanto creo, que es necesario refactorizar esto para una disposición más cómoda.
+- No obstante y pese a realizar este cambio no nos podremos librar de algunas funciones para ocultar la implementación y exponer interfaz necesaria.... 
+
+
+¿En qué exactamente va a consistir el refactor?
+- `isa.hpp -> isa/constants.hpp` 
+- `arm_isa.hpp -> isa/arm_mode/operand2.hpp` solo tendrá todo lo relacionado (plantilla y tabla rellenada).
+- `arm_isa.hpp -> isa/arm_mode/fsr.hpp` solo tendrá las operaciones de fsr (plantilla).
+- `arm_isa.hpp -> isa/arm_mode.hpp`  solo será una tabla y execute arm
+
+¿porque operand2 tiene la tabla también? fácil. operand2 solo tiene el propósito de hacer operand2. Y exclusivamente eso. Operand2 solo lo usa fsr. mientras que fsr se utilizará en conjunto con otros tipos de instrucciones.
+
