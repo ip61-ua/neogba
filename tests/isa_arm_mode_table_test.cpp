@@ -1,4 +1,4 @@
-#include "neogba/arm7tdmi/isa/arm_mode/fsr.hpp"
+#include "neogba/arm7tdmi/isa/arm_mode/table.hpp"
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -113,7 +113,7 @@ TEST_P(fsr_test_fixture, arm_fsr_fsr) {
   else
     ASSERT_EQ(params.expected_rd, cpu->read_active_register(params.rd));
 
-  ASSERT_EQ(params.caller, arm_lut.get(inst));
+  ASSERT_EQ(params.caller, arm_mode_lut.get(inst));
 }
 
 INSTANTIATE_TEST_SUITE_P( //

@@ -1,7 +1,6 @@
 #pragma once
 #include "neogba/arm7tdmi/cpu.hpp"
 #include "neogba/arm7tdmi/isa/constants.hpp"
-#include "neogba/structs/lut.hpp"
 
 namespace neogba {
 /**

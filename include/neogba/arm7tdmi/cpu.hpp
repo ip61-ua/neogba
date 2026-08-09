@@ -1,6 +1,5 @@
 #pragma once
 #include "neogba/memory/bus.hpp"
-#include "neogba/types.hpp"
 #include <array>
 
 namespace neogba {

@@ -1,6 +1,5 @@
-#include "neogba/arm7tdmi/isa/arm_mode.hpp"
+#pragma once
 #include "neogba/arm7tdmi/isa/arm_mode/fsr.hpp"
-#include "neogba/arm7tdmi/isa/include.hpp"
 
 namespace neogba {
 
@@ -82,6 +81,4 @@ inline constexpr auto arm_mode_lut = []() consteval {
 
   return table;
 }();
-
-void execute_arm(arm7tdmi& cpu, u32 inst) { arm_mode_lut.invoke(inst, cpu, inst); }
 } // namespace neogba

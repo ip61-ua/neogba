@@ -1,6 +1,5 @@
 #include "neogba/arm7tdmi/cpu.hpp"
-#include "neogba/arm7tdmi/isa.hpp"
-#include "neogba/memory/bus.hpp"
+#include "neogba/arm7tdmi/isa/constants.hpp"
 #include <gtest/gtest.h>
 
 using namespace neogba;

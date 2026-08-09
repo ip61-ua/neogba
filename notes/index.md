@@ -1993,3 +1993,4 @@ Y es que nuestro mocking lo hacemos mirando en la tabla lut por lo que deberíam
 ASSERT_EQ(params.caller, arm_lut.get(inst));
 ```
 
+Pues fácil, esa evaluación se realiza en una cabecera que importaremos en el cpp del execute Y así podemos seguir siguiendo la regla que de que un cpp reciba el mismo nombre que su cabecera principal. Porque? Porque así no diferimos en nomenclatura arm_mode.cpp de include.hpp.
