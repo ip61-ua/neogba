@@ -1994,3 +1994,17 @@ ASSERT_EQ(params.caller, arm_lut.get(inst));
 ```
 
 Pues fácil, esa evaluación se realiza en una cabecera que importaremos en el cpp del execute Y así podemos seguir siguiendo la regla que de que un cpp reciba el mismo nombre que su cabecera principal. Porque? Porque así no diferimos en nomenclatura arm_mode.cpp de include.hpp.
+
+El siguiente paso será implementar las instrucciones de carga y almacenamiento. Adicionalmente me gustaría hacer un cambio en implementar la comprobación del campo condicional del modo arm. Además me gustaría hacer las implementaciones de las instrucciones lógicas y aritméticas y las carga-almacenamiento del modo thumb. por ir a la par.
+
+Luego mi plan es centrarme en la documentación a full. Y retomar algunos punto que se trataron en la reunión.
+
+Y finalmente ir con el DMA. Pero creo que es bastante más complicado, porque implica hacer la sincronización vertical y horizontal correctamente. Además de averiguar que coño es eso. Pero que parece que es sobre los gráficos!!
+
+Vamos, que estoy jodido por bocazas.
+
+Bueno en tal caso sí es así consideraré cambiar el objetivo por otros: considero que aquí estaría muy bien implementar la instrucción branch and exchange para pasar de arm a thumb y viceversa e implementar más de ambos isa cómo la multiplicación.
+
+Otra cosa que quizás vaya viendo es sobre el reloj y los ciclos por si acaso. Aunque siendo francos, y al ser este un proyecto amateur creo que podría permitirme omitir la relojería pero podría estar jodido si las pruebas que se requiera esto de la precisión de ciclos sea complejo.
+
+En un aspecto que he estado pensando es en más general cómo funcionan los emuladores. ¿A qué no sería ideal que el programa antes de ejecutarlo lo podríamos preparar para la computadora de destino? es decir cogerlo entero y pasearse por este, mascarlo, y dejarlo ya para el ordenador listo para ejecutar nativamente. No creo, porque eso sería como un decompilador y compilar de nuevo. Pero además, pese a no tener el problema de las instrucciones de longitud variable y alineamiento, lo cierto es que el programa podría estar sujeto a condiciones de interpretación de bits en vivo para determinar si un espacio de 32 bits es una instrucción o dos de thumb. Ello quiere decir que deberíamos realizar algún tipo de análisis en observación de patrones para determinar una interpretación de datos de unos y ceros correcta. Aunque en tal caso de hacerse habría que analizar el riesgo de que ocurra que el compilar por listillo reutilice una instrucción de 32 bits como dos de thumb y que ambas tres sean complemente legales y legibles. ¿habrá alguno que haga esto por ahorrarse 32 míseros bits?. 

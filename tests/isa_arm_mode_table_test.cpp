@@ -1,3 +1,4 @@
+#include "neogba/arm7tdmi/isa/arm_mode/fsr.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/table.hpp"
 #include <gtest/gtest.h>
 #include <memory>
