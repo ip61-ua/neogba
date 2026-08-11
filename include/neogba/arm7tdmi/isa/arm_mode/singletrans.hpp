@@ -66,6 +66,4 @@ void arm_singletrans_generator(arm7tdmi& cpu, u32 inst) {
   }
 }
 
-inline constexpr auto arm_{arm_fsr_generator<arm_fsr_opcode::AND>};
-
 } // namespace neogba
