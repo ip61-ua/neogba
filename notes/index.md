@@ -2769,6 +2769,7 @@ Considera que operand2 es externo por cuestiones de diseño para facilitar su re
 
 Considera que seguir a raja tabla la tabla de decodiciación de arm como mínima garantía de la verdad 
 
+  ``` text
   |..3 ..................2 ..................1 ..................0|
   |1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
   |_Cond__|0_0_0|___Op__|S|__Rn___|__Rd___|__Shift__|Typ|0|__Rm___| DataProc
@@ -2801,6 +2802,7 @@ Considera que seguir a raja tabla la tabla de decodiciación de arm como mínima
   |_Cond__|1_1_1_0|_CPopc_|__CRn__|__CRd__|__CP#__|_CP__|0|__CRm__| CoDataOp
   |_Cond__|1_1_1_0|CPopc|L|__CRn__|__Rd___|__CP#__|_CP__|1|__CRm__| CoRegTrans
   |_Cond__|1_1_1_1|_____________Ignored_by_Processor______________| SWI
+  ```
 
 Considera únicamente las instrucciones lanzables desde el chip ARM7TDMI-s que implementa la arquitectura ARMv4T
 
