@@ -2041,3 +2041,7 @@ si I es 1, vemos que claramente reutiliza la lógica de bit4 que ya hemos visto 
 Vemos que operand2 también considera valores fuera de sus 12 bits. (I, Rd). Sin embargo, la buena noticia es que ambos campos siguen coincidiendo aquí. Esto es un claro fruto de la ingeniería del diseño del chip eficiente. Y ahora el esfuerzo ha dado sus frutos y tenemos un camino más fácil de implementación. Esto sugiere que en el futuro será muy costoso mantener los cambios si decimos hacer la combi explosiva.
 
 Siendo que no tenemos que hacer ningún hack raro para reutilizar esta mecánica de solución. Esto tiene bastantes garantías, puesto a que el funcionamiento de operand2 ya fue probado suficientemente y además conocemos su funcionamiento (aunque sea vagamente y recordando la idea que hay detrás más que la exactitud)
+
+Seguimos con algunos más sencillo. Como saber si es carga o almacenamiento o una palabra o un byte.
+
+Podemos simplificar el código operadores ternarios en línea y ser compile time.

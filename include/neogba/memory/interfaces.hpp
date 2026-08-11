@@ -1,6 +1,5 @@
 #pragma once
 #include "neogba/structs/lut.hpp"
-#include "neogba/types.hpp"
 
 namespace neogba {
 
@@ -32,7 +31,7 @@ private:
   lut<u8, bytes_length, normalizer> bytes;
 
 public:
-  lut<u8, bytes_length, normalizer>& data() { return bytes; }
+  decltype(bytes)& data() { return bytes; }
 
   virtual ~memory() = default;
   virtual u32 read(u8 size, u32 addr) const override {
@@ -66,7 +65,7 @@ protected:
 
   constexpr bool is_offset_exceeded(u32 addr) const { return normalizer(addr) >= bytes_length; }
 
-  template <u8 size_requested> constexpr u32 int_read(u32 addr) const {
+  template <u8 size_requested, bool align_addr = true> constexpr u32 int_read(u32 addr) const {
     if constexpr (check_bounds)
       if (is_offset_exceeded(addr))
         return 0;
@@ -79,12 +78,17 @@ protected:
         if (is_offset_exceeded(addr + 1))
           return 0;
 
+      if constexpr (align_addr)
+        addr = addr & ~1;
       return (static_cast<u32>(bytes.get(addr + 1)) << 8) | static_cast<u32>(bytes.get(addr));
 
     } else {
       if constexpr (check_bounds)
-        if (is_offset_exceeded(addr + 2))
+        if (is_offset_exceeded(addr + 3))
           return 0;
+
+      if constexpr (align_addr)
+        addr = addr & ~3;
 
       return (static_cast<u32>(bytes.get(addr + 3)) << 24) |
              (static_cast<u32>(bytes.get(addr + 2)) << 16) |
