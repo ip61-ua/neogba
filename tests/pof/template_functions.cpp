@@ -25,9 +25,15 @@ template <std::size_t... I> constexpr lut_type make_lut(std::index_sequence<I...
 }
 
 TEST(proof_of_concept, template_functions_check_if_runs_match_adhoc) {
-  auto mylut{make_lut(std::make_index_sequence<16>{})};
+  auto mylut{make_lut(std::make_index_sequence<16>())};
 
   EXPECT_EQ(true, mylut.invoke(8, 8));
   EXPECT_EQ(false, mylut.invoke(8, 9));
+  EXPECT_NE(mylut.get(11), mylut.get(10));
   EXPECT_EQ(superplant<true>, mylut.get(8));
+  EXPECT_EQ(superplant<true>, superplant<true>);
+
+  //  std::println("s<true>: {:x}\nmylut@8: {:x}",
+  //  reinterpret_cast<std::uintptr_t>(&superplant<true>),
+  //  reinterpret_cast<std::uintptr_t>(mylut.get(8)));
 }

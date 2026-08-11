@@ -112,6 +112,7 @@ using ISA_ARM_HALFREG_RM = /*              */ ISA_ARM_MULTIPLY_RM;
 
 /// Halfword data transfer, immediate offset
 constexpr u32 ISA_ARM_HALFIMM_TEMPLATE{0x00400090u};
+using ISA_ARM_HALFIMM_I = /*               */ ISA_ARM_FSR_I;
 using ISA_ARM_HALFIMM_P = /*               */ ISA_ARM_HALFREG_P;
 using ISA_ARM_HALFIMM_U = /*               */ ISA_ARM_HALFREG_U;
 using ISA_ARM_HALFIMM_W = /*               */ ISA_ARM_MULTIPLY_A;
@@ -125,6 +126,7 @@ using ISA_ARM_HALFIMM_OFFSET = field_split<u32, u8, ISA_ARM_MULTIPLY_RS::shift,
 
 /// Single data transfer
 constexpr u32 ISA_ARM_SINGLETRANS_TEMPLATE{0x06000000u};
+using ISA_ARM_SINGLETRANS_I = /*           */ ISA_ARM_HALFIMM_P;
 using ISA_ARM_SINGLETRANS_P = /*           */ ISA_ARM_HALFIMM_P;
 using ISA_ARM_SINGLETRANS_U = /*           */ ISA_ARM_HALFIMM_U;
 using ISA_ARM_SINGLETRANS_B = /*           */ ISA_ARM_SWAP_B;

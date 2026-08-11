@@ -2092,4 +2092,733 @@ Para garantizar la calidad de nuestros testing desde la lut, buscamos hacer test
 
 Vamos a crear una test para la prueba de concepto.
 
+``` c++
+#include "neogba/structs/lut.hpp"
+#include <gtest/gtest.h>
 
+using namespace neogba;
+
+template <bool a = false, bool b = false, bool c = false, bool d = false>
+bool superplant(int codigo) {
+  return (a << 3 | b << 2 | c << 1 | d) == codigo;
+}
+using function_type = bool (*)(int);
+using lut_type = lut<function_type, 16>;
+
+template <std::size_t I> constexpr function_type expected_function() {
+  static_assert(I < 16);
+
+  return &superplant<(I & 0b1000) != 0, (I & 0b0100) != 0, (I & 0b0010) != 0, (I & 0b0001) != 0>;
+}
+
+template <std::size_t... I> constexpr lut_type make_lut(std::index_sequence<I...>) {
+  lut_type result;
+
+  (result.fill(I, 0, expected_function<I>()), ...);
+
+  return result;
+}
+
+TEST(proof_of_concept, template_functions_check_if_runs_match_adhoc) {
+  auto mylut{make_lut(std::make_index_sequence<16>{})};
+
+  EXPECT_EQ(true, mylut.invoke(8, 8));
+  EXPECT_EQ(false, mylut.invoke(8, 9));
+  EXPECT_NE(mylut.get(11), mylut.get(10));
+  EXPECT_EQ(superplant<true>, mylut.get(8));
+  EXPECT_EQ(superplant<true>, superplant<true>);
+}
+
+```
+
+La prueba resultante es bastante simple y pasa satisfactoriamente las expectativas impuestas. Por lo que es positivo hacer este cambio de las funciones.
+
+La única pega es el código de pruebas se más sensibles a cambios si llegasen a variar los argumentos de platilla. Cosa que en este caso sea muy poco probable y si se hiciera pudiésemos optar por técnicas como argumentos por defecto. No obstante, quizás tenga ventaja más estética que funcionar, pero la sintaxis de una función debería ser consultada y no es tan obvia si vemos que es lo que realmente hace solo por leer el nombre. Esto creo que realmente si puede ser un dolor de cabeza puesto que en los parámetros de plantilla hay veces en las que hay lógica negativa, poner true -> en realidad es asumir 0 en un campo cuando la convención habitual es true -> 1 o la aplicación de lógica como not algo algo.
+
+Por lo tanto podemos concluir que esto sí podemos hacerlo. Siendo así que podemos reducir el código a mantener. Y eso es una gran ventaja.
+
+Esta pequeña prueba de concepto para familiarizarme para metagenerar funciones. 
+
+Notas para mí:
+
+``` c++
+make_lut(std::make_index_sequence<16>{}) // las llaves aquí son de constructor/inicializador, -> "()" == "{}"
+                          |
+                          V
+make_lut(std::index_sequence<15, 14, 13, ..., 3, 2, 1, 0>)
+
+
+tipo... i // variádico
+i... // expansión 
+```
+
+Ahora aquí viene la siguiente pregunta como juntamos fsr y single trans en una lut. Pues es jodido.
+
+Bueno primero lo vamos hacer de forma consistente, y vamos a aplicar este hallazgo a fsr. Bueno no.
+
+Vamos a pensar en como podemos juntar todo esto en una sola cosa grande.
+
+Perdón. Tengo otra idea que puede llegar a cuajar. Aunque es poco estándar y quizás requiera algo de macros. La cuestión es que para mejorar la fina legibilidad del código en los parámetros hubo una forma en swift que impusieron conocer los parámetros. Y aunque sea algo tedioso conocer la implementación concreta de una llamada lo cierto es que no fue para nada una idea mal encaminada. Porque así te aseguras que en futuras si requiere atención un cambio porque haya cambiado su signatura, el propio compilador te notifica de este cambio. Igual y tiene sus inconvenientes como tener que escribir cosas extras o el método no es infalible ante cambios con argumentos por defectos. O tampoco sirve si es un lamba.... Aunque pensándolo mejor, podemos aprochar el clangd para decirle que muestre los nombres de parámetros por nosotros.
+
+es decir:
+
+``` c++
+// yo veo esto
+inline constexpr auto arm_singletrans_i0_p0_u0_b0_w0_l0_rdpc0: void (*const)(arm7tdmi &, u32){arm_singletrans_generator<false>},
+
+// y me gustaría                                                                                                        __
+inline constexpr auto arm_singletrans_i0_p0_u0_b0_w0_l0_rdpc0: void (*const)(arm7tdmi &, u32){arm_singletrans_generator<i: false>},
+```
+
+Vale no se puede. Lol.
+
+Bueno y es mentira eso de las macros en realidad sí se puede hacer. Y eso ya está funcando en los test. Y es una ventaja puesto que podemos ver como va. Y por medio de esto podríamos hacer plantillas con argumentos/paramétros bien definidos sin importar tanto el orden en el que estén definidos. Mierda! Esto es c++, y aquí el orden de inicialización sí importa. Vamos a hacer una cosa. Creo que hay un flag que te permite tratar eso como un error. Eso es deber del compilador de hacerlo. El mío es de usarlo lo más cómodamente posible. Comprendo que esto está hecho para hacerlo de forma lineal al orden en el que fueron declarados los argumentos de función. Pero ello implica a seguir un orden que no siempre suele ser el más cómodo. Siendo que para solucionarlo debes alterar el orden y provocar que todos sigan el contrato en el está función porque te pasa por no tener un oráculo que todo lo ve y debes haber previsto aún cuando tú código sea humilde.
+
+Conclusión mejor no tocar nada. Bueno no, es que sí que me parece buena idea remplazar los argumentos de una plantilla para puedan ser explícitos. 
+
+¿A qué viene a todo esto hablar de chorrada? Con esto podemos conseguir mayor versatilidad de modificar la tabla lut por karnaugh.
+
+Mi idea es que desde el código sea capaz que la comprobación rd_pc ocupa el mismo espacio y posición dentro de una instrucción y por lo tanto podemos asumir que son la misma variable para hacer una simplificación por karnaugh eficiente. Siendo que de hacerlo así podríamos incurrir en diferenciarlas en dos o más. 
+
+Además otra idea que podríamos plantear es tener una mega estructura con todas las variables ordenadas y conocer ya de un vistazo qué variables hay que mirar (las que están con 1) y las que están a 0 y las que no se exponen por que no influyen (x en karnaugh).
+
+Aquí entra otro punto de vista que puede complicar todo. Y es que al ser esto un lenguaje de algo nivel, lo vamos a tener bien difícil si queremos por ejemplo para algunos campos considerarlos en conjunto o por separado. Por si tenemos que ocupar 3 bits o cada bit en las mismas posiciones ocupadas tiene significado diferente.
+
+Eureka!
+Creo que ahora sí. Como siempre el algebra de bool viene a salvarnos. Lo que podemos hacer es una cuestión fácil para salvarnos de la avaricia de usar structs. Estos son grandes y verbosos. Pero con esta idea ya nada será mejor.
+
+La línea final es que utilicemos dos números de 32 bits: uno para indicar true o false y otro para indicar los don't care bits o una máscara de los que sí we care.
+
+De esta forma podemos expresar con la máscara qué bits realmente están activos o desactivos de los ignorables para karnaugh. Además así damos una ventaja muy grande a manipular de datos como quisiere y a expresar el significado de los bits como se les dé la puñetera gana.
+
+Pero Iván y como hacemos esto, pero si parece contradictorio porque ahora tenemos que escribir los bits a mano y no es nada cómodo? Muy buena pregunta, Iván (estoy chalado). Debemos acordarnos de los extractores. Con set_high podemos poner a uno los bits de interés. Y através de los mismos podemos recuperar información de interés y reinterpretar los datos.
+
+Así evitamos pasar múltiples u8 como bool sino que ahora cambia la partida y ahora solo te doy dos números y tu te las apañas. Bueno, aquí tú es nuevamente yo. EL cambio será mínimo, solo hay que declarar arriba del todo las variables con siginificado o alojarlas en el ámbito donde realemente se use con seguridad porque así evitamos al compilador si una variable no se usa en tiempo de compilación por el conjunto de decisiones tomadas para generar la plantilla. Claro ahora así. Por ejemplo podemos tener que una mayor granuaridad al ajustar qué operaciones realizar. Aunque el compilador siga siendo muy listo pero creo que así se damos pilas para volar por bits! Un ejemplo muy claro es en operand2, hay un caso que de 7 variables usa 2 para una rama. Y el resto son descartadas.
+
+¡TODO HA CAMBIADO!
+
+Creo que ahora sí va cobrando más sentido y la sintaxis sería algo talque así:
+
+``` c++
+
+
+// field.hpp
+namespace neogba {
+
+/**
+ * @brief Describes a contiguous bit field within an instruction encoding.
+ *
+ * Provides compile-time utilities to extract and insert a bit or bits field using a mask and shift
+ * value.
+ *
+ * @tparam instruction_t Instruction type. `u32` for ARM. `u16` for Thumb.
+ * @tparam return_t Type returned by the extracted field.
+ * @tparam n_shift Least significant bit position of the field.
+ * @tparam bit_mask Bit mask identifying the field.
+ */
+template <typename instruction_t, typename return_t, u8 n_shift, instruction_t bit_mask = 0xfu,
+          typename alternative_return_t = return_t>
+struct field {
+  using ins_t = instruction_t;
+  using ret_t = return_t;
+  using alt_ret_t = alternative_return_t;
+  static constexpr u8 shift{n_shift};
+  static constexpr ins_t mask{bit_mask};
+
+  /**
+   * @brief Extracts the field value from an instruction.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Retrieved value from instruction.
+   */
+  [[nodiscard]] static inline constexpr ret_t get(ins_t instruction) {
+
+    return static_cast<ret_t>(((instruction) & (mask)) >> shift);
+  }
+  /**
+   * @brief Replaces the field value within an instruction.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @param value Raw value to set in the field.
+   * @return Copy of the instruction and replaced field.
+   */
+  [[nodiscard]] static inline constexpr ins_t set(ins_t instruction, ret_t value) {
+    return ((instruction) & (~mask)) | ((value << shift) & mask);
+  }
+
+  [[nodiscard]] static inline constexpr ins_t set(ins_t instruction, alt_ret_t value)
+    requires(!std::same_as<alt_ret_t, ret_t>)
+  {
+    return set(instruction, static_cast<ret_t>(value));
+  }
+
+  /**
+   * @brief Adds binary ones the field value within an instruction.
+   *
+   * @param value Raw value to set of the field.
+   * @return That original value shifted and masked.
+   */
+  [[nodiscard]] static inline constexpr ins_t set_high(ret_t value) {
+    return (value << shift) & mask;
+  }
+
+  [[nodiscard]] static inline constexpr ins_t set_high(alt_ret_t value)
+    requires(!std::same_as<alt_ret_t, ret_t>)
+  {
+    return set_high(static_cast<ret_t>(value));
+  }
+};
+
+/**
+ * @brief Convenient wrapper for fields defined by an unshifted mask.
+ *
+ * The supplied mask is automatically shifted by `n_shift` before creating the underlying
+ * `field`.
+ *
+ * @tparam instruction_t Instruction type.
+ * @tparam return_t Extracted value type.
+ * @tparam n_shift Least significant bit position of the field.
+ * @tparam base_mask Unshifted field mask.
+ * @tparam alternative_return_t Alternative type to avoid writing static_cast.
+ *
+ * @see field
+ */
+template <typename instruction_t, typename return_t, u8 n_shift, instruction_t base_mask = 0xfu,
+          typename alternative_return_t = return_t>
+struct field_delayed
+    : field<instruction_t, return_t, n_shift, (base_mask << n_shift), alternative_return_t> {};
+
+/**
+ * @brief Specialization for single-bit instruction fields.
+ *
+ * Provides boolean accessors and convenience operations for manipulating individual bits.
+ *
+ * @tparam instruction_t Instruction type.
+ * @tparam n_shift Bit position.
+ *
+ * @see field
+ */
+template <typename instruction_t, u8 n_shift>
+struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
+  using ins_t = instruction_t;
+
+  /**
+   * @brief Returns the bit as a boolean value.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Retrieved boolean from instruction.
+   */
+  [[nodiscard]] static constexpr bool get(ins_t instruction) {
+    return ((instruction)&field_bool::mask) != 0;
+  }
+
+  /**
+   * @brief Returns the bit as a 8 bit unsigned value.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Retrieved bit as 8 bit unsigned from instruction, but masked and shifted.
+   */
+  [[nodiscard]] static constexpr u8 get_raw(ins_t instruction) {
+    return ((instruction)&field_bool::mask) >> n_shift;
+  }
+
+  /**
+   * @brief Sets or clears the bit given an instruction.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @param value Sets if `true`, clears if `false`.
+   * @return Copy of the instruction with the bit changed.
+   */
+  [[nodiscard]] static constexpr ins_t set(ins_t instruction, bool value) {
+    return ((instruction) & (~field_bool::mask)) | (value ? field_bool::mask : 0);
+  }
+
+  /**
+   * @brief Clears the bit given an instruction.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Copy of the instruction with bit cleared.
+   */
+  [[nodiscard]] static constexpr ins_t set0(ins_t instruction) {
+    return instruction & ~field_bool::mask;
+  }
+
+  /**
+   * @brief Sets the bit given an instruction.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Copy of the instruction with bit set.
+   */
+  [[nodiscard]] static constexpr ins_t set1(ins_t instruction) {
+    return instruction | field_bool::mask;
+  }
+
+  /**
+   * @brief Toggles the bit given an instruction.
+   *
+   * toggle `true` becomes `false` and viceversa.
+   *
+   * @param instruction Raw 32-bit ARM instruction.
+   * @return Copy of the instruction with bit toggled.
+   */
+  [[nodiscard]] static constexpr ins_t toggle(ins_t instruction) {
+    return instruction ^ field_bool::mask;
+  }
+
+  /**
+   * @brief Adds binary one in the field value within an instruction.
+   *
+   * @return That bit shifted and masked.
+   */
+  [[nodiscard]] static inline constexpr ins_t set_high() { return field_bool::mask; }
+};
+
+// Antes 
+
+
+template <bool i = false, bool p = false, bool u = false, bool b = false, bool w = false,
+          bool l = false, bool rd_pc = false>
+void arm_singletrans_generator(arm7tdmi& cpu, u32 inst) {
+  const auto r_base{ISA_ARM_SINGLETRANS_RN::get(inst)}, src_dst{ISA_ARM_SINGLETRANS_RD::get(inst)};
+
+  u32 offset;
+  if constexpr (i) {
+    offset = arm_fsr_operand2_lut.invoke(inst, cpu, inst).result;
+  } else {
+    offset = ISA_ARM_SINGLETRANS_OFFSET::get(inst);
+  }
+/// ....
+
+// Ahora
+template <u32 tflags>
+void arm_singletrans_generator(arm7tdmi& cpu, u32 inst) {
+  const auto r_base{ISA_ARM_SINGLETRANS_RN::get(inst)}, src_dst{ISA_ARM_SINGLETRANS_RD::get(inst)};
+
+  constexpr u32 i{ISA_ARM_SINGLETRANS_I::get(tflags)} 
+
+  u32 offset;
+  if constexpr (i) {
+    offset = arm_fsr_operand2_lut.invoke(inst, cpu, inst).result;
+  } else {
+    offset = ISA_ARM_SINGLETRANS_OFFSET::get(inst);
+  }
+
+/// ....
+
+
+// de forma que podemos ahora instaciar así
+lut.put_raw(0, arm_singletrans_generator<ISA_ARM_SINGLETRANS_TEMPLATE | ISA_ARM_SINGLETRANS_OFFSET::set_high()>);
+```
+
+Aunque creo que la sintaxis sigue siendo muy larga. Y creo que lo podemos solucionar utilizando namespaces.
+
+Aquí viene otra iteración más, y es que nos la pelan los we care bits dentro de la plantilla. ¿Por qué? porque no somos ni karnaugh ni la lut y asumimos que la que nos llega está bien. Además solo cabe observar Fsr y operand2 que hemos hecho oídos sordos a los x.
+
+Hay un caveat que hay que tener en cuenta y es que ahora podemos generar hasta 2^32 funciones cómo máximo que hagan absolutamente lo mismo, esto es porque si podemos un 1 donde sea ignorado para ese generador de instrucciones resultará en dos punteros función distintos pero con exactamente mismo código que donde tenga ese bit a 0.
+
+Aunque esto no debería ser un problema porque tenemos los extractores que hacen bastante visible y legible donde está el fallo, hay que seguir teniendo en cuenta esto.
+
+Otra idea que podríamos llevar a cabo, aunque haciendo esto directamente nos quitamos el problema de antes pero añadimos creo que más tiempo de compilación. Puede ser revolucionario. Y es...
+
+Hacer un meta-metagenerador! Wow.
+
+En que consiste? Fácil este meta²generador está compuesto de dos fases en una primera fase se encarga de hacer de router e identificar el tipo correcto de instrucción a generar. Y luego delega la tarea de generar la función al generador concreto.
+
+¿Qué conseguimos? que podemos generar siempre funciones correctas pasando de 0..2³² con un range. Suponiendo que su implementación no tiene errores.
+
+meta²generador no hará uso de luts, delegará con ifs y tiempo de compilación la tarea de generar esta forma. ¿Y para qué carajos quiero esto? fácil porque así un for o un range se encarga de llenar la tabla y mientras nos podemos enfocar en hacer el karnaugh correctamente y así confiar plenamente en la matemática para el rellenado y recuperación de bits.
+
+Es más ahora podemos cambiar nuestras prioridades y dedicarnos a hacer el karnaugh bien y despreocuparnos de cambiarlo.
+
+A ver esta idea sobre el papel parece que vaya a salvar Orihuela del software de paupérrima calidad. Y en cierta parte lo es, pero lo que realmente va a acabar haciendo es sustituir parte de los mecanismos de karnaugh. Bueno no te creas... A ver, la idea esta es poner ifs en compilación con constexpr para decidir que función utilizar en el durante el llenado. Y luego en los test lo podríamos llegar a utilizar como para decir dame el puntero de función correcto de este churro. Claro y podemos conseguir una garantía de que lo que se genere de ahí ya sea único.
+
+Para esto yo creo que deberíamos tener variables extras para los campos como:
+
+``` c++
+
+/// Halfword data transfer, register offset
+constexpr u32 ISA_ARM_HALFREG_TEMPLATE{0x00000090u};
+constexpr u32 ISA_ARM_HALFREG_FIXED{0x...u}; // NUEVO! es una máscara los con bits son fijos en template (esto es 0 1 que deben estar en esa posición porque si no están ahí está mal)
+constexpr u32 ISA_ARM_HALFREG_CARE{0x...u}; // NUEVO! es una máscara los con bits que son utilizados para el tiempo de compilación. Por ejemplo el bit rd sí por que podemos conocer si es pc o no. Pero no importa si es bit4 en singletrans.
+using ISA_ARM_HALFREG_P = /*               */ field_bool<u32, 24>;
+using ISA_ARM_HALFREG_U = /*               */ field_bool<u32, 23>;
+using ISA_ARM_HALFREG_W = /*               */ ISA_ARM_MULTIPLY_A;
+using ISA_ARM_HALFREG_L = /*               */ ISA_ARM_FSR_S;
+using ISA_ARM_HALFREG_RN = /*              */ ISA_ARM_FSR_RN;
+using ISA_ARM_HALFREG_RD = /*              */ ISA_ARM_FSR_RD;
+using ISA_ARM_HALFREG_S = /*               */ field_bool<u32, 6>;
+using ISA_ARM_HALFREG_H = /*               */ field_bool<u32, 5>;
+using ISA_ARM_HALFREG_RM = /*              */ ISA_ARM_MULTIPLY_RM;
+
+```
+
+Creo que delegar un for de 32 GB a compilar no creo que sea tan buena idea. No obstante lo que podemos hacer es de todo ese rango, podemos podar cual algoritmo. Es decir, la idea aquí en lugar de un range logo sería solo coger un conjunto de instrucciones límite e iterar sobre estas. Por ejemplo, así podemos cubrir todo eficientemente y saber con certeza y desde un pov del tester, solo observando casos condiciones. Pero además esto nos puede servir como anillo al dedo a conocer nuestro orden en el karnaugh fácilmente.
+
+Me explico: 
+
+``` c++
+{
+ using namespace ...;
+ for (auto i : {TEMPLATE | P | RD_PC}) // llenar
+}
+
+{
+ using namespace ...2;
+ for (auto i : {TEMPLATE | I | B}) // llenar
+}
+```
+
+Y además tal y como se muestra podríamos organizarlo por categorías! o en lugar de usar un for usar un sequence y que ya por debajo por la enumeración con algún offset y máscara podamos sincronizar karnaugh con lo esencial.
+
+Bueno un for no podemos utilizar en con plantillas sino que nos vemos forzados a utilizar index_sequence.
+
+Con esto acabamos de salvar la ram de todas computadoras.
+
+Lo próximo que pueda hacer es que hemos practicado la reducción por karnaugh que considero necesario hacer una búsqueda exahustiva cómo está puesta la simplificación. Para hacerlo todo más fácil.
+
+vale. mgba reserva una tabla de 1 << 12 espacios.
+
+``` c
+// mgba/src/arm/decoder-arm.c
+static const ARMDecoder _armDecoderTable[0x1000] = {
+	DECLARE_ARM_EMITTER_BLOCK(_ARMDecode)
+};
+
+void ARMDecodeARM(uint32_t opcode, struct ARMInstructionInfo* info) {
+	memset(info, 0, sizeof(*info));
+	info->execMode = MODE_ARM;
+	info->opcode = opcode;
+	info->branchType = ARM_BRANCH_NONE;
+	info->condition = opcode >> 28;
+	info->sInstructionCycles = 1;
+	ARMDecoder decoder = _armDecoderTable[((opcode >> 16) & 0xFF0) | ((opcode >> 4) & 0x00F)];
+	decoder(opcode, info);
+}
+```
+
+También por lo que he visto es que ARM hace muchas perradas y no utiliza un karnaugh purista y es como que necesario hacerlo en un orden y sobre escribiendo anteriores. No sé con total exactitud, pero lo que sé es que nuestros han tomado un approach más simple y directo. solo con 12 bits.
+
+Para nuestra implementación deberíamos coger también el rd (0xf << 12). Ojo una cosa muy nueva es que podemos reducir y alterar. De hecho, mirando de pasada y creo que podemos hacerlo que sea de 12 bits y aplicarle más optimizaciones.
+
+Te explico porque fácilmente.
+
+tenemos en bytes una instucción típica así.
+
+
+``` text
+COND | numeros fijos | opcode | campo1 | campo 2 | campo3 | campo4 | campo5
+```
+
+aprox, y groso modo.
+numeros fijos y opcode sí están contemplados en el mgba.
+
+Ahora bien en el mgba contemplan del bit 4 al 7. Lo cual está ok si realmente llegan a utilizar el bit4 del operand2 como una estrategia para acceder a la operación de operand2 directamente. Vale no.
+Imposible! Está bien.
+
+Porque hay un tipo de instrucción que sí lo requiere para ser idenficado.
+Mi plan ahora ver si puedo reemplazar el bit 7 para expresar la variable rd_pc == 0xf
+
+mentira el bit7 en la de alu fsr, el bit7 es tratado por otra función que es llamada por dentro de la función de instrucción concreta. Además por parámetro siempre tiene la instucción exacta por lo que a las malas a t.ejecución como bien hacen mgba!
+
+
+```
+vale pesemos un paso más allá.
+
+mgba utiliza algo como esto para el propósito de optimizar los accesos correspondientes a cad
+
+
+
+vale. mgba reserva una tabla de 1 << 12 espacios.
+
+```c
+// mgba/src/arm/decoder-arm.c
+static const ARMDecoder _armDecoderTable[0x1000] = {
+    DECLARE_ARM_EMITTER_BLOCK(_ARMDecode)
+};
+
+void ARMDecodeARM(uint32_t opcode, struct ARMInstructionInfo* info) {
+    memset(info, 0, sizeof(*info));
+    info->execMode = MODE_ARM;
+    info->opcode = opcode;
+    info->branchType = ARM_BRANCH_NONE;
+    info->condition = opcode >> 28;
+    info->sInstructionCycles = 1;
+    ARMDecoder decoder = _armDecoderTable[((opcode >> 16) & 0xFF0) | ((opcode >> 4) & 0x00F)];
+    decoder(opcode, info);
+}
+```
+
+
+
+mi pregunta es consideras que: podamos remplazar alguna parte de la máscara para que contenga la información rd\_pc (read 0xf << 12) == 15 que queda más o menos en los mismos sitios que en todas las instrucciones reduciendo a un bit?
+
+
+
+Considera la información de la imagen!
+
+Considera el siguiente código
+
+
+
+```
+#pragma once
+#include "neogba/arm7tdmi/isa/arm_mode/operand2.hpp"
+#include <utility>
+
+namespace neogba {
+/**
+ * @brief Executes a compile-time specialized ARM data-processing instruction.
+ *
+ * This template generates the implementation of an ARM Flexible Second Operand (FSR)
+ * data-processing instruction. The selected opcode and execution behaviour could be entirely
+ * resolved at compile time using template parameters, allowing the compiler to remove unused
+ * branches and optimize the generated code for each instruction variant.
+ *
+ * Depending on the template arguments, the generated implementation may update the CPSR flags,
+ * write the result to the program counter, or implement flag-only instructions such as CMP or
+ * TST.
+ *
+ * @tparam opcode Data-processing opcode to execute.
+ * @tparam s Whether the instruction updates the CPSR condition flags.
+ * @tparam rd_pc Whether the destination register is R15 (PC).
+ *
+ * @param cpu ARM7TDMI CPU state to execute the instruction on.
+ * @param inst Raw 32-bit ARM instruction.
+ *
+ * @note All instruction-specific decisions are resolved at compile time using `if constexpr`, so
+ * the generated machine code contains only the logic required for the selected instruction
+ * variant with least branches at execution-time.
+ *
+ * @warning Setting `rd_pc` when `opcode` is one of (`TST`, `TEQ`, `CMP`, `CMN`) is not a
+ * documented behaviour in ARM. Because these opcodes only write side effects (by updating CPSR)
+ * and ignore destination `rd` field. According, it is illegal to write that on assembly (`rd`
+ * contains trash).
+ *
+ * @warning If the instruction `opcode` is one of (`TST`, `TEQ`, `CMP`, `CMN`), then the flag S is
+ * implicitly set. If else, it means it's another instruction type. This fucntion is not
+ * responsible for handling that!
+ *
+ * @todo Testing this function.
+ * @todo Ensure correct handling when r15 is involved as source or as destination.
+ *
+ * @see arm_operand2_generator
+ * @see arm_operand2_lut
+ * @see arm_fsr_opcode
+ * @see arm7tdmi
+ */
+template <arm_fsr_opcode opcode, bool s = false, bool rd_pc = false>
+void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
+  // Meta template variables
+  constexpr auto is_logical{opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::EOR ||
+                            opcode == arm_fsr_opcode::TST || opcode == arm_fsr_opcode::TEQ ||
+                            opcode == arm_fsr_opcode::ORR || opcode == arm_fsr_opcode::MOV ||
+                            opcode == arm_fsr_opcode::BIC || opcode == arm_fsr_opcode::MVN};
+  constexpr auto can_write_rd{!(opcode == arm_fsr_opcode::TST || opcode == arm_fsr_opcode::TEQ ||
+                                opcode == arm_fsr_opcode::CMP || opcode == arm_fsr_opcode::CMN)};
+  constexpr auto is_inverted_sub{opcode == arm_fsr_opcode::RSB || opcode == arm_fsr_opcode::RSC};
+  constexpr auto is_not_move{opcode != arm_fsr_opcode::MOV && opcode != arm_fsr_opcode::MVN};
+  constexpr auto is_sum{opcode == arm_fsr_opcode::ADD or opcode == arm_fsr_opcode::ADC or
+                        opcode == arm_fsr_opcode::CMN};
+
+  // Retrieve values
+  u8 rd_idx;
+  u32 op1;
+  u64 res;
+  auto rn_idx{ISA_ARM_FSR_RN::get(inst)};
+
+  if constexpr (rd_pc)
+    rd_idx = 0xfu;
+  else
+    rd_idx = ISA_ARM_FSR_RD::get(inst);
+
+  if constexpr (is_not_move)
+    op1 = cpu.read_active_register(rn_idx);
+
+  auto op2{arm_fsr_operand2_lut.invoke(inst, cpu, inst)};
+
+  if constexpr (is_inverted_sub)
+    std::swap(op1, op2.result);
+
+  // Perform operation
+  if constexpr (opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::TST)
+    res = op1 & op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::EOR || opcode == arm_fsr_opcode::TEQ)
+    res = op1 ^ op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::SUB || opcode == arm_fsr_opcode::CMP ||
+                     opcode == arm_fsr_opcode::RSB)
+    res = static_cast<u64>(op1) - op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::ADD || opcode == arm_fsr_opcode::CMN)
+    res = static_cast<u64>(op1) + op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::ADC)
+    res = static_cast<u64>(op1) + op2.result + op2.carry_in;
+  else if constexpr (opcode == arm_fsr_opcode::SBC || opcode == arm_fsr_opcode::RSC)
+    res = static_cast<u64>(op1) - op2.result + op2.carry_in - 1;
+  else if constexpr (opcode == arm_fsr_opcode::ORR)
+    res = op1 | op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::MOV)
+    res = op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::BIC)
+    res = op1 & ~op2.result;
+  else if constexpr (opcode == arm_fsr_opcode::MVN)
+    res = ~op2.result;
+
+  // write back the result
+  auto res32{static_cast<u32>(res)};
+  if constexpr (can_write_rd)
+    cpu.write_active_register(rd_idx, res32);
+
+  // Side effects
+  if constexpr (s) {
+    if constexpr (rd_pc and can_write_rd) {
+      cpu.write_cpsr(cpu.read_spsr());
+
+    } else {
+
+      // common
+      auto z{static_cast<u32>(res32 == 0) << arm7tdmi::Z_SHIFT}; // (res32 == 0) -> true -> 0x0...01
+      u32 n{res32 & 0x80000000}; // N ya está en el bit 31 -> 0 movimientos
+
+      if constexpr (is_logical) {
+        auto c{static_cast<u32>(op2.carry_out << arm7tdmi::C_SHIFT)}; // op2.carry_out es 0 o 1.
+
+        // meter V aquí = !necesario -> no está afectado.
+        // set_cpsr(mask, values) sobrescribe solo estos `mask`
+        cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C, z | n | c);
+      } else {
+        auto c{static_cast<u32>(res >> 32)}; // (res >> 32) & 1 es 1 o 0.
+        auto v{~(op1 ^ op2.result)};
+
+        if constexpr (not is_sum) {
+          c = !c;
+          v = ~v;
+        }
+
+        c = (c & 1) << arm7tdmi::C_SHIFT; // Mover lo necesario!
+        v = (v & (op1 ^ res32) & 0x80000000) >>
+            (31 - arm7tdmi::V_SHIFT); // Mover lo justo al bit V.
+
+        cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V, z | n | c | v);
+      }
+    }
+  }
+}
+
+inline constexpr auto
+
+    arm_fsr_AND_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::AND>},
+    arm_fsr_EOR_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::EOR>},
+    arm_fsr_SUB_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::SUB>},
+    arm_fsr_RSB_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::RSB>},
+    arm_fsr_ADD_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::ADD>},
+    arm_fsr_ADC_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::ADC>},
+    arm_fsr_SBC_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::SBC>},
+    arm_fsr_RSC_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::RSC>},
+    arm_fsr_ORR_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::ORR>},
+    arm_fsr_MOV_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::MOV>},
+    arm_fsr_BIC_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::BIC>},
+    arm_fsr_MVN_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::MVN>},
+    arm_fsr_AND_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::AND, true>},
+    arm_fsr_EOR_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::EOR, true>},
+    arm_fsr_SUB_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::SUB, true>},
+    arm_fsr_RSB_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::RSB, true>},
+    arm_fsr_ADD_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::ADD, true>},
+    arm_fsr_ADC_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::ADC, true>},
+    arm_fsr_SBC_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::SBC, true>},
+    arm_fsr_RSC_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::RSC, true>},
+    arm_fsr_ORR_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::ORR, true>},
+    arm_fsr_MOV_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::MOV, true>},
+    arm_fsr_BIC_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::BIC, true>},
+    arm_fsr_MVN_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::MVN, true>},
+    arm_fsr_AND_S_RdPC{arm_fsr_generator<arm_fsr_opcode::AND, true, true>},
+    arm_fsr_EOR_S_RdPC{arm_fsr_generator<arm_fsr_opcode::EOR, true, true>},
+    arm_fsr_SUB_S_RdPC{arm_fsr_generator<arm_fsr_opcode::SUB, true, true>},
+    arm_fsr_RSB_S_RdPC{arm_fsr_generator<arm_fsr_opcode::RSB, true, true>},
+    arm_fsr_ADD_S_RdPC{arm_fsr_generator<arm_fsr_opcode::ADD, true, true>},
+    arm_fsr_ADC_S_RdPC{arm_fsr_generator<arm_fsr_opcode::ADC, true, true>},
+    arm_fsr_SBC_S_RdPC{arm_fsr_generator<arm_fsr_opcode::SBC, true, true>},
+    arm_fsr_RSC_S_RdPC{arm_fsr_generator<arm_fsr_opcode::RSC, true, true>},
+    arm_fsr_ORR_S_RdPC{arm_fsr_generator<arm_fsr_opcode::ORR, true, true>},
+    arm_fsr_MOV_S_RdPC{arm_fsr_generator<arm_fsr_opcode::MOV, true, true>},
+    arm_fsr_BIC_S_RdPC{arm_fsr_generator<arm_fsr_opcode::BIC, true, true>},
+    arm_fsr_MVN_S_RdPC{arm_fsr_generator<arm_fsr_opcode::MVN, true, true>},
+    arm_fsr_AND_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::AND, false, true>},
+    arm_fsr_EOR_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::EOR, false, true>},
+    arm_fsr_SUB_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::SUB, false, true>},
+    arm_fsr_RSB_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::RSB, false, true>},
+    arm_fsr_ADD_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::ADD, false, true>},
+    arm_fsr_ADC_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::ADC, false, true>},
+    arm_fsr_SBC_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::SBC, false, true>},
+    arm_fsr_RSC_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::RSC, false, true>},
+    arm_fsr_ORR_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::ORR, false, true>},
+    arm_fsr_MOV_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::MOV, false, true>},
+    arm_fsr_BIC_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::BIC, false, true>},
+    arm_fsr_MVN_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::MVN, false, true>},
+    arm_fsr_TST_notRdPC{arm_fsr_generator<arm_fsr_opcode::TST, true>},
+    arm_fsr_TEQ_notRdPC{arm_fsr_generator<arm_fsr_opcode::TEQ, true>},
+    arm_fsr_CMP_notRdPC{arm_fsr_generator<arm_fsr_opcode::CMP, true>},
+    arm_fsr_CMN_notRdPC{arm_fsr_generator<arm_fsr_opcode::CMN, true>},
+    arm_fsr_TST_RdPC{arm_fsr_generator<arm_fsr_opcode::TST, true, true>},
+    arm_fsr_TEQ_RdPC{arm_fsr_generator<arm_fsr_opcode::TEQ, true, true>},
+    arm_fsr_CMP_RdPC{arm_fsr_generator<arm_fsr_opcode::CMP, true, true>},
+    arm_fsr_CMN_RdPC{arm_fsr_generator<arm_fsr_opcode::CMN, true, true>};
+} // namespace neogba
+
+```
+
+Considera que operand2 es externo por cuestiones de diseño para facilitar su reutilización y por lo tanto como puedes apreciar en el código, es una llamada externa que bien hace todo el cómputo necesario.
+
+Considera que seguir a raja tabla la tabla de decodiciación de arm como mínima garantía de la verdad 
+
+  |..3 ..................2 ..................1 ..................0|
+  |1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0_9_8_7_6_5_4_3_2_1_0|
+  |_Cond__|0_0_0|___Op__|S|__Rn___|__Rd___|__Shift__|Typ|0|__Rm___| DataProc
+  |_Cond__|0_0_0|___Op__|S|__Rn___|__Rd___|__Rs___|0|Typ|1|__Rm___| DataProc
+  |_Cond__|0_0_1|___Op__|S|__Rn___|__Rd___|_Shift_|___Immediate___| DataProc
+  |_Cond__|0_0_1_1_0_0_1_0_0_0_0_0_1_1_1_1_0_0_0_0|_____Hint______| ARM11:Hint
+  |_Cond__|0_0_1_1_0|P|1|0|_Field_|__Rd___|_Shift_|___Immediate___| PSR Imm
+  |_Cond__|0_0_0_1_0|P|L|0|_Field_|__Rd___|0_0_0_0|0_0_0_0|__Rm___| PSR Reg
+  |_Cond__|0_0_0_1_0_0_1_0_1_1_1_1_1_1_1_1_1_1_1_1|0_0|L|1|__Rn___| BX,BLX
+  |1_1_1_0|0_0_0_1_0_0_1_0|_____immediate_________|0_1_1_1|_immed_| ARM9:BKPT
+  |_Cond__|0_0_0_1_0_1_1_0_1_1_1_1|__Rd___|1_1_1_1|0_0_0_1|__Rm___| ARM9:CLZ
+  |_Cond__|0_0_0_1_0|Op_|0|__Rn___|__Rd___|0_0_0_0|0_1_0_1|__Rm___| ARM9:QALU
+  |_Cond__|0_0_0_0_0_0|A|S|__Rd___|__Rn___|__Rs___|1_0_0_1|__Rm___| Multiply
+  |_Cond__|0_0_0_0_0_1_0_0|_RdHi__|_RdLo__|__Rs___|1_0_0_1|__Rm___| ARM11:UMAAL
+  |_Cond__|0_0_0_0_1|U|A|S|_RdHi__|_RdLo__|__Rs___|1_0_0_1|__Rm___| MulLong
+  |_Cond__|0_0_0_1_0|Op_|0|Rd/RdHi|Rn/RdLo|__Rs___|1|y|x|0|__Rm___| MulHalfARM9
+  |_Cond__|0_0_0_1_0|B|0_0|__Rn___|__Rd___|0_0_0_0|1_0_0_1|__Rm___| TransSwp12
+  |_Cond__|0_0_0_1_1|_Op__|__Rn___|__Rd___|1_1_1_1|1_0_0_1|__Rm___| ARM11:LDREX
+  |_Cond__|0_0_0|P|U|0|W|L|__Rn___|__Rd___|0_0_0_0|1|S|H|1|__Rm___| TransReg10
+  |_Cond__|0_0_0|P|U|1|W|L|__Rn___|__Rd___|OffsetH|1|S|H|1|OffsetL| TransImm10
+  |_Cond__|0_1_0|P|U|B|W|L|__Rn___|__Rd___|_________Offset________| TransImm9
+  |_Cond__|0_1_1|P|U|B|W|L|__Rn___|__Rd___|__Shift__|Typ|0|__Rm___| TransReg9
+  |_Cond__|0_1_1|________________xxx____________________|1|__xxx__| Undefined
+  |_Cond__|0_1_1|Op_|x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x_x|1|x_x_x_x| ARM11:Media
+  |1_1_1_1_0_1_0_1_0_1_1_1_1_1_1_1_1_1_1_1_0_0_0_0_0_0_0_1_1_1_1_1| ARM11:CLREX
+  |_Cond__|1_0_0|P|U|S|W|L|__Rn___|__________Register_List________| BlockTrans
+  |_Cond__|1_0_1|L|___________________Offset______________________| B,BL,BLX
+  |_Cond__|1_1_0|P|U|N|W|L|__Rn___|__CRd__|__CP#__|____Offset_____| CoDataTrans
+  |_Cond__|1_1_0_0_0_1_0|L|__Rn___|__Rd___|__CP#__|_CPopc_|__CRm__| CoRR ARM9
+  |_Cond__|1_1_1_0|_CPopc_|__CRn__|__CRd__|__CP#__|_CP__|0|__CRm__| CoDataOp
+  |_Cond__|1_1_1_0|CPopc|L|__CRn__|__Rd___|__CP#__|_CP__|1|__CRm__| CoRegTrans
+  |_Cond__|1_1_1_1|_____________Ignored_by_Processor______________| SWI
+
+Considera únicamente las instrucciones lanzables desde el chip ARM7TDMI-s que implementa la arquitectura ARMv4T
+
+```
+
+La IA es aveces muy cabezona con no ver errores o sí con matices pero el matiz es algo que importa en absoluto. Ninguna ha dado en el motivo exacto.
+
+Vale no es posible remplazar bit7 porque no había formula de identificar bx, bit4 con las coproc, ni tampoco bits superiores por que están demasiado atados. Y todo ello para remplazar por rd_pc==15 no vale la pena. 
+
+Ni aún así con u32 como parámetro porque en realidad eso no influye en nada, eso es recuperar datos de ahí pero si rd_pc es realmente 15 o debería haber preasumido. Y como no podríamos insertar esa info en la lut al momento, esto puede hacer asunciones peligrosamente erróneas. Así como escribir siempre en el pc que se haga una suma, o que el efecto secundario no sea el esperado si el destino es 15.
+
+Podríamos llegar a expandir a 13 bits y fin del problema. Pero no quiero. Sería interesante poder comparar el rendimiento de caché en este caso. No juzgo, solo admiro como de simple es el acercamiento al problema de mgba. Denota sus años de experiencia.
+
+Rondando por mi cabeza es una idea muy descabellada y que quizás sea hasta controversial. Pero tengo la idea de remplazar el bit 7 por eso de rd_pc. Y cuando sea, `|_Cond__|0_0_0_1_0_0_1_0_1_1_1_1_1_1_1_1_1_1_1_1|0_0|L|1|__Rn___|` exactamente eso ignorando campos variables, hacer una hiper especialización y considerarlo en la lut como una undefined especial.
+
+Pero he ahí el quid de la cuestión. Y es que se algún modo entramos en una paradoja en la que queriendo mejorar el rendimiento lo acabamos de empeorar introduciendo una posible ramificación por cada vez que utilice el normalizador de la lut. Ello o que si ubiese algún operador mágico que coga la instrucción detecte que es esa y sume el offset para ser una del tipo indefinido.
+
+Otra opción sería tratar bx como una multiply pero ahí se queda la idea porque el precómputo de la platilla es fijo a lo largo de toda la vida del programa. Y sería imposible mandar algo por ahí para idenficar bx desde multiply. Esto nace como un error conceptual cómo funciona de metaprogramación. Y es que sigue aquí la regla de oklam (navaja) que todo es por un motivo más simple de lo que realmente parece.
+
+En conclusión, no hay forma de mejorar esto que no sea añadiendo más bits.
+Vamos a seguir con los 12 de mgba pero una pequeña peculiaridad y es que vamos cambiar el código lo mínimo posible esto para evitar cambiar mucho para hacer comparativas de rendimiento. Sí realmente marca la diferencia, quizás en un futuro podríamos considerar expandir a 13 bits.
