@@ -2822,3 +2822,10 @@ Otra opción sería tratar bx como una multiply pero ahí se queda la idea porqu
 
 En conclusión, no hay forma de mejorar esto que no sea añadiendo más bits.
 Vamos a seguir con los 12 de mgba pero una pequeña peculiaridad y es que vamos cambiar el código lo mínimo posible esto para evitar cambiar mucho para hacer comparativas de rendimiento. Sí realmente marca la diferencia, quizás en un futuro podríamos considerar expandir a 13 bits.
+
+Hoy ha sido un día de completa lucidez! Siento que he avanzado mucho y ahora tengo camino donde seguir bien.
+
+Dicho esto:
+- Implementar el "karnaugh" definitivo en la lut general.
+- Reemplazar constantes del isa por algo más súper pachamamesco.
+- Reemplazar tparams por un único número u32.
