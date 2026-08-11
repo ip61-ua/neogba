@@ -2806,8 +2806,6 @@ Considera que seguir a raja tabla la tabla de decodiciación de arm como mínima
 
 Considera únicamente las instrucciones lanzables desde el chip ARM7TDMI-s que implementa la arquitectura ARMv4T
 
-```
-
 La IA es aveces muy cabezona con no ver errores o sí con matices pero el matiz es algo que importa en absoluto. Ninguna ha dado en el motivo exacto.
 
 Vale no es posible remplazar bit7 porque no había formula de identificar bx, bit4 con las coproc, ni tampoco bits superiores por que están demasiado atados. Y todo ello para remplazar por rd_pc==15 no vale la pena. 
