@@ -2044,4 +2044,5 @@ Siendo que no tenemos que hacer ningún hack raro para reutilizar esta mecánica
 
 Seguimos con algunos más sencillo. Como saber si es carga o almacenamiento o una palabra o un byte.
 
-Podemos simplificar el código operadores ternarios en línea y ser compile time.
+Podemos simplificar el código operadores ternarios en línea y ser compile time. Not every true por si acaso.
+Casos especiales rn = rd.
