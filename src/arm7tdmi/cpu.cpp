@@ -76,7 +76,7 @@ void arm7tdmi::set_arm_mode() {
 void arm7tdmi::set_thumb_mode() {
   this->instruction_size = 16;
   this->instruction_incrementator = 2;
-  this->execute = nullptr; // dumb!
+  this->execute = execute_thumb;
   this->set_cpsr(T, T);
 }
 

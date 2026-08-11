@@ -2008,3 +2008,36 @@ Bueno en tal caso sí es así consideraré cambiar el objetivo por otros: consid
 Otra cosa que quizás vaya viendo es sobre el reloj y los ciclos por si acaso. Aunque siendo francos, y al ser este un proyecto amateur creo que podría permitirme omitir la relojería pero podría estar jodido si las pruebas que se requiera esto de la precisión de ciclos sea complejo.
 
 En un aspecto que he estado pensando es en más general cómo funcionan los emuladores. ¿A qué no sería ideal que el programa antes de ejecutarlo lo podríamos preparar para la computadora de destino? es decir cogerlo entero y pasearse por este, mascarlo, y dejarlo ya para el ordenador listo para ejecutar nativamente. No creo, porque eso sería como un decompilador y compilar de nuevo. Pero además, pese a no tener el problema de las instrucciones de longitud variable y alineamiento, lo cierto es que el programa podría estar sujeto a condiciones de interpretación de bits en vivo para determinar si un espacio de 32 bits es una instrucción o dos de thumb. Ello quiere decir que deberíamos realizar algún tipo de análisis en observación de patrones para determinar una interpretación de datos de unos y ceros correcta. Aunque en tal caso de hacerse habría que analizar el riesgo de que ocurra que el compilar por listillo reutilice una instrucción de 32 bits como dos de thumb y que ambas tres sean complemente legales y legibles. ¿habrá alguno que haga esto por ahorrarse 32 míseros bits?. 
+
+# 11 de agosto
+
+Hoy vamos a centrarnos en lo realmente bueno.
+
+1. Transferencia de Datos Simple (Word / Unsigned Byte) Aplica a LDR, STR, LDRB y STRB.
+2. Transferencia de Media Palabra y Datos con Signo Aplica a LDRH, STRH, LDRSB y LDRSH.
+3. Transferencia Múltiple de Bloque Aplica a LDM y STM.
+4. Intercambio Atómico (Data Swap) Aplica a SWP y SWPB.
+
+Entonces voy a sacar la documentación y vamos con la primera de las opciones.
+
+Pero antes lo que voy a hacer es que en el execute del modo arm funcione el cond e implementar una función dummy para thumb de momento.
+
+Ahora centrándonos en lo que nos acontence, tenemos que single trans tiene hasta 6 banderas en forma de bit que definen un comportamiento u otro. Para empezar tenemos que en función de L decide si es un almacenamiento o carga, W si writeback en rn, B si es un bytes o no, P si es sumar o restar a base (pre o post indexado) e I es si es inmediato o el temible offset desplazado. 
+
+Con esta información creo que es suficiente para colocarla en la template.
+
+Tal y como suponía que r15 será algún tipo de caso especial. 
+
+Si es r15 en rn, W estará desactivado.
+Jamás r15 será en rm (offset desplazado).
+Si r15 es rd y es una instrucción de almacenamiento, el valor almacenado será la dirección + 12.
+
+Por lo tanto, volveríamos a obtener una combinación exclusiva de casos.
+
+saber si r15 es una cosa que podríamos saber antes puesto que está en un sitio campo fijo rd de 4 bit. Además muy seguramente coincidirá con el resto de formatos de instrucción por el hecho de no tocar las narices de hacer la misma comprobación en 32 sitios distintos y ahorrar así en circuitería.
+
+si I es 1, vemos que claramente reutiliza la lógica de bit4 que ya hemos visto anteriormente. Por lo que no voy a hacerla, vamos a reutilizarla. Esto es una clara suposición dado la autoreferencia de la documentación y asumiendo ahorro en la circuitería. Aunque creo que podemos utilizar directamente la lut operand2 para ese caso. Siendo así de elogiar por no haber optado por realizar una combinación termonuclear y preferir la reutilización. El truco aquí es tener cuidado.
+
+Vemos que operand2 también considera valores fuera de sus 12 bits. (I, Rd). Sin embargo, la buena noticia es que ambos campos siguen coincidiendo aquí. Esto es un claro fruto de la ingeniería del diseño del chip eficiente. Y ahora el esfuerzo ha dado sus frutos y tenemos un camino más fácil de implementación. Esto sugiere que en el futuro será muy costoso mantener los cambios si decimos hacer la combi explosiva.
+
+Siendo que no tenemos que hacer ningún hack raro para reutilizar esta mecánica de solución. Esto tiene bastantes garantías, puesto a que el funcionamiento de operand2 ya fue probado suficientemente y además conocemos su funcionamiento (aunque sea vagamente y recordando la idea que hay detrás más que la exactitud)
