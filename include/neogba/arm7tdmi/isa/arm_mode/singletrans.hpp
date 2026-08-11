@@ -3,7 +3,8 @@
 
 namespace neogba {
 
-template <bool i, bool p, bool u, bool b, bool w, bool l, bool rd_pc = false>
+template <bool i = false, bool p = false, bool u = false, bool b = false, bool w = false,
+          bool l = false, bool rd_pc = false>
 void arm_singletrans_generator(arm7tdmi& cpu, u32 inst) {
   const auto r_base{ISA_ARM_SINGLETRANS_RN::get(inst)}, src_dst{ISA_ARM_SINGLETRANS_RD::get(inst)};
 
@@ -65,5 +66,11 @@ void arm_singletrans_generator(arm7tdmi& cpu, u32 inst) {
     cpu.bus->write(n_bits, addr, store_data);
   }
 }
+
+inline constexpr auto
+
+    arm_singletrans_i0_p0_u0_b0_w0_l0_rdpc0{arm_singletrans_generator<>},
+    arm_singletrans_i1_p0_u0_b0_w0_l0_rdpc0{arm_singletrans_generator<true>},
+    arm_singletrans_i0_p1_u0_b0_w0_l0_rdpc0{arm_singletrans_generator<false, true>};
 
 } // namespace neogba

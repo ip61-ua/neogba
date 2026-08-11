@@ -2046,3 +2046,50 @@ Seguimos con algunos más sencillo. Como saber si es carga o almacenamiento o un
 
 Podemos simplificar el código operadores ternarios en línea y ser compile time. Not every true por si acaso.
 Casos especiales rn = rd.
+
+Vale ya ya está implementado. Y tenemos otro problemita. Y es que tener 7 variables de plantilla, tenemos una posbilidad de 2^7 combinaciones a prestablecer. Lo cual resultaría en insertar a mano 128 funciones. Sin embargo, pensemos por un momento: típicamente una instrucción del modo ARM está compuesta por el campo condicional y no inmediatamente después el resto de sus campos necesarios. Es decir existe un hueco fijo de instrucciones. Que no servirán para absolutamente sino que solo sirva para su identificación. Pero no siempre es así. Puede ser que tengamos bits por medias de indentificación. Como mismamente halftrans. Bueno aunque puede ser bastante variable.
+
+Vale para la inserción no habrá problema alguno porque su pueda hacer con ifs. Pero a la hora de indexación y búsqueda del recurso esta práctica desembocaría en una muy grave penalización de rendimiento por predicción de condiciones.
+
+Pero que no tuvimos este problema antes? Pues sí, y aquí es donde entra la simplicación por karnaugh! La táctica es bien fácil.
+
+Lo que podemos hacer es en lugar una lut dentro de una lut, utilizar una e ir computando el índice por partes. La primera parte consistiría averiguar a qué tipo de instrucción es. Luego de ahí se obtiene un índice en función del tipo.
+
+Tenemos otro problema si optamos por no escribir a mano y es que perdemos calidad en los test por consistencia ya que no seríamos capaces de estar al 100% de que lo devuelto por la lut se corresponda a algo externo. Esto es que, no podemos hacer un mocking comparando punteros función.
+
+Aunque no obstante, creo que c++ tiene propiedad interesante con las funciones meta generadas. Y es que si bien es cierto que al insertar una función metagenerada con parámetros x en una lut, y luego volver a solicitar la ganeración de la misma función para el mock casero al menos con los mismos y exactos parámetros x debería ser el mismo puntero función. Lo cual tendría todo el sentido porque la función es una cuestión de código exacto para todas las veces que se llame y no tendría mucho sentido persistir en su sección de código dos copias de un código. A no ser que este tipo de cuestiones dependa del nivel de optimización, si utiliza un yield, una corutina asíncrona, o persiste en esta llamada la definición de la variables estáticas que deban ser persistidas entre llamadas.
+
+Eso sí, los parámetros de plantilla deberían ser conocidos en tiempo de compilación. porque lo cierto es que no en tiempo de ejecución es absolutamente indicarle al lenguaje el tipo. 
+
+Hagamos una prueba de concepto. Para ver si nuesto caso de uso de uso plantillas funciona tal y como debe.
+
+"""
+
+supón que estás en c++26 para gnu linux x86 utilizando g++ sin extensiones de vendor.
+
+
+
+tenemos una super plantilla que admite 4 variables de tipo booleano de plantilla (tparam).
+
+
+
+template<bool a, bool b, bool c, bool d> f(int codigo) {...}
+
+
+
+y nos interesa generar todas la combinaciones posibles de esa plantilla. Pero ojo, es demasiado como para hacerlo a mano... 
+
+De forma que la función f la utilizaremos a través de una lut como intermediario que en función del código decidirá si ejecutar con unos parámetros de plantilla u otros.
+
+Seamos francos, nos suda absolutamente como se llamen esas funciones finales. Lo importante es que aparecezcan bien insertadas en la lut.
+
+Para garantizar la calidad de nuestros testing desde la lut, buscamos hacer test del estilo en los que montamos un código y vemos que llame a función correctamente. Como una especie de mocking pero casero por simplificación. Desde sentido, 
+
+1. Si la lut almacena copias datos de la signatura (void f(\*)(int)) ¿es posible? ¿tendremos datos binarios de la función por duplicado? ¿o solo los punteros?
+2. ¿Es posible que si utilizando Google Test para C++ podamos comparar si la lut redirecciona bien recuperando su puntero función metagenerado de la lut y compararlo con la misma función vuelta a ser instanciada desde la plantilla con los mismos parámetros de esperados adhoc? En otras, ¿es cierto que mylut.get(0001) == f<false, false, false, true>? 
+
+"""
+
+Vamos a crear una test para la prueba de concepto.
+
+
