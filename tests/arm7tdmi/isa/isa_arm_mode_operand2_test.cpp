@@ -4,10 +4,11 @@
 
 using namespace neogba;
 using namespace arm_operand2;
+using namespace arm_fsr;
 
 struct operand2_test_param {
   u32 inst;
-  arm_operand2::op2_output (*caller)(arm7tdmi&, u32 inst);
+  operand2_output (*caller)(arm7tdmi&, u32 inst);
   u32 expected_result;
   u8 expected_carry_out;
   u8 initial_carry{0};
@@ -48,10 +49,8 @@ TEST_P(operand2_test_fixture, arm_fsr_operand2) {
   ASSERT_EQ(params.expected_result, op2.result);
   ASSERT_EQ(params.expected_carry_out, op2.carry_out);
   ASSERT_EQ(cpu->is_cpsr(arm7tdmi::C, arm7tdmi::C), static_cast<bool>(op2.carry_in));
-  ASSERT_EQ(params.caller, table.get(params.inst));
+  ASSERT_EQ(params.caller, operand2_table.get(params.inst));
 }
-
-using namespace arm_fsr;
 
 constexpr static u32 //
 

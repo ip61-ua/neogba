@@ -11,7 +11,7 @@ namespace neogba::arm_operand2 {
  *
  * @see arm_operand2_generator
  */
-struct op2_output {
+struct operand2_output {
   /** Computed Operand2 value that can be used as operand. */
   u32 result;
 
@@ -66,7 +66,7 @@ struct op2_output {
  */
 template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero = false,
           shift_enum shift_type = shift_enum::LSL>
-[[nodiscard]] op2_output generator(arm7tdmi& cpu, u32 inst) {
+[[nodiscard]] operand2_output operand2(arm7tdmi& cpu, u32 inst) {
   auto carry_out{static_cast<u8>((cpu.read_cpsr() & arm7tdmi::C) >> arm7tdmi::C_SHIFT)};
   auto carry_in{carry_out};
   u32 result;
@@ -174,31 +174,31 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero =
 }
 
 inline constexpr auto arm_fsr_operand2_i0_40_z1_LSL{
-    generator<false, false, false, true, shift_enum::LSL>};
+    operand2<false, false, false, true, shift_enum::LSL>};
 inline constexpr auto arm_fsr_operand2_i0_40_z1_LSR{
-    generator<false, false, false, true, shift_enum::LSR>};
+    operand2<false, false, false, true, shift_enum::LSR>};
 inline constexpr auto arm_fsr_operand2_i0_40_z1_ASR{
-    generator<false, false, false, true, shift_enum::ASR>};
+    operand2<false, false, false, true, shift_enum::ASR>};
 inline constexpr auto arm_fsr_operand2_i0_40_z1_ROR{
-    generator<false, false, false, true, shift_enum::ROR>};
+    operand2<false, false, false, true, shift_enum::ROR>};
 inline constexpr auto arm_fsr_operand2_i0_40_z0_LSL{
-    generator<false, false, false, false, shift_enum::LSL>};
+    operand2<false, false, false, false, shift_enum::LSL>};
 inline constexpr auto arm_fsr_operand2_i0_40_z0_LSR{
-    generator<false, false, false, false, shift_enum::LSR>};
+    operand2<false, false, false, false, shift_enum::LSR>};
 inline constexpr auto arm_fsr_operand2_i0_40_z0_ASR{
-    generator<false, false, false, false, shift_enum::ASR>};
+    operand2<false, false, false, false, shift_enum::ASR>};
 inline constexpr auto arm_fsr_operand2_i0_40_z0_ROR{
-    generator<false, false, false, false, shift_enum::ROR>};
+    operand2<false, false, false, false, shift_enum::ROR>};
 inline constexpr auto arm_fsr_operand2_i0_41_z0_LSL{
-    generator<false, false, true, false, shift_enum::LSL>};
+    operand2<false, false, true, false, shift_enum::LSL>};
 inline constexpr auto arm_fsr_operand2_i0_41_z0_LSR{
-    generator<false, false, true, false, shift_enum::LSR>};
+    operand2<false, false, true, false, shift_enum::LSR>};
 inline constexpr auto arm_fsr_operand2_i0_41_z0_ASR{
-    generator<false, false, true, false, shift_enum::ASR>};
+    operand2<false, false, true, false, shift_enum::ASR>};
 inline constexpr auto arm_fsr_operand2_i0_41_z0_ROR{
-    generator<false, false, true, false, shift_enum::ROR>};
-inline constexpr auto arm_fsr_operand2_i1_r1{generator<true, true>};
-inline constexpr auto arm_fsr_operand2_i1_r0{generator<true, false>};
+    operand2<false, false, true, false, shift_enum::ROR>};
+inline constexpr auto arm_fsr_operand2_i1_r1{operand2<true, true>};
+inline constexpr auto arm_fsr_operand2_i1_r0{operand2<true, false>};
 
 /**
  * @brief Compile-time lookup table for operand2 evaluators.
@@ -220,8 +220,8 @@ inline constexpr auto arm_fsr_operand2_i1_r0{generator<true, false>};
  * @see arm_operand2_generator
  * @see arm7tdmi
  */
-inline constexpr auto table = []() consteval {
-  lut<op2_output (*)(arm7tdmi&, u32), 1 << 4,
+inline constexpr auto operand2_table = []() consteval {
+  lut<operand2_output (*)(arm7tdmi&, u32), 1 << 4,
       +[](std::size_t idx) -> std::size_t {
         auto i{static_cast<bool>(arm_fsr::I::get_raw(idx))};
         auto b4{static_cast<bool>(B4::get_raw(idx))};

@@ -10,7 +10,7 @@ void generator(arm7tdmi& cpu, u32 inst) {
 
   u32 offset;
   if constexpr (i) {
-    offset = arm_operand2::table.invoke(inst, cpu, inst).result;
+    offset = arm_operand2::operand2_table.invoke(inst, cpu, inst).result;
   } else {
     offset = OFFSET::get(inst);
   }
