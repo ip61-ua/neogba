@@ -2,7 +2,7 @@
 #include "neogba/arm7tdmi/cpu.hpp"
 #include "neogba/arm7tdmi/isa/constants.hpp"
 
-namespace neogba {
+namespace neogba::arm_operand2 {
 /**
  * @brief Result of decoding and evaluating ARM operand2 field .
  *
@@ -11,7 +11,7 @@ namespace neogba {
  *
  * @see arm_operand2_generator
  */
-struct arm_operand2_result {
+struct op2_result {
   /** Computed Operand2 value that can be used as operand. */
   u32 result;
 
@@ -65,25 +65,25 @@ struct arm_operand2_result {
  * @see arm7tdmi
  */
 template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero = false,
-          arm_shift_type shift_type = arm_shift_type::LSL>
-[[nodiscard]] arm_operand2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
+          shift_enum shift_type = shift_enum::LSL>
+[[nodiscard]] op2_result arm_operand2_generator(arm7tdmi& cpu, u32 inst) {
   auto carry_out{static_cast<u8>((cpu.read_cpsr() & arm7tdmi::C) >> arm7tdmi::C_SHIFT)};
   auto carry_in{carry_out};
   u32 result;
 
   if constexpr (i) {
-    auto imm{ISA_ARM_FSR_OPERAND2_IMM::get(inst)};
+    auto imm{IMM::get(inst)};
 
     if constexpr (rotate_zero)
       result = imm;
     else {
-      auto rotate{2u * ISA_ARM_FSR_OPERAND2_ROTATE::get(inst)};
+      auto rotate{2u * ROTATE::get(inst)};
       result = std::rotr(imm, rotate);
       carry_out = (result >> 31) & 1;
     }
   } else {
 
-    auto rm_idx{ISA_ARM_FSR_OPERAND2_RM::get(inst)};
+    auto rm_idx{RM::get(inst)};
     auto rm{cpu.read_active_register(rm_idx)};
     // auto shift_type{ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(inst)};
     // auto four{ISA_ARM_FSR_OPERAND2_4::get(inst)};
@@ -91,20 +91,20 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero =
     constexpr bool is_special_case{!bit4 && shift_zero};
 
     if constexpr (is_special_case) {
-      if constexpr (shift_type == arm_shift_type::LSL) {
+      if constexpr (shift_type == shift_enum::LSL) {
         result = rm;
 
-      } else if constexpr (shift_type == arm_shift_type::LSR) {
+      } else if constexpr (shift_type == shift_enum::LSR) {
         // shift_amount = 32; // LSR #0 = LSR #32
         result = 0;
         carry_out = (rm >> 31) & 1;
 
-      } else if constexpr (shift_type == arm_shift_type::ASR) {
+      } else if constexpr (shift_type == shift_enum::ASR) {
         // shift_amount = 32; //  ASR #0
         result = static_cast<u32>(static_cast<i32>(rm) >> 31);
         carry_out = (rm >> 31) & 1;
 
-      } else if constexpr (shift_type == arm_shift_type::ROR) {
+      } else if constexpr (shift_type == shift_enum::ROR) {
         // RRX: Rotate 1 bit and include Cin.
         result = (carry_in << 31) | (rm >> 1);
         carry_out = rm & 1;
@@ -114,16 +114,16 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero =
       // esto no importa al caso especial complemente, por lo que lo podemos atrasar hasta aquí.
       u32 shift_amount;
       if constexpr (bit4) {
-        shift_amount = cpu.read_active_register(ISA_ARM_FSR_OPERAND2_RS::get(inst)) & 0xff;
+        shift_amount = cpu.read_active_register(RS::get(inst)) & 0xff;
         if (shift_amount == 0)
           return {rm, carry_out, carry_in};
       } else {
-        shift_amount = ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(inst);
+        shift_amount = SHIFT_AMOU::get(inst);
         // este jamás será cero porque ya lo fue y tiene 5 bits!
       }
 
       // aunque esto sea un if, lo cierto es que es común a todos y adelantamos la salida.
-      if constexpr (shift_type == arm_shift_type::LSL) {
+      if constexpr (shift_type == shift_enum::LSL) {
         if constexpr (bit4) {
           if (shift_amount > 32)
             return {0, 0, carry_in};
@@ -135,7 +135,7 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero =
         carry_out = (rm >> (32 - shift_amount)) & 1;
         result = rm << shift_amount;
 
-      } else if constexpr (shift_type == arm_shift_type::LSR) {
+      } else if constexpr (shift_type == shift_enum::LSR) {
         if constexpr (bit4) {
           if (shift_amount > 32)
             return {0, 0, carry_in};
@@ -147,7 +147,7 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero =
         result = rm >> shift_amount;
         carry_out = (rm >> (shift_amount - 1)) & 1;
 
-      } else if constexpr (shift_type == arm_shift_type::ASR) {
+      } else if constexpr (shift_type == shift_enum::ASR) {
         if constexpr (bit4) {
           if (shift_amount >= 32)
             return {static_cast<u32>(static_cast<i32>(rm) >> 31), static_cast<u8>((rm >> 31) & 1),
@@ -157,7 +157,7 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero =
         result = static_cast<u32>(static_cast<i32>(rm) >> shift_amount);
         carry_out = (rm >> (shift_amount - 1)) & 1;
 
-      } else if constexpr (shift_type == arm_shift_type::ROR) {
+      } else if constexpr (shift_type == shift_enum::ROR) {
 
         auto masked_shift{shift_amount & 0x1f};
         if constexpr (bit4) {
@@ -174,29 +174,29 @@ template <bool i, bool rotate_zero = false, bool bit4 = false, bool shift_zero =
 }
 
 inline constexpr auto arm_fsr_operand2_i0_40_z1_LSL{
-    arm_operand2_generator<false, false, false, true, arm_shift_type::LSL>};
+    arm_operand2_generator<false, false, false, true, shift_enum::LSL>};
 inline constexpr auto arm_fsr_operand2_i0_40_z1_LSR{
-    arm_operand2_generator<false, false, false, true, arm_shift_type::LSR>};
+    arm_operand2_generator<false, false, false, true, shift_enum::LSR>};
 inline constexpr auto arm_fsr_operand2_i0_40_z1_ASR{
-    arm_operand2_generator<false, false, false, true, arm_shift_type::ASR>};
+    arm_operand2_generator<false, false, false, true, shift_enum::ASR>};
 inline constexpr auto arm_fsr_operand2_i0_40_z1_ROR{
-    arm_operand2_generator<false, false, false, true, arm_shift_type::ROR>};
+    arm_operand2_generator<false, false, false, true, shift_enum::ROR>};
 inline constexpr auto arm_fsr_operand2_i0_40_z0_LSL{
-    arm_operand2_generator<false, false, false, false, arm_shift_type::LSL>};
+    arm_operand2_generator<false, false, false, false, shift_enum::LSL>};
 inline constexpr auto arm_fsr_operand2_i0_40_z0_LSR{
-    arm_operand2_generator<false, false, false, false, arm_shift_type::LSR>};
+    arm_operand2_generator<false, false, false, false, shift_enum::LSR>};
 inline constexpr auto arm_fsr_operand2_i0_40_z0_ASR{
-    arm_operand2_generator<false, false, false, false, arm_shift_type::ASR>};
+    arm_operand2_generator<false, false, false, false, shift_enum::ASR>};
 inline constexpr auto arm_fsr_operand2_i0_40_z0_ROR{
-    arm_operand2_generator<false, false, false, false, arm_shift_type::ROR>};
+    arm_operand2_generator<false, false, false, false, shift_enum::ROR>};
 inline constexpr auto arm_fsr_operand2_i0_41_z0_LSL{
-    arm_operand2_generator<false, false, true, false, arm_shift_type::LSL>};
+    arm_operand2_generator<false, false, true, false, shift_enum::LSL>};
 inline constexpr auto arm_fsr_operand2_i0_41_z0_LSR{
-    arm_operand2_generator<false, false, true, false, arm_shift_type::LSR>};
+    arm_operand2_generator<false, false, true, false, shift_enum::LSR>};
 inline constexpr auto arm_fsr_operand2_i0_41_z0_ASR{
-    arm_operand2_generator<false, false, true, false, arm_shift_type::ASR>};
+    arm_operand2_generator<false, false, true, false, shift_enum::ASR>};
 inline constexpr auto arm_fsr_operand2_i0_41_z0_ROR{
-    arm_operand2_generator<false, false, true, false, arm_shift_type::ROR>};
+    arm_operand2_generator<false, false, true, false, shift_enum::ROR>};
 inline constexpr auto arm_fsr_operand2_i1_r1{arm_operand2_generator<true, true>};
 inline constexpr auto arm_fsr_operand2_i1_r0{arm_operand2_generator<true, false>};
 
@@ -220,15 +220,15 @@ inline constexpr auto arm_fsr_operand2_i1_r0{arm_operand2_generator<true, false>
  * @see arm_operand2_generator
  * @see arm7tdmi
  */
-inline constexpr auto arm_fsr_operand2_lut = []() consteval {
-  lut<arm_operand2_result (*)(arm7tdmi&, u32), 1 << 4,
+inline constexpr auto op2_lut = []() consteval {
+  lut<op2_result (*)(arm7tdmi&, u32), 1 << 4,
       +[](std::size_t idx) -> std::size_t {
-        auto i{static_cast<bool>(ISA_ARM_FSR_I::get_raw(idx))};
-        auto b4{static_cast<bool>(ISA_ARM_FSR_OPERAND2_4::get_raw(idx))};
-        auto t0{static_cast<bool>(ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(idx) & 0x1)};
-        auto t1{static_cast<bool>((ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::get(idx) & 0x2) >> 1)};
-        auto s_not_0{(ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::get(idx)) != 0};
-        auto r_not_0{(ISA_ARM_FSR_OPERAND2_ROTATE::get(idx)) != 0};
+        auto i{static_cast<bool>(arm_fsr::I::get_raw(idx))};
+        auto b4{static_cast<bool>(B4::get_raw(idx))};
+        auto t0{static_cast<bool>(SHIFT_TYPE::get(idx) & 0x1)};
+        auto t1{static_cast<bool>((SHIFT_TYPE::get(idx) & 0x2) >> 1)};
+        auto s_not_0{(SHIFT_AMOU::get(idx)) != 0};
+        auto r_not_0{(ROTATE::get(idx)) != 0};
 
         auto n3{static_cast<u8>(i | b4)};
         auto n2{static_cast<u8>(i | (!b4 & s_not_0))};
@@ -256,4 +256,4 @@ inline constexpr auto arm_fsr_operand2_lut = []() consteval {
 
   return table;
 }();
-} // namespace neogba
+} // namespace neogba::arm_operand2
