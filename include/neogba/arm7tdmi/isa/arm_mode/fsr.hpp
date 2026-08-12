@@ -2,7 +2,7 @@
 #include "neogba/arm7tdmi/isa/arm_mode/operand2.hpp"
 #include <utility>
 
-namespace neogba {
+namespace neogba::arm_fsr {
 /**
  * @brief Executes a compile-time specialized ARM data-processing instruction.
  *
@@ -43,60 +43,60 @@ namespace neogba {
  * @see arm_fsr_opcode
  * @see arm7tdmi
  */
-template <arm_fsr_opcode opcode, bool s = false, bool rd_pc = false>
-void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
+template <opcode_enum opcode, bool s = false, bool rd_pc = false>
+void generator(arm7tdmi& cpu, u32 inst) {
   // Meta template variables
-  constexpr auto is_logical{opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::EOR ||
-                            opcode == arm_fsr_opcode::TST || opcode == arm_fsr_opcode::TEQ ||
-                            opcode == arm_fsr_opcode::ORR || opcode == arm_fsr_opcode::MOV ||
-                            opcode == arm_fsr_opcode::BIC || opcode == arm_fsr_opcode::MVN};
-  constexpr auto can_write_rd{!(opcode == arm_fsr_opcode::TST || opcode == arm_fsr_opcode::TEQ ||
-                                opcode == arm_fsr_opcode::CMP || opcode == arm_fsr_opcode::CMN)};
-  constexpr auto is_inverted_sub{opcode == arm_fsr_opcode::RSB || opcode == arm_fsr_opcode::RSC};
-  constexpr auto is_not_move{opcode != arm_fsr_opcode::MOV && opcode != arm_fsr_opcode::MVN};
-  constexpr auto is_sum{opcode == arm_fsr_opcode::ADD or opcode == arm_fsr_opcode::ADC or
-                        opcode == arm_fsr_opcode::CMN};
+  constexpr auto is_logical{opcode == opcode_enum::AND or opcode == opcode_enum::EOR or
+                            opcode == opcode_enum::TST or opcode == opcode_enum::TEQ or
+                            opcode == opcode_enum::ORR or opcode == opcode_enum::MOV or
+                            opcode == opcode_enum::BIC or opcode == opcode_enum::MVN};
+  constexpr auto can_write_rd{!(opcode == opcode_enum::TST or opcode == opcode_enum::TEQ or
+                                opcode == opcode_enum::CMP or opcode == opcode_enum::CMN)};
+  constexpr auto is_inverted_sub{opcode == opcode_enum::RSB or opcode == opcode_enum::RSC};
+  constexpr auto is_not_move{opcode != opcode_enum::MOV and opcode != opcode_enum::MVN};
+  constexpr auto is_sum{opcode == opcode_enum::ADD or opcode == opcode_enum::ADC or
+                        opcode == opcode_enum::CMN};
 
   // Retrieve values
   u8 rd_idx;
   u32 op1;
   u64 res;
-  auto rn_idx{ISA_ARM_FSR_RN::get(inst)};
+  auto rn_idx{RN::get(inst)};
 
   if constexpr (rd_pc)
     rd_idx = 0xfu;
   else
-    rd_idx = ISA_ARM_FSR_RD::get(inst);
+    rd_idx = RD::get(inst);
 
   if constexpr (is_not_move)
     op1 = cpu.read_active_register(rn_idx);
 
-  auto op2{arm_fsr_operand2_lut.invoke(inst, cpu, inst)};
+  auto op2{arm_operand2::table.invoke(inst, cpu, inst)};
 
   if constexpr (is_inverted_sub)
     std::swap(op1, op2.result);
 
   // Perform operation
-  if constexpr (opcode == arm_fsr_opcode::AND || opcode == arm_fsr_opcode::TST)
+  if constexpr (opcode == opcode_enum::AND or opcode == opcode_enum::TST)
     res = op1 & op2.result;
-  else if constexpr (opcode == arm_fsr_opcode::EOR || opcode == arm_fsr_opcode::TEQ)
+  else if constexpr (opcode == opcode_enum::EOR or opcode == opcode_enum::TEQ)
     res = op1 ^ op2.result;
-  else if constexpr (opcode == arm_fsr_opcode::SUB || opcode == arm_fsr_opcode::CMP ||
-                     opcode == arm_fsr_opcode::RSB)
+  else if constexpr (opcode == opcode_enum::SUB or opcode == opcode_enum::CMP or
+                     opcode == opcode_enum::RSB)
     res = static_cast<u64>(op1) - op2.result;
-  else if constexpr (opcode == arm_fsr_opcode::ADD || opcode == arm_fsr_opcode::CMN)
+  else if constexpr (opcode == opcode_enum::ADD or opcode == opcode_enum::CMN)
     res = static_cast<u64>(op1) + op2.result;
-  else if constexpr (opcode == arm_fsr_opcode::ADC)
+  else if constexpr (opcode == opcode_enum::ADC)
     res = static_cast<u64>(op1) + op2.result + op2.carry_in;
-  else if constexpr (opcode == arm_fsr_opcode::SBC || opcode == arm_fsr_opcode::RSC)
+  else if constexpr (opcode == opcode_enum::SBC or opcode == opcode_enum::RSC)
     res = static_cast<u64>(op1) - op2.result + op2.carry_in - 1;
-  else if constexpr (opcode == arm_fsr_opcode::ORR)
+  else if constexpr (opcode == opcode_enum::ORR)
     res = op1 | op2.result;
-  else if constexpr (opcode == arm_fsr_opcode::MOV)
+  else if constexpr (opcode == opcode_enum::MOV)
     res = op2.result;
-  else if constexpr (opcode == arm_fsr_opcode::BIC)
+  else if constexpr (opcode == opcode_enum::BIC)
     res = op1 & ~op2.result;
-  else if constexpr (opcode == arm_fsr_opcode::MVN)
+  else if constexpr (opcode == opcode_enum::MVN)
     res = ~op2.result;
 
   // write back the result
@@ -142,60 +142,60 @@ void arm_fsr_generator(arm7tdmi& cpu, u32 inst) {
 
 inline constexpr auto
 
-    arm_fsr_AND_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::AND>},
-    arm_fsr_EOR_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::EOR>},
-    arm_fsr_SUB_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::SUB>},
-    arm_fsr_RSB_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::RSB>},
-    arm_fsr_ADD_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::ADD>},
-    arm_fsr_ADC_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::ADC>},
-    arm_fsr_SBC_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::SBC>},
-    arm_fsr_RSC_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::RSC>},
-    arm_fsr_ORR_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::ORR>},
-    arm_fsr_MOV_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::MOV>},
-    arm_fsr_BIC_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::BIC>},
-    arm_fsr_MVN_notS_notRdPC{arm_fsr_generator<arm_fsr_opcode::MVN>},
-    arm_fsr_AND_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::AND, true>},
-    arm_fsr_EOR_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::EOR, true>},
-    arm_fsr_SUB_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::SUB, true>},
-    arm_fsr_RSB_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::RSB, true>},
-    arm_fsr_ADD_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::ADD, true>},
-    arm_fsr_ADC_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::ADC, true>},
-    arm_fsr_SBC_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::SBC, true>},
-    arm_fsr_RSC_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::RSC, true>},
-    arm_fsr_ORR_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::ORR, true>},
-    arm_fsr_MOV_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::MOV, true>},
-    arm_fsr_BIC_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::BIC, true>},
-    arm_fsr_MVN_S_notRdPC{arm_fsr_generator<arm_fsr_opcode::MVN, true>},
-    arm_fsr_AND_S_RdPC{arm_fsr_generator<arm_fsr_opcode::AND, true, true>},
-    arm_fsr_EOR_S_RdPC{arm_fsr_generator<arm_fsr_opcode::EOR, true, true>},
-    arm_fsr_SUB_S_RdPC{arm_fsr_generator<arm_fsr_opcode::SUB, true, true>},
-    arm_fsr_RSB_S_RdPC{arm_fsr_generator<arm_fsr_opcode::RSB, true, true>},
-    arm_fsr_ADD_S_RdPC{arm_fsr_generator<arm_fsr_opcode::ADD, true, true>},
-    arm_fsr_ADC_S_RdPC{arm_fsr_generator<arm_fsr_opcode::ADC, true, true>},
-    arm_fsr_SBC_S_RdPC{arm_fsr_generator<arm_fsr_opcode::SBC, true, true>},
-    arm_fsr_RSC_S_RdPC{arm_fsr_generator<arm_fsr_opcode::RSC, true, true>},
-    arm_fsr_ORR_S_RdPC{arm_fsr_generator<arm_fsr_opcode::ORR, true, true>},
-    arm_fsr_MOV_S_RdPC{arm_fsr_generator<arm_fsr_opcode::MOV, true, true>},
-    arm_fsr_BIC_S_RdPC{arm_fsr_generator<arm_fsr_opcode::BIC, true, true>},
-    arm_fsr_MVN_S_RdPC{arm_fsr_generator<arm_fsr_opcode::MVN, true, true>},
-    arm_fsr_AND_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::AND, false, true>},
-    arm_fsr_EOR_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::EOR, false, true>},
-    arm_fsr_SUB_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::SUB, false, true>},
-    arm_fsr_RSB_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::RSB, false, true>},
-    arm_fsr_ADD_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::ADD, false, true>},
-    arm_fsr_ADC_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::ADC, false, true>},
-    arm_fsr_SBC_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::SBC, false, true>},
-    arm_fsr_RSC_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::RSC, false, true>},
-    arm_fsr_ORR_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::ORR, false, true>},
-    arm_fsr_MOV_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::MOV, false, true>},
-    arm_fsr_BIC_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::BIC, false, true>},
-    arm_fsr_MVN_notS_RdPC{arm_fsr_generator<arm_fsr_opcode::MVN, false, true>},
-    arm_fsr_TST_notRdPC{arm_fsr_generator<arm_fsr_opcode::TST, true>},
-    arm_fsr_TEQ_notRdPC{arm_fsr_generator<arm_fsr_opcode::TEQ, true>},
-    arm_fsr_CMP_notRdPC{arm_fsr_generator<arm_fsr_opcode::CMP, true>},
-    arm_fsr_CMN_notRdPC{arm_fsr_generator<arm_fsr_opcode::CMN, true>},
-    arm_fsr_TST_RdPC{arm_fsr_generator<arm_fsr_opcode::TST, true, true>},
-    arm_fsr_TEQ_RdPC{arm_fsr_generator<arm_fsr_opcode::TEQ, true, true>},
-    arm_fsr_CMP_RdPC{arm_fsr_generator<arm_fsr_opcode::CMP, true, true>},
-    arm_fsr_CMN_RdPC{arm_fsr_generator<arm_fsr_opcode::CMN, true, true>};
-} // namespace neogba
+    arm_fsr_AND_notS_notRdPC{generator<opcode_enum::AND>},
+    arm_fsr_EOR_notS_notRdPC{generator<opcode_enum::EOR>},
+    arm_fsr_SUB_notS_notRdPC{generator<opcode_enum::SUB>},
+    arm_fsr_RSB_notS_notRdPC{generator<opcode_enum::RSB>},
+    arm_fsr_ADD_notS_notRdPC{generator<opcode_enum::ADD>},
+    arm_fsr_ADC_notS_notRdPC{generator<opcode_enum::ADC>},
+    arm_fsr_SBC_notS_notRdPC{generator<opcode_enum::SBC>},
+    arm_fsr_RSC_notS_notRdPC{generator<opcode_enum::RSC>},
+    arm_fsr_ORR_notS_notRdPC{generator<opcode_enum::ORR>},
+    arm_fsr_MOV_notS_notRdPC{generator<opcode_enum::MOV>},
+    arm_fsr_BIC_notS_notRdPC{generator<opcode_enum::BIC>},
+    arm_fsr_MVN_notS_notRdPC{generator<opcode_enum::MVN>},
+    arm_fsr_AND_S_notRdPC{generator<opcode_enum::AND, true>},
+    arm_fsr_EOR_S_notRdPC{generator<opcode_enum::EOR, true>},
+    arm_fsr_SUB_S_notRdPC{generator<opcode_enum::SUB, true>},
+    arm_fsr_RSB_S_notRdPC{generator<opcode_enum::RSB, true>},
+    arm_fsr_ADD_S_notRdPC{generator<opcode_enum::ADD, true>},
+    arm_fsr_ADC_S_notRdPC{generator<opcode_enum::ADC, true>},
+    arm_fsr_SBC_S_notRdPC{generator<opcode_enum::SBC, true>},
+    arm_fsr_RSC_S_notRdPC{generator<opcode_enum::RSC, true>},
+    arm_fsr_ORR_S_notRdPC{generator<opcode_enum::ORR, true>},
+    arm_fsr_MOV_S_notRdPC{generator<opcode_enum::MOV, true>},
+    arm_fsr_BIC_S_notRdPC{generator<opcode_enum::BIC, true>},
+    arm_fsr_MVN_S_notRdPC{generator<opcode_enum::MVN, true>},
+    arm_fsr_AND_S_RdPC{generator<opcode_enum::AND, true, true>},
+    arm_fsr_EOR_S_RdPC{generator<opcode_enum::EOR, true, true>},
+    arm_fsr_SUB_S_RdPC{generator<opcode_enum::SUB, true, true>},
+    arm_fsr_RSB_S_RdPC{generator<opcode_enum::RSB, true, true>},
+    arm_fsr_ADD_S_RdPC{generator<opcode_enum::ADD, true, true>},
+    arm_fsr_ADC_S_RdPC{generator<opcode_enum::ADC, true, true>},
+    arm_fsr_SBC_S_RdPC{generator<opcode_enum::SBC, true, true>},
+    arm_fsr_RSC_S_RdPC{generator<opcode_enum::RSC, true, true>},
+    arm_fsr_ORR_S_RdPC{generator<opcode_enum::ORR, true, true>},
+    arm_fsr_MOV_S_RdPC{generator<opcode_enum::MOV, true, true>},
+    arm_fsr_BIC_S_RdPC{generator<opcode_enum::BIC, true, true>},
+    arm_fsr_MVN_S_RdPC{generator<opcode_enum::MVN, true, true>},
+    arm_fsr_AND_notS_RdPC{generator<opcode_enum::AND, false, true>},
+    arm_fsr_EOR_notS_RdPC{generator<opcode_enum::EOR, false, true>},
+    arm_fsr_SUB_notS_RdPC{generator<opcode_enum::SUB, false, true>},
+    arm_fsr_RSB_notS_RdPC{generator<opcode_enum::RSB, false, true>},
+    arm_fsr_ADD_notS_RdPC{generator<opcode_enum::ADD, false, true>},
+    arm_fsr_ADC_notS_RdPC{generator<opcode_enum::ADC, false, true>},
+    arm_fsr_SBC_notS_RdPC{generator<opcode_enum::SBC, false, true>},
+    arm_fsr_RSC_notS_RdPC{generator<opcode_enum::RSC, false, true>},
+    arm_fsr_ORR_notS_RdPC{generator<opcode_enum::ORR, false, true>},
+    arm_fsr_MOV_notS_RdPC{generator<opcode_enum::MOV, false, true>},
+    arm_fsr_BIC_notS_RdPC{generator<opcode_enum::BIC, false, true>},
+    arm_fsr_MVN_notS_RdPC{generator<opcode_enum::MVN, false, true>},
+    arm_fsr_TST_notRdPC{generator<opcode_enum::TST, true>},
+    arm_fsr_TEQ_notRdPC{generator<opcode_enum::TEQ, true>},
+    arm_fsr_CMP_notRdPC{generator<opcode_enum::CMP, true>},
+    arm_fsr_CMN_notRdPC{generator<opcode_enum::CMN, true>},
+    arm_fsr_TST_RdPC{generator<opcode_enum::TST, true, true>},
+    arm_fsr_TEQ_RdPC{generator<opcode_enum::TEQ, true, true>},
+    arm_fsr_CMP_RdPC{generator<opcode_enum::CMP, true, true>},
+    arm_fsr_CMN_RdPC{generator<opcode_enum::CMN, true, true>};
+} // namespace neogba::arm_fsr

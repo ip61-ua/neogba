@@ -302,8 +302,6 @@ struct field_split : field<instruction_t, return_t, n_shift, bit_mask> {
   [[nodiscard]] static inline constexpr ins_t operator()(ret_t value) { return set_high(value); }
 
   // only mask
-  [[nodiscard]] static inline constexpr ins_t operator()() {
-    return ((-1) & (mask2)) | (((-1) << join) & field_split::mask);
-  }
+  [[nodiscard]] static inline constexpr ins_t operator()() { return mask2 | field_split::mask; }
 };
 } // namespace neogba

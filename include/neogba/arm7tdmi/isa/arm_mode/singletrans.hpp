@@ -1,12 +1,12 @@
 #pragma once
-#include "neogba/arm7tdmi/isa/arm_mode/operand2.hpp" // lol
+#include "neogba/arm7tdmi/isa/arm_mode/operand2.hpp"
 
-namespace neogba {
+namespace neogba::singletrans {
 
 template <bool i = false, bool p = false, bool u = false, bool b = false, bool w = false,
           bool l = false, bool rd_pc = false>
 void arm_singletrans_generator(arm7tdmi& cpu, u32 inst) {
-  const auto r_base{ISA_ARM_SINGLETRANS_RN::get(inst)}, src_dst{ISA_ARM_SINGLETRANS_RD::get(inst)};
+  const auto r_base{RN::get(inst)}, src_dst{ISA_ARM_SINGLETRANS_RD::get(inst)};
 
   u32 offset;
   if constexpr (i) {
@@ -73,4 +73,4 @@ inline constexpr auto
     arm_singletrans_i1_p0_u0_b0_w0_l0_rdpc0{arm_singletrans_generator<true>},
     arm_singletrans_i0_p1_u0_b0_w0_l0_rdpc0{arm_singletrans_generator<false, true>};
 
-} // namespace neogba
+} // namespace neogba::singletrans
