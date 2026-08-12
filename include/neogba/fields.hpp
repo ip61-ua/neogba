@@ -24,6 +24,7 @@ struct field {
   using alt_ret_t = alternative_return_t;
   static constexpr u8 shift{n_shift};
   static constexpr ins_t mask{bit_mask};
+  static constexpr ins_t H{mask};
 
   /**
    * @brief Extracts the field value from an instruction.
@@ -56,6 +57,8 @@ struct field {
     }
   }
 
+  [[nodiscard]] static inline constexpr ins_t set_high() { return H; }
+
   /**
    * @brief Adds binary ones the field value within an instruction.
    *
@@ -76,37 +79,12 @@ struct field {
     }
   }
 
-  // operator overloading
-
-  // get
-  [[nodiscard]] static inline constexpr ret_t operator()(ins_t instruction)
-    requires(not std::same_as<ins_t, ret_t> and not std::same_as<ins_t, alt_ret_t>)
-  {
-    return get(instruction);
-  }
-
-  // set
-  [[nodiscard]] static inline constexpr ins_t operator()(ins_t instruction, ret_t value) {
-    return set(instruction, value);
-  }
-
-  [[nodiscard]] static inline constexpr ins_t operator()(ins_t instruction, alt_ret_t value)
-    requires(not std::same_as<alt_ret_t, ret_t>)
-  {
-    return set(instruction, value);
-  }
-
-  // set_high
-  [[nodiscard]] static inline constexpr ins_t operator()(ret_t value) { return set_high(value); }
-
-  [[nodiscard]] static inline constexpr ins_t operator()(alt_ret_t value)
+  [[nodiscard]] static inline constexpr ins_t h(ret_t value) { return set_high(value); }
+  [[nodiscard]] static inline constexpr ins_t h(alt_ret_t value)
     requires(not std::same_as<alt_ret_t, ret_t>)
   {
     return set_high(value);
   }
-
-  // only mask
-  [[nodiscard]] static inline constexpr ins_t operator()() { return mask; }
 };
 
 /**
@@ -204,28 +182,6 @@ struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
   [[nodiscard]] static constexpr ins_t toggle(ins_t instruction) {
     return instruction ^ field_bool::mask;
   }
-
-  /**
-   * @brief Adds binary one in the field value within an instruction.
-   *
-   * @return That bit shifted and masked.
-   */
-  [[nodiscard]] static inline constexpr ins_t set_high() { return field_bool::mask; }
-
-  [[nodiscard]]
-  static inline constexpr ins_t operator()() {
-    return set_high();
-  }
-
-  [[nodiscard]]
-  static inline constexpr bool operator()(ins_t instruction) {
-    return get(instruction);
-  }
-
-  [[nodiscard]]
-  static inline constexpr ins_t operator()(ins_t instruction, bool value) {
-    return set(instruction, value);
-  }
 };
 
 /**
@@ -252,7 +208,8 @@ struct field_split : field<instruction_t, return_t, n_shift, bit_mask> {
   using ins_t = instruction_t;
 
   static constexpr u8 join{join_shift};
-  static constexpr instruction_t mask2{bit_mask2};
+  static constexpr ins_t mask2{bit_mask2};
+  static constexpr ins_t H{mask2 | field_split::mask};
 
   /**
    * @brief Extracts the combined field value.
@@ -286,22 +243,11 @@ struct field_split : field<instruction_t, return_t, n_shift, bit_mask> {
   [[nodiscard]] static inline constexpr ins_t set_high(ret_t value) {
     return ((value) & (mask2)) | ((value << join) & field_split::mask);
   }
-
-  // get
-  [[nodiscard]] static inline constexpr ret_t operator()(ins_t instruction)
-    requires(not std::same_as<ins_t, ret_t>)
-  {
-    return get(instruction);
+  [[nodiscard]] static inline constexpr ins_t h(ret_t value) {
+    return field_split::set_high(value);
   }
-
-  // set
-  [[nodiscard]] static inline constexpr ins_t operator()(ins_t instruction, ret_t value) {
-    return set(instruction, value);
-  }
-  // set_high
-  [[nodiscard]] static inline constexpr ins_t operator()(ret_t value) { return set_high(value); }
 
   // only mask
-  [[nodiscard]] static inline constexpr ins_t operator()() { return mask2 | field_split::mask; }
+  [[nodiscard]] static inline constexpr ins_t set_high() { return field_split::H; }
 };
 } // namespace neogba
