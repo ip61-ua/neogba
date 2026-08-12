@@ -4,7 +4,8 @@
 namespace neogba {
 
 /// ARM
-enum class arm_cond : u8 {
+namespace cond {
+enum class cond_enum : u8 {
   EQ = 0b0000,
   NE = 0b0001,
   HSCS = 0b0010,
@@ -22,11 +23,12 @@ enum class arm_cond : u8 {
   AL = 0b1110,
   NV = 0b1111,
 };
-
-using ISA_ARM_COND = field_delayed<u32, u8, 28, 0xfu, arm_cond>;
+using ISA_ARM_COND = field_delayed<u32, u8, 28, 0xfu, cond_enum>;
+} // namespace cond
 
 /// Data processing and FSR transfer
-enum class arm_fsr_opcode : u8 {
+namespace fsr {
+enum class opcode_enum : u8 {
   AND = 0b0000,
   EOR = 0b0001,
   SUB = 0b0010,
@@ -44,19 +46,9 @@ enum class arm_fsr_opcode : u8 {
   BIC = 0b1110,
   MVN = 0b1111,
 };
-
-enum class arm_shift_type : u8 {
-  LSL = 0b00,
-  LSR = 0b01,
-  ASR = 0b10,
-  ROR = 0b11,
-};
-
-/// FSR
-namespace fsr {
 constexpr u32 TEMPLATE{0x00000000u};
 using I = /*         */ field_bool<u32, 25>;
-using OPCODE = /*    */ field_delayed<u32, u8, 21, 0xfu, arm_fsr_opcode>;
+using OPCODE = /*    */ field_delayed<u32, u8, 21, 0xfu, opcode_enum>;
 using S = /*         */ field_bool<u32, 20>;
 using RN = /*        */ field_delayed<u32, u8, 16>;
 using RD = /*        */ field_delayed<u32, u8, 12>;
@@ -64,9 +56,15 @@ using OPERAND2 = /*  */ field<u32, u16, 0, ((1u << 12) - 1)>;
 } // namespace fsr
 
 namespace operand2 {
+enum class shift_enum : u8 {
+  LSL = 0b00,
+  LSR = 0b01,
+  ASR = 0b10,
+  ROR = 0b11,
+};
 using SHIFT = /*     */ field_delayed<u32, u16, 4, 0xffu>;
 using B4 = /*        */ field_bool<u32, 4>;
-using SHIFT_TYPE = /**/ field_delayed<u32, u8, 5, 0x3u, arm_shift_type>;
+using SHIFT_TYPE = /**/ field_delayed<u32, u8, 5, 0x3u, shift_enum>;
 using SHIFT_AMOU = /**/ field_delayed<u32, u8, 7, 0x1fu>;
 using RS = /*        */ field_delayed<u32, u8, 8>;
 using RM = /*        */ field<u32, u8, 0>;
@@ -163,13 +161,13 @@ constexpr u32 TEMPLATE{0x06000010u};
 /// Block data transfer
 namespace blocktrans {
 constexpr u32 TEMPLATE{0x09000000u};
-using P = /*           */ halfimm::P;
-using U = /*           */ halfimm::U;
-using S = /*           */ singleswap::B;
-using W = /*           */ halfimm::W;
-using L = /*           */ halfimm::L;
-using RN = /*          */ halfimm::RN;
-using REGISTERLIST = /**/ field<u32, u16, 0, 0xffffu>;
+using P = /*         */ halfimm::P;
+using U = /*         */ halfimm::U;
+using S = /*         */ singleswap::B;
+using W = /*         */ halfimm::W;
+using L = /*         */ halfimm::L;
+using RN = /*        */ halfimm::RN;
+using REGLIST = /*   */ field<u32, u16, 0, 0xffffu>;
 } // namespace blocktrans
 
 /// Branch
