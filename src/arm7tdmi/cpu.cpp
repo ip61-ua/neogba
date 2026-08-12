@@ -17,40 +17,41 @@ void arm7tdmi::set_mode(u8 mode, bool update_cpsr) {
 }
 
 bool arm7tdmi::ckeck_arm_condition(u32 instruction) const {
-  auto cond = static_cast<arm_cond>(ISA_ARM_COND::get(instruction)); // lol
+  using namespace arm_cond;
+  auto cond = static_cast<cond_enum>(COND::get(instruction)); // lol
 
   switch (cond) {
-  case arm_cond::EQ:
+  case cond_enum::EQ:
     return this->is_cpsr(Z, Z);
-  case arm_cond::NE:
+  case cond_enum::NE:
     return this->is_cpsr(Z, 0);
-  case arm_cond::HSCS:
+  case cond_enum::HSCS:
     return this->is_cpsr(C, C);
-  case arm_cond::LOCC:
+  case cond_enum::LOCC:
     return this->is_cpsr(C, 0);
-  case arm_cond::MI:
+  case cond_enum::MI:
     return this->is_cpsr(N, N);
-  case arm_cond::PL:
+  case cond_enum::PL:
     return this->is_cpsr(N, 0);
-  case arm_cond::VS:
+  case cond_enum::VS:
     return this->is_cpsr(V, V);
-  case arm_cond::VC:
+  case cond_enum::VC:
     return this->is_cpsr(V, 0);
-  case arm_cond::HI:
+  case cond_enum::HI:
     return this->is_cpsr(C | Z, C);
-  case arm_cond::LS:
+  case cond_enum::LS:
     return this->is_cpsr(C, 0) || this->is_cpsr(Z, Z);
-  case arm_cond::GE:
+  case cond_enum::GE:
     return this->is_cpsr(N, N) == this->is_cpsr(V, V);
-  case arm_cond::LT:
+  case cond_enum::LT:
     return this->is_cpsr(N, N) != this->is_cpsr(V, V);
-  case arm_cond::GT:
+  case cond_enum::GT:
     return this->is_cpsr(Z, 0) && (this->is_cpsr(N, N) == this->is_cpsr(V, V));
-  case arm_cond::LE:
+  case cond_enum::LE:
     return this->is_cpsr(Z, Z) || (this->is_cpsr(N, N) != this->is_cpsr(V, V));
-  case arm_cond::AL:
+  case cond_enum::AL:
     return true;
-  case arm_cond::NV:
+  case cond_enum::NV:
   default:
     return false;
   };

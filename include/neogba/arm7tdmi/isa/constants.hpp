@@ -23,7 +23,7 @@ enum class cond_enum : u8 {
   AL = 0b1110,
   NV = 0b1111,
 };
-using ISA_ARM_COND = field_delayed<u32, u8, 28, 0xfu, cond_enum>;
+using COND = field_delayed<u32, u8, 28, 0xfu, cond_enum>;
 } // namespace arm_cond
 
 /// Data processing and FSR transfer
