@@ -2829,3 +2829,9 @@ Dicho esto:
 - Implementar el "karnaugh" definitivo en la lut general.
 - Reemplazar constantes del isa por algo más súper pachamamesco.
 - Reemplazar tparams por un único número u32.
+
+# 12 de agosto
+
+Hoy es tu día, https://www.eclipse.org/downloads/ hoy vas a renacer aunque no en forma de Java IDE.
+
+Vamos a empezar con los ISA constants

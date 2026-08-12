@@ -52,260 +52,331 @@ enum class arm_shift_type : u8 {
   ROR = 0b11,
 };
 
-constexpr u32 ISA_ARM_FSR_TEMPLATE{0x00000000u};
-using ISA_ARM_FSR_I = /*                   */ field_bool<u32, 25>;
-using ISA_ARM_FSR_OPCODE = /*              */ field_delayed<u32, u8, 21, 0xfu, arm_fsr_opcode>;
-using ISA_ARM_FSR_S = /*                   */ field_bool<u32, 20>;
-using ISA_ARM_FSR_RN = /*                  */ field_delayed<u32, u8, 16>;
-using ISA_ARM_FSR_RD = /*                  */ field_delayed<u32, u8, 12>;
-using ISA_ARM_FSR_OPERAND2 = /*            */ field<u32, u16, 0, ((1u << 12) - 1)>;
-using ISA_ARM_FSR_OPERAND2_SHIFT = /*      */ field_delayed<u32, u16, 4, 0xffu>;
-using ISA_ARM_FSR_OPERAND2_4 = /*          */ field_bool<u32, 4>;
-using ISA_ARM_FSR_OPERAND2_SHIFT_TYPE = /* */ field_delayed<u32, u8, 5, 0x3u, arm_shift_type>;
-using ISA_ARM_FSR_OPERAND2_SHIFT_AMOU = /* */ field_delayed<u32, u8, 7, 0x1fu>;
-using ISA_ARM_FSR_OPERAND2_RS = /*         */ field_delayed<u32, u8, 8>;
-using ISA_ARM_FSR_OPERAND2_RM = /*         */ field<u32, u8, 0>;
-using ISA_ARM_FSR_OPERAND2_ROTATE = /*     */ ISA_ARM_FSR_OPERAND2_RS;
-using ISA_ARM_FSR_OPERAND2_IMM = /*        */ field<u32, u8, 0, 0xffu>;
+/// FSR
+namespace fsr {
+constexpr u32 TEMPLATE{0x00000000u};
+using I = /*         */ field_bool<u32, 25>;
+using OPCODE = /*    */ field_delayed<u32, u8, 21, 0xfu, arm_fsr_opcode>;
+using S = /*         */ field_bool<u32, 20>;
+using RN = /*        */ field_delayed<u32, u8, 16>;
+using RD = /*        */ field_delayed<u32, u8, 12>;
+using OPERAND2 = /*  */ field<u32, u16, 0, ((1u << 12) - 1)>;
+} // namespace fsr
+
+namespace operand2 {
+using SHIFT = /*     */ field_delayed<u32, u16, 4, 0xffu>;
+using B4 = /*        */ field_bool<u32, 4>;
+using SHIFT_TYPE = /**/ field_delayed<u32, u8, 5, 0x3u, arm_shift_type>;
+using SHIFT_AMOU = /**/ field_delayed<u32, u8, 7, 0x1fu>;
+using RS = /*        */ field_delayed<u32, u8, 8>;
+using RM = /*        */ field<u32, u8, 0>;
+using ROTATE = /*    */ RS;
+using IMM = /*       */ field<u32, u8, 0, 0xffu>;
+} // namespace operand2
 
 /// Multiply
-constexpr u32 ISA_ARM_MULTIPLY_TEMPLATE{0x00000090u};
-using ISA_ARM_MULTIPLY_A = /*              */ field_bool<u32, 21>;
-using ISA_ARM_MULTIPLY_S = /*              */ ISA_ARM_FSR_S;
-using ISA_ARM_MULTIPLY_RD = /*             */ ISA_ARM_FSR_RN;
-using ISA_ARM_MULTIPLY_RN = /*             */ ISA_ARM_FSR_RD;
-using ISA_ARM_MULTIPLY_RS = /*             */ field_delayed<u32, u8, 8>;
-using ISA_ARM_MULTIPLY_RM = /*             */ field_delayed<u32, u8, 0>;
+namespace multiply {
+constexpr u32 TEMPLATE{0x00000090u};
+using A = /*         */ field_bool<u32, 21>;
+using S = /*         */ fsr::S;
+using RD = /*        */ fsr::RN;
+using RN = /*        */ fsr::RD;
+using RS = /*        */ field_delayed<u32, u8, 8>;
+using RM = /*        */ operand2::RM;
+} // namespace multiply
 
 /// Multiply long
-constexpr u32 ISA_ARM_LONG_TEMPLATE{0x00800090u};
-using ISA_ARM_LONG_U = /*                  */ field_bool<u32, 22>;
-using ISA_ARM_LONG_A = /*                  */ ISA_ARM_MULTIPLY_A;
-using ISA_ARM_LONG_S = /*                  */ ISA_ARM_MULTIPLY_S;
-using ISA_ARM_LONG_RDHI = /*               */ ISA_ARM_MULTIPLY_RD;
-using ISA_ARM_LONG_RDLO = /*               */ ISA_ARM_MULTIPLY_RN;
-using ISA_ARM_LONG_RN = /*                 */ ISA_ARM_MULTIPLY_RS;
-using ISA_ARM_LONG_RM = /*                 */ ISA_ARM_MULTIPLY_RM;
+namespace multiplylong {
+constexpr u32 TEMPLATE{0x00800090u};
+using U = /*         */ field_bool<u32, 22>;
+using A = /*         */ multiply::A;
+using S = /*         */ multiply::S;
+using RDHI = /*      */ multiply::RD;
+using RDLO = /*      */ multiply::RN;
+using RN = /*        */ multiply::RS;
+using RM = /*        */ multiply::RM;
+} // namespace multiplylong
 
 /// Single data swap
-constexpr u32 ISA_ARM_SWAP_TEMPLATE{0x01000090u};
-using ISA_ARM_SWAP_B = /*                  */ ISA_ARM_LONG_U;
-using ISA_ARM_SWAP_RN = /*                 */ ISA_ARM_FSR_RN;
-using ISA_ARM_SWAP_RD = /*                 */ ISA_ARM_FSR_RD;
-using ISA_ARM_SWAP_RM = /*                 */ ISA_ARM_MULTIPLY_RM;
+namespace singleswap {
+constexpr u32 TEMPLATE{0x01000090u};
+using B = /*         */ multiplylong::U;
+using RN = /*        */ fsr::RN;
+using RD = /*        */ fsr::RD;
+using RM = /*        */ multiply::RM;
+} // namespace singleswap
 
 /// Branch and Exchange
-constexpr u32 ISA_ARM_EXCHANGE_TEMPLATE{0x012fff10u};
-using ISA_ARM_EXCHANGE_RN = ISA_ARM_MULTIPLY_RM;
+namespace branchexchange {
+constexpr u32 TEMPLATE{0x012fff10u};
+using RN = multiply::RM;
+} // namespace branchexchange
 
 /// Halfword data transfer, register offset
-constexpr u32 ISA_ARM_HALFREG_TEMPLATE{0x00000090u};
-using ISA_ARM_HALFREG_P = /*               */ field_bool<u32, 24>;
-using ISA_ARM_HALFREG_U = /*               */ field_bool<u32, 23>;
-using ISA_ARM_HALFREG_W = /*               */ ISA_ARM_MULTIPLY_A;
-using ISA_ARM_HALFREG_L = /*               */ ISA_ARM_FSR_S;
-using ISA_ARM_HALFREG_RN = /*              */ ISA_ARM_FSR_RN;
-using ISA_ARM_HALFREG_RD = /*              */ ISA_ARM_FSR_RD;
-using ISA_ARM_HALFREG_S = /*               */ field_bool<u32, 6>;
-using ISA_ARM_HALFREG_H = /*               */ field_bool<u32, 5>;
-using ISA_ARM_HALFREG_RM = /*              */ ISA_ARM_MULTIPLY_RM;
+namespace halfreg {
+constexpr u32 TEMPLATE{0x00000090u};
+using P = /*         */ field_bool<u32, 24>;
+using U = /*         */ field_bool<u32, 23>;
+using W = /*         */ multiply::A;
+using L = /*         */ fsr::S;
+using RN = /*        */ fsr::RN;
+using RD = /*        */ fsr::RD;
+using S = /*         */ field_bool<u32, 6>;
+using H = /*         */ field_bool<u32, 5>;
+using RM = /*        */ multiply::RM;
+} // namespace halfreg
 
 /// Halfword data transfer, immediate offset
-constexpr u32 ISA_ARM_HALFIMM_TEMPLATE{0x00400090u};
-using ISA_ARM_HALFIMM_I = /*               */ ISA_ARM_FSR_I;
-using ISA_ARM_HALFIMM_P = /*               */ ISA_ARM_HALFREG_P;
-using ISA_ARM_HALFIMM_U = /*               */ ISA_ARM_HALFREG_U;
-using ISA_ARM_HALFIMM_W = /*               */ ISA_ARM_MULTIPLY_A;
-using ISA_ARM_HALFIMM_L = /*               */ ISA_ARM_FSR_S;
-using ISA_ARM_HALFIMM_RN = /*              */ ISA_ARM_FSR_RN;
-using ISA_ARM_HALFIMM_RD = /*              */ ISA_ARM_FSR_RD;
-using ISA_ARM_HALFIMM_S = /*               */ ISA_ARM_HALFREG_S;
-using ISA_ARM_HALFIMM_H = /*               */ ISA_ARM_HALFREG_H;
-using ISA_ARM_HALFIMM_OFFSET = field_split<u32, u8, ISA_ARM_MULTIPLY_RS::shift,
-                                           ISA_ARM_MULTIPLY_RS::mask, ISA_ARM_MULTIPLY_RM::mask, 4>;
+namespace halfimm {
+constexpr u32 TEMPLATE{0x00400090u};
+using I = /*         */ fsr::I;
+using P = /*         */ halfreg::P;
+using U = /*         */ halfreg::U;
+using W = /*         */ multiply::A;
+using L = /*         */ fsr::S;
+using RN = /*        */ fsr::RN;
+using RD = /*        */ fsr::RD;
+using S = /*         */ halfreg::S;
+using H = /*         */ halfreg::H;
+using OFFSET = field_split<u32, u8, multiply::RS::shift, multiply::RS::mask, multiply::RM::mask, 4>;
+} // namespace halfimm
 
 /// Single data transfer
-constexpr u32 ISA_ARM_SINGLETRANS_TEMPLATE{0x06000000u};
-using ISA_ARM_SINGLETRANS_I = /*           */ ISA_ARM_HALFIMM_P;
-using ISA_ARM_SINGLETRANS_P = /*           */ ISA_ARM_HALFIMM_P;
-using ISA_ARM_SINGLETRANS_U = /*           */ ISA_ARM_HALFIMM_U;
-using ISA_ARM_SINGLETRANS_B = /*           */ ISA_ARM_SWAP_B;
-using ISA_ARM_SINGLETRANS_W = /*           */ ISA_ARM_HALFIMM_W;
-using ISA_ARM_SINGLETRANS_L = /*           */ ISA_ARM_HALFIMM_L;
-using ISA_ARM_SINGLETRANS_RN = /*          */ ISA_ARM_HALFIMM_RN;
-using ISA_ARM_SINGLETRANS_RD = /*          */ ISA_ARM_HALFIMM_RD;
-using ISA_ARM_SINGLETRANS_OFFSET = /*      */ ISA_ARM_FSR_OPERAND2;
+namespace singletrans {
+constexpr u32 TEMPLATE{0x06000000u};
+using I = /*         */ halfimm::P;
+using P = /*         */ halfimm::P;
+using U = /*         */ halfimm::U;
+using B = /*         */ singleswap::B;
+using W = /*         */ halfimm::W;
+using L = /*         */ halfimm::L;
+using RN = /*        */ halfimm::RN;
+using RD = /*        */ halfimm::RD;
+using OFFSET = /*    */ fsr::OPERAND2;
+} // namespace singletrans
 
 /// Undefined
-constexpr u32 ISA_ARM_UNDEFINED_TEMPLATE{0x06000010u};
+namespace undefined {
+constexpr u32 TEMPLATE{0x06000010u};
+} // namespace undefined
 
 /// Block data transfer
-constexpr u32 ISA_ARM_BLOCKTRANS_TEMPLATE{0x09000000u};
-using ISA_ARM_BLOCKTRANS_P = /*            */ ISA_ARM_HALFIMM_P;
-using ISA_ARM_BLOCKTRANS_U = /*            */ ISA_ARM_HALFIMM_U;
-using ISA_ARM_BLOCKTRANS_S = /*            */ ISA_ARM_SWAP_B;
-using ISA_ARM_BLOCKTRANS_W = /*            */ ISA_ARM_HALFIMM_W;
-using ISA_ARM_BLOCKTRANS_L = /*            */ ISA_ARM_HALFIMM_L;
-using ISA_ARM_BLOCKTRANS_RN = /*           */ ISA_ARM_HALFIMM_RN;
-using ISA_ARM_BLOCKTRANS_REGISTERLIST = /* */ field<u32, u16, 0, 0xffffu>;
+namespace blocktrans {
+constexpr u32 TEMPLATE{0x09000000u};
+using P = /*           */ halfimm::P;
+using U = /*           */ halfimm::U;
+using S = /*           */ singleswap::B;
+using W = /*           */ halfimm::W;
+using L = /*           */ halfimm::L;
+using RN = /*          */ halfimm::RN;
+using REGISTERLIST = /**/ field<u32, u16, 0, 0xffffu>;
+} // namespace blocktrans
 
 /// Branch
-constexpr u32 ISA_ARM_BRANCH_TEMPLATE{0x0a000000u};
-using ISA_ARM_BRANCH_L = /*                */ ISA_ARM_HALFIMM_P;
-using ISA_ARM_BRANCH_OFFSET = /*           */ field<u32, u32, 0, 0xffffffu>;
+namespace branch {
+constexpr u32 TEMPLATE{0x0a000000u};
+using L = /*         */ halfimm::P;
+using OFFSET = /*    */ field<u32, u32, 0, 0xffffffu>;
+} // namespace branch
 
 /// Coprocessor data transfer
-constexpr u32 ISA_ARM_COPROCTRANS_P_TEMPLATE{0x0b000000u};
-using ISA_ARM_COPROCTRANS_P = /*           */ ISA_ARM_HALFIMM_P;
-using ISA_ARM_COPROCTRANS_U = /*           */ ISA_ARM_HALFIMM_U;
-using ISA_ARM_COPROCTRANS_N = /*           */ ISA_ARM_SWAP_B;
-using ISA_ARM_COPROCTRANS_W = /*           */ ISA_ARM_HALFIMM_W;
-using ISA_ARM_COPROCTRANS_L = /*           */ ISA_ARM_HALFIMM_L;
-using ISA_ARM_COPROCTRANS_RN = /*          */ ISA_ARM_HALFIMM_RN;
-using ISA_ARM_COPROCTRANS_CRD = /*         */ ISA_ARM_FSR_RD;
-using ISA_ARM_COPROCTRANS_CPSHARP = /*     */ ISA_ARM_MULTIPLY_RS;
-using ISA_ARM_COPROCTRANS_OFFSET = /*      */ field<u32, u8, 0, 0xffu>;
+namespace coproctrans {
+constexpr u32 TEMPLATE{0x0b000000u};
+using P = /*           */ halfimm::P;
+using U = /*           */ halfimm::U;
+using N = /*           */ singleswap::B;
+using W = /*           */ halfimm::W;
+using L = /*           */ halfimm::L;
+using RN = /*          */ halfimm::RN;
+using CRD = /*         */ fsr::RD;
+using CPSHARP = /*     */ multiply::RS;
+using OFFSET = /*      */ field<u32, u8, 0, 0xffu>;
+} // namespace coproctrans
 
 /// Coprocessor data operation
-constexpr u32 ISA_ARM_COPROCOP_TEMPLATE{0x0e000000u};
-using ISA_ARM_COPROCOP_CPOPC = /*     */ field_delayed<u32, u8, 21>;
-using ISA_ARM_COPROCOP_CRN = /*       */ ISA_ARM_HALFIMM_RN;
-using ISA_ARM_COPROCOP_CRD = /*       */ ISA_ARM_FSR_RD;
-using ISA_ARM_COPROCOP_CPSHARP = /*   */ ISA_ARM_MULTIPLY_RS;
-using ISA_ARM_COPROCOP_CP = /*        */ field_delayed<u32, u8, 5, 0x7u>;
-using ISA_ARM_COPROCOP_CRM = /*       */ ISA_ARM_MULTIPLY_RM;
+namespace coprocop {
+constexpr u32 TEMPLATE{0x0e000000u};
+using CPOPC = /*     */ field_delayed<u32, u8, 21>;
+using CRN = /*       */ halfimm::RN;
+using CRD = /*       */ fsr::RD;
+using CPSHARP = /*   */ multiply::RS;
+using CP = /*        */ field_delayed<u32, u8, 5, 0x7u>;
+using CRM = /*       */ multiply::RM;
+} // namespace coprocop
 
 /// Coprocessor register transfer
-constexpr u32 ISA_ARM_COPROCREGTRANS_TEMPLATE{0x0e000010u};
-using ISA_ARM_COPROCREGTRANS_CPOPC = /*  */ field_delayed<u32, u8, 21, 0x7u>;
-using ISA_ARM_COPROCREGTRANS_L = /*      */ ISA_ARM_SINGLETRANS_L;
-using ISA_ARM_COPROCREGTRANS_CRN = /*    */ ISA_ARM_COPROCOP_CRN;
-using ISA_ARM_COPROCREGTRANS_RD = /*     */ ISA_ARM_COPROCOP_CRD;
-using ISA_ARM_COPROCREGTRANS_CPSHARP = /**/ ISA_ARM_COPROCOP_CPSHARP;
-using ISA_ARM_COPROCREGTRANS_CP = /*     */ ISA_ARM_COPROCOP_CP;
-using ISA_ARM_COPROCREGTRANS_CRM = /*    */ ISA_ARM_COPROCOP_CRM;
+namespace coprocregtrans {
+constexpr u32 TEMPLATE{0x0e000010u};
+using CPOPC = /*     */ field_delayed<u32, u8, 21, 0x7u>;
+using L = /*         */ singletrans::L;
+using CRN = /*       */ coprocop::CRN;
+using RD = /*        */ coprocop::CRD;
+using CPSHARP = /*   */ coprocop::CPSHARP;
+using CP = /*        */ coprocop::CP;
+using CRM = /*       */ coprocop::CRM;
+} // namespace coprocregtrans
 
 /// Software interrupt
-constexpr u32 ISA_ARM_SWINT_TEMPLATE{0x0f000000u};
-using ISA_ARM_SWINT_SWI = /*       */ field<u32, u32, 0, 0xffffffu>;
+namespace swint {
+constexpr u32 TEMPLATE{0x0f000000u};
+using SWI = /*       */ field<u32, u32, 0, 0xffffffu>;
+} // namespace swint
 
 /// Thumb
 
 /// Format 01 - Move shifted register
-constexpr u16 ISA_THUMB_01_TEMPLATE{0x0000u};
-using ISA_THUMB_01_OP = /*             */ field_delayed<u16, u8, 11, 0x3u>;
-using ISA_THUMB_01_OFFSET5 = /*        */ field_delayed<u16, u8, 6, 0x1fu>;
-using ISA_THUMB_01_RS = /*             */ field_delayed<u16, u8, 3, 0x7u>;
-using ISA_THUMB_01_RD = /*             */ field<u16, u8, 0, 0x7u>;
+namespace thumb01 {
+constexpr u16 TEMPLATE{0x0000u};
+using OP = /*        */ field_delayed<u16, u8, 11, 0x3u>;
+using OFFSET5 = /*   */ field_delayed<u16, u8, 6, 0x1fu>;
+using RS = /*        */ field_delayed<u16, u8, 3, 0x7u>;
+using RD = /*        */ field<u16, u8, 0, 0x7u>;
+} // namespace thumb01
 
 /// Format 02 - Add and substract
-constexpr u16 ISA_THUMB_02_TEMPLATE{0x1c00u};
-using ISA_THUMB_02_OP = /*             */ field_bool<u16, 9>;
-using ISA_THUMB_02_RNOFFSET3 = /*      */ field_delayed<u16, u8, 6, 0x7u>;
-using ISA_THUMB_02_RS = /*             */ ISA_THUMB_01_RS;
-using ISA_THUMB_02_RD = /*             */ ISA_THUMB_01_RD;
+namespace thumb02 {
+constexpr u16 TEMPLATE{0x1c00u};
+using OP = /*        */ field_bool<u16, 9>;
+using RNOFFSET3 = /* */ field_delayed<u16, u8, 6, 0x7u>;
+using RS = /*        */ thumb01::RS;
+using RD = /*        */ thumb01::RD;
+} // namespace thumb02
 
 /// Format 03 - Move, compare, add, and subtract immediate
-constexpr u16 ISA_THUMB_03_TEMPLATE{0x2000u};
-using ISA_THUMB_03_OP = /*             */ ISA_THUMB_01_OP;
-using ISA_THUMB_03_RD = /*             */ field_delayed<u16, u8, 8, 0x7u>;
-using ISA_THUMB_03_OFFSET8 = /*        */ field<u16, u8, 0, 0xffu>;
+namespace thumb03 {
+constexpr u16 TEMPLATE{0x2000u};
+using OP = /*        */ thumb01::OP;
+using RD = /*        */ field_delayed<u16, u8, 8, 0x7u>;
+using OFFSET8 = /*   */ field<u16, u8, 0, 0xffu>;
+} // namespace thumb03
 
 /// Format 04 - ALU operation
-constexpr u16 ISA_THUMB_04_TEMPLATE{0x4000u};
-using ISA_THUMB_04_OP = /*             */ field_delayed<u16, u8, 6, 0xfu>;
-using ISA_THUMB_04_RS = /*             */ ISA_THUMB_01_RS;
-using ISA_THUMB_04_RD = /*             */ ISA_THUMB_01_RD;
+namespace thumb04 {
+constexpr u16 TEMPLATE{0x4000u};
+using OP = /*        */ field_delayed<u16, u8, 6, 0xfu>;
+using RS = /*        */ thumb01::RS;
+using RD = /*        */ thumb01::RD;
+} // namespace thumb04
 
 /// Format 05 - High register operations and branch exchange
-constexpr u16 ISA_THUMB_05_TEMPLATE{0x4400u};
-using ISA_THUMB_05_OP = /*             */ field_delayed<u16, u8, 8, 0x7u>;
-using ISA_THUMB_05_H1 = /*             */ field_bool<u16, 7>;
-using ISA_THUMB_05_H2 = /*             */ field_bool<u16, 6>;
-using ISA_THUMB_05_RSHS = /*           */ ISA_THUMB_01_RS;
-using ISA_THUMB_05_RDHD = /*           */ ISA_THUMB_01_RD;
+namespace thumb05 {
+constexpr u16 TEMPLATE{0x4400u};
+using OP = /*        */ field_delayed<u16, u8, 8, 0x7u>;
+using H1 = /*        */ field_bool<u16, 7>;
+using H2 = /*        */ field_bool<u16, 6>;
+using RSHS = /*      */ thumb01::RS;
+using RDHD = /*      */ thumb01::RD;
+} // namespace thumb05
 
 /// Format 06 - PC-relative load
-constexpr u16 ISA_THUMB_06_TEMPLATE{0x4800u};
-using ISA_THUMB_06_RD = /*             */ ISA_THUMB_03_RD;
-using ISA_THUMB_06_WORD8 = /*          */ field<u16, u8, 0, 0xffu>;
+namespace thumb06 {
+constexpr u16 TEMPLATE{0x4800u};
+using RD = /*        */ thumb03::RD;
+using WORD8 = /*     */ field<u16, u8, 0, 0xffu>;
+} // namespace thumb06
 
 /// Format 07 - Load and store with relative offset
-constexpr u16 ISA_THUMB_07_TEMPLATE{0x5000u};
-using ISA_THUMB_07_L = /*              */ field_bool<u16, 11>;
-using ISA_THUMB_07_B = /*              */ field_bool<u16, 10>;
-using ISA_THUMB_07_RO = /*             */ ISA_THUMB_02_RNOFFSET3;
-using ISA_THUMB_07_RB = /*             */ ISA_THUMB_01_RS;
-using ISA_THUMB_07_RD = /*             */ ISA_THUMB_01_RD;
+namespace thumb07 {
+constexpr u16 TEMPLATE{0x5000u};
+using L = /*         */ field_bool<u16, 11>;
+using B = /*         */ field_bool<u16, 10>;
+using RO = /*        */ thumb02::RNOFFSET3;
+using RB = /*        */ thumb01::RS;
+using RD = /*        */ thumb01::RD;
+} // namespace thumb07
 
 /// Format 08 - Load and store sign-extended byte and halfword
-constexpr u16 ISA_THUMB_08_TEMPLATE{0x5200u};
-using ISA_THUMB_08_H = /*              */ ISA_THUMB_07_L;
-using ISA_THUMB_08_S = /*              */ ISA_THUMB_07_B;
-using ISA_THUMB_08_RO = /*             */ ISA_THUMB_07_RO;
-using ISA_THUMB_08_RB = /*             */ ISA_THUMB_07_RB;
-using ISA_THUMB_08_RD = /*             */ ISA_THUMB_07_RD;
+namespace thumb08 {
+constexpr u16 TEMPLATE{0x5200u};
+using H = /*         */ thumb07::L;
+using S = /*         */ thumb07::B;
+using RO = /*        */ thumb07::RO;
+using RB = /*        */ thumb07::RB;
+using RD = /*        */ thumb07::RD;
+} // namespace thumb08
 
 /// Format 09 - Load and store with immediate offset
-constexpr u16 ISA_THUMB_09_TEMPLATE{0x6000u};
-using ISA_THUMB_09_B = /*              */ field_bool<u16, 12>;
-using ISA_THUMB_09_L = /*              */ ISA_THUMB_07_L;
-using ISA_THUMB_09_OFFSET5 = /*        */ ISA_THUMB_01_OFFSET5;
-using ISA_THUMB_09_RB = /*             */ ISA_THUMB_01_RS;
-using ISA_THUMB_09_RD = /*             */ ISA_THUMB_01_RD;
+namespace thumb09 {
+constexpr u16 TEMPLATE{0x6000u};
+using B = /*         */ field_bool<u16, 12>;
+using L = /*         */ thumb07::L;
+using OFFSET5 = /*   */ thumb01::OFFSET5;
+using RB = /*        */ thumb01::RS;
+using RD = /*        */ thumb01::RD;
+} // namespace thumb09
 
 /// Format 10 - Load and store halfword
-constexpr u16 ISA_THUMB_10_TEMPLATE{0x8000u};
-using ISA_THUMB_10_L = /*              */ ISA_THUMB_09_L;
-using ISA_THUMB_10_OFFSET5 = /*        */ ISA_THUMB_01_OFFSET5;
-using ISA_THUMB_10_RB = /*             */ ISA_THUMB_01_RS;
-using ISA_THUMB_10_RD = /*             */ ISA_THUMB_01_RD;
+namespace thumb10 {
+constexpr u16 TEMPLATE{0x8000u};
+using L = /*         */ thumb09::L;
+using OFFSET5 = /*   */ thumb01::OFFSET5;
+using RB = /*        */ thumb01::RS;
+using RD = /*        */ thumb01::RD;
+} // namespace thumb10
 
 /// Format 11 - SP-relative load and store
-constexpr u16 ISA_THUMB_11_TEMPLATE{0x9000u};
-using ISA_THUMB_11_L = /*              */ ISA_THUMB_10_L;
-using ISA_THUMB_11_RD = /*             */ ISA_THUMB_06_RD;
-using ISA_THUMB_11_WORD8 = /*          */ ISA_THUMB_06_WORD8;
+namespace thumb11 {
+constexpr u16 TEMPLATE{0x9000u};
+using L = /*         */ thumb10::L;
+using RD = /*        */ thumb06::RD;
+using WORD8 = /*     */ thumb06::WORD8;
+} // namespace thumb11
 
 /// Format 12 - Load address
-constexpr u16 ISA_THUMB_12_TEMPLATE{0xa000u};
-using ISA_THUMB_12_SP = /*             */ ISA_THUMB_11_L;
-using ISA_THUMB_12_RD = /*             */ ISA_THUMB_11_RD;
-using ISA_THUMB_12_WORD8 = /*          */ ISA_THUMB_11_WORD8;
+namespace thumb12 {
+constexpr u16 TEMPLATE{0xa000u};
+using SP = /*        */ thumb11::L;
+using RD = /*        */ thumb11::RD;
+using WORD8 = /*     */ thumb11::WORD8;
+} // namespace thumb12
 
 /// Format 13 - Add offset to stack pointer
-constexpr u16 ISA_THUMB_13_TEMPLATE{0xb000u};
-using ISA_THUMB_13_S = /*              */ field_bool<u16, 7>;
-using ISA_THUMB_13_SWORD7 = /*         */ field<u16, u8, 0, 0x7fu>;
+namespace thumb13 {
+constexpr u16 TEMPLATE{0xb000u};
+using S = /*         */ field_bool<u16, 7>;
+using SWORD7 = /*    */ field<u16, u8, 0, 0x7fu>;
+} // namespace thumb13
 
 /// Format 14 - Push and pop registers
-constexpr u16 ISA_THUMB_14_TEMPLATE{0xb400u};
-using ISA_THUMB_14_L = /*              */ ISA_THUMB_11_L;
-using ISA_THUMB_14_R = /*              */ field_bool<u16, 8>;
-using ISA_THUMB_14_RLIST = /*          */ ISA_THUMB_11_WORD8;
+namespace thumb14 {
+constexpr u16 TEMPLATE{0xb400u};
+using L = /*         */ thumb11::L;
+using R = /*         */ field_bool<u16, 8>;
+using RLIST = /*     */ thumb11::WORD8;
+} // namespace thumb14
 
 /// Format 15 - Multiple load and store
-constexpr u16 ISA_THUMB_15_TEMPLATE{0xc000u};
-using ISA_THUMB_15_L = /*              */ ISA_THUMB_12_SP;
-using ISA_THUMB_15_RB = /*             */ ISA_THUMB_12_RD;
-using ISA_THUMB_15_RLIST = /*          */ ISA_THUMB_12_WORD8;
+namespace thumb15 {
+constexpr u16 TEMPLATE{0xc000u};
+using L = /*         */ thumb12::SP;
+using RB = /*        */ thumb12::RD;
+using RLIST = /*     */ thumb12::WORD8;
+} // namespace thumb15
 
 /// Format 16 - Conditional branch
-constexpr u16 ISA_THUMB_16_TEMPLATE{0xd000u};
-using ISA_THUMB_16_COND = /*           */ field_delayed<u16, u8, 8>;
-using ISA_THUMB_16_SOFTSET8 = /*       */ ISA_THUMB_12_WORD8;
+namespace thumb16 {
+constexpr u16 TEMPLATE{0xd000u};
+using COND = /*      */ field_delayed<u16, u8, 8>;
+using SOFTSET8 = /*  */ thumb12::WORD8;
+} // namespace thumb16
 
 /// Format 17 - Software interrupt
-constexpr u16 ISA_THUMB_17_TEMPLATE{0xdf00u};
-using ISA_THUMB_17_VALUE8 = /*         */ field<u16, u8, 0, 0xffu>;
+namespace thumb17 {
+constexpr u16 TEMPLATE{0xdf00u};
+using VALUE8 = /*    */ field<u16, u8, 0, 0xffu>;
+} // namespace thumb17
 
 /// Format 18 - Unconditional branch
-constexpr u16 ISA_THUMB_18_TEMPLATE{0xe000u};
-using ISA_THUMB_18_OFFSET11 = /*       */ field<u16, u16, 0, 0x7ffu>;
+namespace thumb18 {
+constexpr u16 TEMPLATE{0xe000u};
+using OFFSET11 = /*  */ field<u16, u16, 0, 0x7ffu>;
+} // namespace thumb18
 
 /// Format 19 - Long branch with link
-constexpr u16 ISA_THUMB_19_TEMPLATE = {0xf000u};
-using ISA_THUMB_19_H = /*              */ ISA_THUMB_15_L;
-using ISA_THUMB_19_OFFSET = /*         */ ISA_THUMB_18_OFFSET11;
+namespace thumb19 {
+constexpr u16 TEMPLATE = {0xf000u};
+using H = /*         */ thumb15::L;
+using OFFSET = /*    */ thumb18::OFFSET11;
+} // namespace thumb19
 
 } // namespace neogba
