@@ -3,10 +3,11 @@
 #include <memory>
 
 using namespace neogba;
+using namespace arm_operand2;
 
 struct operand2_test_param {
   u32 inst;
-  arm_operand2_result (*caller)(arm7tdmi&, u32 inst);
+  arm_operand2::op2_output (*caller)(arm7tdmi&, u32 inst);
   u32 expected_result;
   u8 expected_carry_out;
   u8 initial_carry{0};
@@ -47,73 +48,56 @@ TEST_P(operand2_test_fixture, arm_fsr_operand2) {
   ASSERT_EQ(params.expected_result, op2.result);
   ASSERT_EQ(params.expected_carry_out, op2.carry_out);
   ASSERT_EQ(cpu->is_cpsr(arm7tdmi::C, arm7tdmi::C), static_cast<bool>(op2.carry_in));
-  ASSERT_EQ(params.caller, arm_fsr_operand2_lut.get(params.inst));
+  ASSERT_EQ(params.caller, table.get(params.inst));
 }
 
+using namespace arm_fsr;
+
 constexpr static u32 //
-    i000{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_I::set_high() | ISA_ARM_FSR_OPERAND2_IMM::set_high(69)},
-    i001{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_I::set_high() |
-         ISA_ARM_FSR_OPERAND2_IMM::set_high(255) | ISA_ARM_FSR_OPERAND2_ROTATE::set_high(2)},
 
-    i002{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_RM::set_high(r9) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSL))},
-    i003{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_RM::set_high(r9) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSR))},
-    i004{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_RM::set_high(r9) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ASR))},
-    i005{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_RM::set_high(r9) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ROR))},
+    i000{TEMPLATE | I::set_high() | IMM::set_high(69)},
+    i001{TEMPLATE | I::set_high() | IMM::set_high(255) | ROTATE::set_high(2)},
 
-    i006{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
-         ISA_ARM_FSR_OPERAND2_RS::set_high(r8) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ROR))},
+    i002{TEMPLATE | RM::set_high(r9) | SHIFT_TYPE::set_high(shift_enum::LSL)},
+    i003{TEMPLATE | RM::set_high(r9) | SHIFT_TYPE::set_high(shift_enum::LSR)},
+    i004{TEMPLATE | RM::set_high(r9) | SHIFT_TYPE::set_high(shift_enum::ASR)},
+    i005{TEMPLATE | RM::set_high(r9) | SHIFT_TYPE::set_high(shift_enum::ROR)},
 
-    i007{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::set_high(1) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSL))},
-    i008{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::set_high(1) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSR))},
-    i009{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_RM::set_high(r9) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::set_high(3) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ASR))},
-    i010{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_AMOU::set_high(1) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ROR))},
+    i006{TEMPLATE | B4::set_high() | RS::set_high(r8) | RM::set_high(r7) |
+         SHIFT_TYPE::set_high(shift_enum::ROR)},
 
-    i011{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
-         ISA_ARM_FSR_OPERAND2_RS::set_high(r2) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ROR))},
-    i012{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
-         ISA_ARM_FSR_OPERAND2_RS::set_high(r1) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ROR))},
+    i007{TEMPLATE | RM::set_high(r7) | SHIFT_AMOU::set_high(1) |
+         SHIFT_TYPE::set_high(shift_enum::LSL)},
+    i008{TEMPLATE | RM::set_high(r7) | SHIFT_AMOU::set_high(1) |
+         SHIFT_TYPE::set_high(shift_enum::LSR)},
+    i009{TEMPLATE | RM::set_high(r9) | SHIFT_AMOU::set_high(3) |
+         SHIFT_TYPE::set_high(shift_enum::ASR)},
+    i010{TEMPLATE | RM::set_high(r7) | SHIFT_AMOU::set_high(1) |
+         SHIFT_TYPE::set_high(shift_enum::ROR)},
 
-    i013{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
-         ISA_ARM_FSR_OPERAND2_RS::set_high(r3) | ISA_ARM_FSR_OPERAND2_RM::set_high(r9) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ASR))},
-    i014{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
-         ISA_ARM_FSR_OPERAND2_RS::set_high(r1) | ISA_ARM_FSR_OPERAND2_RM::set_high(r9) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::ASR))},
+    i011{TEMPLATE | B4::set_high() | RS::set_high(r2) | RM::set_high(r7) |
+         SHIFT_TYPE::set_high(shift_enum::ROR)},
+    i012{TEMPLATE | B4::set_high() | RS::set_high(r1) | RM::set_high(r7) |
+         SHIFT_TYPE::set_high(shift_enum::ROR)},
 
-    i015{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
-         ISA_ARM_FSR_OPERAND2_RS::set_high(r3) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSR))},
-    i016{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
-         ISA_ARM_FSR_OPERAND2_RS::set_high(r2) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSR))},
-    i017{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
-         ISA_ARM_FSR_OPERAND2_RS::set_high(r1) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSR))},
+    i013{TEMPLATE | B4::set_high() | RS::set_high(r3) | RM::set_high(r9) |
+         SHIFT_TYPE::set_high(shift_enum::ASR)},
+    i014{TEMPLATE | B4::set_high() | RS::set_high(r1) | RM::set_high(r9) |
+         SHIFT_TYPE::set_high(shift_enum::ASR)},
 
-    i018{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
-         ISA_ARM_FSR_OPERAND2_RS::set_high(r3) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSL))},
-    i019{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
-         ISA_ARM_FSR_OPERAND2_RS::set_high(r2) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSL))},
-    i020{ISA_ARM_FSR_TEMPLATE | ISA_ARM_FSR_OPERAND2_4::set_high() |
-         ISA_ARM_FSR_OPERAND2_RS::set_high(r1) | ISA_ARM_FSR_OPERAND2_RM::set_high(r7) |
-         ISA_ARM_FSR_OPERAND2_SHIFT_TYPE::set_high(static_cast<u8>(arm_shift_type::LSL))};
+    i015{TEMPLATE | B4::set_high() | RS::set_high(r3) | RM::set_high(r7) |
+         SHIFT_TYPE::set_high(shift_enum::LSR)},
+    i016{TEMPLATE | B4::set_high() | RS::set_high(r2) | RM::set_high(r7) |
+         SHIFT_TYPE::set_high(shift_enum::LSR)},
+    i017{TEMPLATE | B4::set_high() | RS::set_high(r1) | RM::set_high(r7) |
+         SHIFT_TYPE::set_high(shift_enum::LSR)},
+
+    i018{TEMPLATE | B4::set_high() | RS::set_high(r3) | RM::set_high(r7) |
+         SHIFT_TYPE::set_high(shift_enum::LSL)},
+    i019{TEMPLATE | B4::set_high() | RS::set_high(r2) | RM::set_high(r7) |
+         SHIFT_TYPE::set_high(shift_enum::LSL)},
+    i020{TEMPLATE | B4::set_high() | RS::set_high(r1) | RM::set_high(r7) |
+         SHIFT_TYPE::set_high(shift_enum::LSL)};
 
 INSTANTIATE_TEST_SUITE_P(  //
     operand2_parametrized, //

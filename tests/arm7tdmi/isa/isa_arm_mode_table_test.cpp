@@ -1,14 +1,16 @@
 #include "neogba/arm7tdmi/isa/arm_mode/fsr.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/table.hpp"
+#include "neogba/arm7tdmi/isa/constants.hpp"
 #include <gtest/gtest.h>
 #include <memory>
 
 using namespace neogba;
+using namespace arm_fsr;
 
 struct fsr_test_param {
   u8 mode;
   bool s{true};
-  arm_fsr_opcode opcode;
+  arm_fsr::opcode_enum opcode;
   void (*caller)(arm7tdmi&, u32 inst);
 
   u8 rd;
@@ -57,19 +59,20 @@ protected:
 } // namespace
 
 TEST_P(fsr_test_fixture, arm_fsr_fsr) {
+  using namespace arm_operand2;
   const auto& params = GetParam();
 
-  u32 inst{ISA_ARM_FSR_TEMPLATE};
+  u32 inst{TEMPLATE};
 
   // "Ensamblar" la receta.
   if (params.s)
-    inst = ISA_ARM_FSR_S::set1(inst);
+    inst = S::set1(inst);
 
-  inst = ISA_ARM_FSR_OPCODE::set(inst, static_cast<u8>(params.opcode));
-  inst = ISA_ARM_FSR_I::set0(inst);
-  inst = ISA_ARM_FSR_RD::set(inst, params.rd);
-  inst = ISA_ARM_FSR_RN::set(inst, params.rn);
-  inst = ISA_ARM_FSR_OPERAND2_RM::set(inst, params.rm);
+  inst = OPCODE::set(inst, static_cast<u8>(params.opcode));
+  inst = I::set0(inst);
+  inst = RD::set(inst, params.rd);
+  inst = RN::set(inst, params.rn);
+  inst = RM::set(inst, params.rm);
 
   // Preparar ingredientes la CPU
 
@@ -124,7 +127,7 @@ INSTANTIATE_TEST_SUITE_P( //
         // Caso 0
         fsr_test_param{.mode = arm7tdmi::MODE_FIQ,
                        .s = true,
-                       .opcode = arm_fsr_opcode::MOV,
+                       .opcode = opcode_enum::MOV,
                        .caller = arm_fsr_MOV_S_notRdPC,
                        .rd = r4,
                        .rn = r6,
@@ -148,7 +151,7 @@ INSTANTIATE_TEST_SUITE_P( //
         // Caso 1
         fsr_test_param{.mode = arm7tdmi::MODE_FIQ,
                        .s = false,
-                       .opcode = arm_fsr_opcode::RSB,
+                       .opcode = opcode_enum::RSB,
                        .caller = arm_fsr_RSB_notS_RdPC,
                        .rd = pc,
                        .rn = r6,
@@ -174,7 +177,7 @@ INSTANTIATE_TEST_SUITE_P( //
         // rd_pc=false, !is_not_move=false, is_inverted=false, can_write_rd=false, s=true
         fsr_test_param{.mode = arm7tdmi::MODE_USR,
                        .s = true,
-                       .opcode = arm_fsr_opcode::CMP,
+                       .opcode = opcode_enum::CMP,
                        .caller = arm_fsr_CMP_notRdPC,
                        .rd = r4,
                        .rn = r2,
@@ -200,7 +203,7 @@ INSTANTIATE_TEST_SUITE_P( //
         // !is_sum=true is_logical=false
         fsr_test_param{.mode = arm7tdmi::MODE_SYS,
                        .s = true,
-                       .opcode = arm_fsr_opcode::ADD,
+                       .opcode = opcode_enum::ADD,
                        .caller = arm_fsr_ADD_S_notRdPC,
                        .rd = r0,
                        .rn = r1,
@@ -226,7 +229,7 @@ INSTANTIATE_TEST_SUITE_P( //
         // s = true, rd_pc = true, can_write_rd = true -> CPSR = SPSR
         fsr_test_param{.mode = arm7tdmi::MODE_FIQ,
                        .s = true,
-                       .opcode = arm_fsr_opcode::MOV,
+                       .opcode = opcode_enum::MOV,
                        .caller = arm_fsr_MOV_S_RdPC,
                        .rd = pc,
                        .rn = r0,
@@ -245,7 +248,7 @@ INSTANTIATE_TEST_SUITE_P( //
         // not is_sum = true, s = true, can_write_rd = true
         fsr_test_param{.mode = arm7tdmi::MODE_USR,
                        .s = true,
-                       .opcode = arm_fsr_opcode::SUB,
+                       .opcode = opcode_enum::SUB,
                        .caller = arm_fsr_SUB_S_notRdPC,
                        .rd = r0,
                        .rn = r1,
@@ -265,7 +268,7 @@ INSTANTIATE_TEST_SUITE_P( //
         // is_logical = true, can_write_rd = false, s = true
         fsr_test_param{.mode = arm7tdmi::MODE_USR,
                        .s = true,
-                       .opcode = arm_fsr_opcode::TST,
+                       .opcode = opcode_enum::TST,
                        .caller = arm_fsr_TST_notRdPC,
                        .rd = r0,
                        .rn = r1,
