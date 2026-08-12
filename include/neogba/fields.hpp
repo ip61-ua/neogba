@@ -246,7 +246,7 @@ struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
  * @tparam join_shift Number of bits separating both ranges.
  */
 template <typename instruction_t, typename return_t, u8 n_shift, instruction_t bit_mask,
-          instruction_t bit_mask2, u8 join_shift>
+          instruction_t bit_mask2, u8 join_shift = 4>
 struct field_split : field<instruction_t, return_t, n_shift, bit_mask> {
   using ret_t = return_t;
   using ins_t = instruction_t;

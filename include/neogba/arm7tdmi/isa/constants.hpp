@@ -4,7 +4,7 @@
 namespace neogba {
 
 /// ARM
-namespace cond {
+namespace arm_cond {
 enum class cond_enum : u8 {
   EQ = 0b0000,
   NE = 0b0001,
@@ -24,10 +24,10 @@ enum class cond_enum : u8 {
   NV = 0b1111,
 };
 using ISA_ARM_COND = field_delayed<u32, u8, 28, 0xfu, cond_enum>;
-} // namespace cond
+} // namespace arm_cond
 
 /// Data processing and FSR transfer
-namespace fsr {
+namespace arm_fsr {
 enum class opcode_enum : u8 {
   AND = 0b0000,
   EOR = 0b0001,
@@ -53,9 +53,9 @@ using S = /*         */ field_bool<u32, 20>;
 using RN = /*        */ field_delayed<u32, u8, 16>;
 using RD = /*        */ field_delayed<u32, u8, 12>;
 using OPERAND2 = /*  */ field<u32, u16, 0, ((1u << 12) - 1)>;
-} // namespace fsr
+} // namespace arm_fsr
 
-namespace operand2 {
+namespace arm_operand2 {
 enum class shift_enum : u8 {
   LSL = 0b00,
   LSR = 0b01,
@@ -70,157 +70,156 @@ using RS = /*        */ field_delayed<u32, u8, 8>;
 using RM = /*        */ field<u32, u8, 0>;
 using ROTATE = /*    */ RS;
 using IMM = /*       */ field<u32, u8, 0, 0xffu>;
-} // namespace operand2
+} // namespace arm_operand2
 
 /// Multiply
-namespace multiply {
+namespace arm_multiply {
 constexpr u32 TEMPLATE{0x00000090u};
 using A = /*         */ field_bool<u32, 21>;
-using S = /*         */ fsr::S;
-using RD = /*        */ fsr::RN;
-using RN = /*        */ fsr::RD;
+using S = /*         */ arm_fsr::S;
+using RD = /*        */ arm_fsr::RN;
+using RN = /*        */ arm_fsr::RD;
 using RS = /*        */ field_delayed<u32, u8, 8>;
-using RM = /*        */ operand2::RM;
-} // namespace multiply
+using RM = /*        */ arm_operand2::RM;
+} // namespace arm_multiply
 
 /// Multiply long
-namespace multiplylong {
+namespace arm_multiplylong {
 constexpr u32 TEMPLATE{0x00800090u};
 using U = /*         */ field_bool<u32, 22>;
-using A = /*         */ multiply::A;
-using S = /*         */ multiply::S;
-using RDHI = /*      */ multiply::RD;
-using RDLO = /*      */ multiply::RN;
-using RN = /*        */ multiply::RS;
-using RM = /*        */ multiply::RM;
-} // namespace multiplylong
+using A = /*         */ arm_multiply::A;
+using S = /*         */ arm_multiply::S;
+using RDHI = /*      */ arm_multiply::RD;
+using RDLO = /*      */ arm_multiply::RN;
+using RN = /*        */ arm_multiply::RS;
+using RM = /*        */ arm_multiply::RM;
+} // namespace arm_multiplylong
 
 /// Single data swap
-namespace singleswap {
+namespace arm_singleswap {
 constexpr u32 TEMPLATE{0x01000090u};
-using B = /*         */ multiplylong::U;
-using RN = /*        */ fsr::RN;
-using RD = /*        */ fsr::RD;
-using RM = /*        */ multiply::RM;
-} // namespace singleswap
+using B = /*         */ arm_multiplylong::U;
+using RN = /*        */ arm_fsr::RN;
+using RD = /*        */ arm_fsr::RD;
+using RM = /*        */ arm_multiply::RM;
+} // namespace arm_singleswap
 
 /// Branch and Exchange
-namespace branchexchange {
+namespace arm_branchexchange {
 constexpr u32 TEMPLATE{0x012fff10u};
-using RN = multiply::RM;
-} // namespace branchexchange
+using RN = /*        */ arm_multiply::RM;
+} // namespace arm_branchexchange
 
 /// Halfword data transfer, register offset
-namespace halfreg {
+namespace arm_halfreg {
 constexpr u32 TEMPLATE{0x00000090u};
 using P = /*         */ field_bool<u32, 24>;
 using U = /*         */ field_bool<u32, 23>;
-using W = /*         */ multiply::A;
-using L = /*         */ fsr::S;
-using RN = /*        */ fsr::RN;
-using RD = /*        */ fsr::RD;
+using W = /*         */ arm_multiply::A;
+using L = /*         */ arm_fsr::S;
+using RN = /*        */ arm_fsr::RN;
+using RD = /*        */ arm_fsr::RD;
 using S = /*         */ field_bool<u32, 6>;
 using H = /*         */ field_bool<u32, 5>;
-using RM = /*        */ multiply::RM;
-} // namespace halfreg
+using RM = /*        */ arm_multiply::RM;
+} // namespace arm_halfreg
 
 /// Halfword data transfer, immediate offset
-namespace halfimm {
+namespace arm_halfimm {
 constexpr u32 TEMPLATE{0x00400090u};
-using I = /*         */ fsr::I;
-using P = /*         */ halfreg::P;
-using U = /*         */ halfreg::U;
-using W = /*         */ multiply::A;
-using L = /*         */ fsr::S;
-using RN = /*        */ fsr::RN;
-using RD = /*        */ fsr::RD;
-using S = /*         */ halfreg::S;
-using H = /*         */ halfreg::H;
-using OFFSET = field_split<u32, u8, multiply::RS::shift, multiply::RS::mask, multiply::RM::mask, 4>;
-} // namespace halfimm
+using I = /*         */ arm_fsr::I;
+using P = /*         */ arm_halfreg::P;
+using U = /*         */ arm_halfreg::U;
+using W = /*         */ arm_multiply::A;
+using L = /*         */ arm_fsr::S;
+using RN = /*        */ arm_fsr::RN;
+using RD = /*        */ arm_fsr::RD;
+using S = /*         */ arm_halfreg::S;
+using H = /*         */ arm_halfreg::H;
+using OFFSET =
+    field_split<u32, u8, arm_multiply::RS::shift, arm_multiply::RS::mask, arm_multiply::RM::mask>;
+} // namespace arm_halfimm
 
 /// Single data transfer
-namespace singletrans {
+namespace arm_singletrans {
 constexpr u32 TEMPLATE{0x06000000u};
-using I = /*         */ halfimm::P;
-using P = /*         */ halfimm::P;
-using U = /*         */ halfimm::U;
-using B = /*         */ singleswap::B;
-using W = /*         */ halfimm::W;
-using L = /*         */ halfimm::L;
-using RN = /*        */ halfimm::RN;
-using RD = /*        */ halfimm::RD;
-using OFFSET = /*    */ fsr::OPERAND2;
-} // namespace singletrans
+using I = /*         */ arm_halfimm::P;
+using P = /*         */ arm_halfimm::P;
+using U = /*         */ arm_halfimm::U;
+using B = /*         */ arm_singleswap::B;
+using W = /*         */ arm_halfimm::W;
+using L = /*         */ arm_halfimm::L;
+using RN = /*        */ arm_halfimm::RN;
+using RD = /*        */ arm_halfimm::RD;
+using OFFSET = /*    */ arm_fsr::OPERAND2;
+} // namespace arm_singletrans
 
 /// Undefined
-namespace undefined {
+namespace arm_undefined {
 constexpr u32 TEMPLATE{0x06000010u};
-} // namespace undefined
+} // namespace arm_undefined
 
 /// Block data transfer
-namespace blocktrans {
+namespace arm_blocktrans {
 constexpr u32 TEMPLATE{0x09000000u};
-using P = /*         */ halfimm::P;
-using U = /*         */ halfimm::U;
-using S = /*         */ singleswap::B;
-using W = /*         */ halfimm::W;
-using L = /*         */ halfimm::L;
-using RN = /*        */ halfimm::RN;
+using P = /*         */ arm_halfimm::P;
+using U = /*         */ arm_halfimm::U;
+using S = /*         */ arm_singleswap::B;
+using W = /*         */ arm_halfimm::W;
+using L = /*         */ arm_halfimm::L;
+using RN = /*        */ arm_halfimm::RN;
 using REGLIST = /*   */ field<u32, u16, 0, 0xffffu>;
-} // namespace blocktrans
+} // namespace arm_blocktrans
 
 /// Branch
-namespace branch {
+namespace arm_branch {
 constexpr u32 TEMPLATE{0x0a000000u};
-using L = /*         */ halfimm::P;
+using L = /*         */ arm_halfimm::P;
 using OFFSET = /*    */ field<u32, u32, 0, 0xffffffu>;
-} // namespace branch
+} // namespace arm_branch
 
 /// Coprocessor data transfer
-namespace coproctrans {
+namespace arm_coproctrans {
 constexpr u32 TEMPLATE{0x0b000000u};
-using P = /*         */ halfimm::P;
-using U = /*         */ halfimm::U;
-using N = /*         */ singleswap::B;
-using W = /*         */ halfimm::W;
-using L = /*         */ halfimm::L;
-using RN = /*        */ halfimm::RN;
-using CRD = /*       */ fsr::RD;
-using CPSHARP = /*   */ multiply::RS;
+using P = /*         */ arm_halfimm::P;
+using U = /*         */ arm_halfimm::U;
+using N = /*         */ arm_singleswap::B;
+using W = /*         */ arm_halfimm::W;
+using L = /*         */ arm_halfimm::L;
+using RN = /*        */ arm_halfimm::RN;
+using CRD = /*       */ arm_fsr::RD;
+using CPSHARP = /*   */ arm_multiply::RS;
 using OFFSET = /*    */ field<u32, u8, 0, 0xffu>;
-} // namespace coproctrans
+} // namespace arm_coproctrans
 
 /// Coprocessor data operation
-namespace coprocop {
+namespace arm_coprocop {
 constexpr u32 TEMPLATE{0x0e000000u};
 using CPOPC = /*     */ field_delayed<u32, u8, 21>;
-using CRN = /*       */ halfimm::RN;
-using CRD = /*       */ fsr::RD;
-using CPSHARP = /*   */ multiply::RS;
+using CRN = /*       */ arm_halfimm::RN;
+using CRD = /*       */ arm_fsr::RD;
+using CPSHARP = /*   */ arm_multiply::RS;
 using CP = /*        */ field_delayed<u32, u8, 5, 0x7u>;
-using CRM = /*       */ multiply::RM;
-} // namespace coprocop
+using CRM = /*       */ arm_multiply::RM;
+} // namespace arm_coprocop
 
 /// Coprocessor register transfer
-namespace coprocregtrans {
+namespace arm_coprocregtrans {
 constexpr u32 TEMPLATE{0x0e000010u};
 using CPOPC = /*     */ field_delayed<u32, u8, 21, 0x7u>;
-using L = /*         */ singletrans::L;
-using CRN = /*       */ coprocop::CRN;
-using RD = /*        */ coprocop::CRD;
-using CPSHARP = /*   */ coprocop::CPSHARP;
-using CP = /*        */ coprocop::CP;
-using CRM = /*       */ coprocop::CRM;
-} // namespace coprocregtrans
+using L = /*         */ arm_singletrans::L;
+using CRN = /*       */ arm_coprocop::CRN;
+using RD = /*        */ arm_coprocop::CRD;
+using CPSHARP = /*   */ arm_coprocop::CPSHARP;
+using CP = /*        */ arm_coprocop::CP;
+using CRM = /*       */ arm_coprocop::CRM;
+} // namespace arm_coprocregtrans
 
 /// Software interrupt
-namespace swint {
+namespace arm_swint {
 constexpr u32 TEMPLATE{0x0f000000u};
 using SWI = /*       */ field<u32, u32, 0, 0xffffffu>;
-} // namespace swint
-
-/// Thumb
+} // namespace arm_swint
 
 /// Format 01 - Move shifted register
 namespace thumb01 {
