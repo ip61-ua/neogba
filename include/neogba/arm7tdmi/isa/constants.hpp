@@ -182,15 +182,15 @@ using OFFSET = /*    */ field<u32, u32, 0, 0xffffffu>;
 /// Coprocessor data transfer
 namespace coproctrans {
 constexpr u32 TEMPLATE{0x0b000000u};
-using P = /*           */ halfimm::P;
-using U = /*           */ halfimm::U;
-using N = /*           */ singleswap::B;
-using W = /*           */ halfimm::W;
-using L = /*           */ halfimm::L;
-using RN = /*          */ halfimm::RN;
-using CRD = /*         */ fsr::RD;
-using CPSHARP = /*     */ multiply::RS;
-using OFFSET = /*      */ field<u32, u8, 0, 0xffu>;
+using P = /*         */ halfimm::P;
+using U = /*         */ halfimm::U;
+using N = /*         */ singleswap::B;
+using W = /*         */ halfimm::W;
+using L = /*         */ halfimm::L;
+using RN = /*        */ halfimm::RN;
+using CRD = /*       */ fsr::RD;
+using CPSHARP = /*   */ multiply::RS;
+using OFFSET = /*    */ field<u32, u8, 0, 0xffu>;
 } // namespace coproctrans
 
 /// Coprocessor data operation

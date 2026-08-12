@@ -1,5 +1,7 @@
 #pragma once
 #include "neogba/types.hpp"
+#include <type_traits>
+#include <utility>
 
 namespace neogba {
 
@@ -30,9 +32,9 @@ struct field {
    * @return Retrieved value from instruction.
    */
   [[nodiscard]] static inline constexpr ret_t get(ins_t instruction) {
-
     return static_cast<ret_t>(((instruction) & (mask)) >> shift);
   }
+
   /**
    * @brief Replaces the field value within an instruction.
    *
@@ -45,9 +47,13 @@ struct field {
   }
 
   [[nodiscard]] static inline constexpr ins_t set(ins_t instruction, alt_ret_t value)
-    requires(!std::same_as<alt_ret_t, ret_t>)
+    requires(not std::same_as<alt_ret_t, ret_t>)
   {
-    return set(instruction, static_cast<ret_t>(value));
+    if constexpr (std::is_enum_v<alt_ret_t>) {
+      return set(instruction, std::to_underlying(value));
+    } else {
+      return set(instruction, static_cast<ret_t>(value));
+    }
   }
 
   /**
@@ -61,10 +67,46 @@ struct field {
   }
 
   [[nodiscard]] static inline constexpr ins_t set_high(alt_ret_t value)
-    requires(!std::same_as<alt_ret_t, ret_t>)
+    requires(not std::same_as<alt_ret_t, ret_t>)
   {
-    return set_high(static_cast<ret_t>(value));
+    if constexpr (std::is_enum_v<alt_ret_t>) {
+      return set_high(std::to_underlying(value));
+    } else {
+      return set_high(static_cast<ret_t>(value));
+    }
   }
+
+  // operator overloading
+
+  // get
+  [[nodiscard]] static inline constexpr ret_t operator()(ins_t instruction)
+    requires(not std::same_as<ins_t, ret_t> and not std::same_as<ins_t, alt_ret_t>)
+  {
+    return get(instruction);
+  }
+
+  // set
+  [[nodiscard]] static inline constexpr ins_t operator()(ins_t instruction, ret_t value) {
+    return set(instruction, value);
+  }
+
+  [[nodiscard]] static inline constexpr ins_t operator()(ins_t instruction, alt_ret_t value)
+    requires(not std::same_as<alt_ret_t, ret_t>)
+  {
+    return set(instruction, value);
+  }
+
+  // set_high
+  [[nodiscard]] static inline constexpr ins_t operator()(ret_t value) { return set_high(value); }
+
+  [[nodiscard]] static inline constexpr ins_t operator()(alt_ret_t value)
+    requires(not std::same_as<alt_ret_t, ret_t>)
+  {
+    return set_high(value);
+  }
+
+  // only mask
+  [[nodiscard]] static inline constexpr ins_t operator()() { return mask; }
 };
 
 /**
@@ -169,6 +211,21 @@ struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
    * @return That bit shifted and masked.
    */
   [[nodiscard]] static inline constexpr ins_t set_high() { return field_bool::mask; }
+
+  [[nodiscard]]
+  static inline constexpr ins_t operator()() {
+    return set_high();
+  }
+
+  [[nodiscard]]
+  static inline constexpr bool operator()(ins_t instruction) {
+    return get(instruction);
+  }
+
+  [[nodiscard]]
+  static inline constexpr ins_t operator()(ins_t instruction, bool value) {
+    return set(instruction, value);
+  }
 };
 
 /**
@@ -181,8 +238,8 @@ struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
  *
  * @tparam instruction_t Instruction type.
  * @tparam return_t Extracted value type.
- * @tparam n_shift Unused by this specialization's extraction logic but kept for compatibility with
- * `field`. This value represents the least significant bit position of the field a0 in out
+ * @tparam n_shift Unused by this specialization's extraction logic but kept for compatibility
+ * with `field`. This value represents the least significant bit position of the field a0 in out
  * example.
  * @tparam bit_mask Upper bit range.
  * @tparam bit_mask2 Lower bit range.
@@ -203,7 +260,7 @@ struct field_split : field<instruction_t, return_t, n_shift, bit_mask> {
    * @param instruction Raw 32-bit ARM instruction.
    * @return Retrieved combined value from instruction.
    */
-  [[nodiscard]] static constexpr ret_t get(ins_t instruction) {
+  [[nodiscard]] static inline constexpr ret_t get(ins_t instruction) {
     return static_cast<ret_t>(((instruction & field_split::mask) >> join) | (instruction & mask2));
   }
 
@@ -214,7 +271,7 @@ struct field_split : field<instruction_t, return_t, n_shift, bit_mask> {
    * @param value Combined raw value to set in split fields.
    * @return Copy of the instruction and replaced field.
    */
-  [[nodiscard]] static constexpr ins_t set(ins_t instruction, ret_t value) {
+  [[nodiscard]] static inline constexpr ins_t set(ins_t instruction, ret_t value) {
     auto val = static_cast<ins_t>(value);
     return (instruction & ~(field_split::mask | mask2)) | ((val) & (mask2)) |
            ((val << join) & field_split::mask);
@@ -228,6 +285,25 @@ struct field_split : field<instruction_t, return_t, n_shift, bit_mask> {
    */
   [[nodiscard]] static inline constexpr ins_t set_high(ret_t value) {
     return ((value) & (mask2)) | ((value << join) & field_split::mask);
+  }
+
+  // get
+  [[nodiscard]] static inline constexpr ret_t operator()(ins_t instruction)
+    requires(not std::same_as<ins_t, ret_t>)
+  {
+    return get(instruction);
+  }
+
+  // set
+  [[nodiscard]] static inline constexpr ins_t operator()(ins_t instruction, ret_t value) {
+    return set(instruction, value);
+  }
+  // set_high
+  [[nodiscard]] static inline constexpr ins_t operator()(ret_t value) { return set_high(value); }
+
+  // only mask
+  [[nodiscard]] static inline constexpr ins_t operator()() {
+    return ((-1) & (mask2)) | (((-1) << join) & field_split::mask);
   }
 };
 } // namespace neogba
