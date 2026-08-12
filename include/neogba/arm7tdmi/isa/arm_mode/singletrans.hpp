@@ -1,18 +1,18 @@
 #pragma once
 #include "neogba/arm7tdmi/isa/arm_mode/operand2.hpp"
 
-namespace neogba::singletrans {
+namespace neogba::arm_singletrans {
 
 template <bool i = false, bool p = false, bool u = false, bool b = false, bool w = false,
           bool l = false, bool rd_pc = false>
-void arm_singletrans_generator(arm7tdmi& cpu, u32 inst) {
-  const auto r_base{RN::get(inst)}, src_dst{ISA_ARM_SINGLETRANS_RD::get(inst)};
+void generator(arm7tdmi& cpu, u32 inst) {
+  const auto r_base{RN::get(inst)}, src_dst{RD::get(inst)};
 
   u32 offset;
   if constexpr (i) {
-    offset = arm_fsr_operand2_lut.invoke(inst, cpu, inst).result;
+    offset = arm_operand2::table.invoke(inst, cpu, inst).result;
   } else {
-    offset = ISA_ARM_SINGLETRANS_OFFSET::get(inst);
+    offset = OFFSET::get(inst);
   }
 
   const u32 base{cpu.read_active_register(r_base)};
@@ -69,8 +69,8 @@ void arm_singletrans_generator(arm7tdmi& cpu, u32 inst) {
 
 inline constexpr auto
 
-    arm_singletrans_i0_p0_u0_b0_w0_l0_rdpc0{arm_singletrans_generator<>},
-    arm_singletrans_i1_p0_u0_b0_w0_l0_rdpc0{arm_singletrans_generator<true>},
-    arm_singletrans_i0_p1_u0_b0_w0_l0_rdpc0{arm_singletrans_generator<false, true>};
+    arm_singletrans_i0_p0_u0_b0_w0_l0_rdpc0{generator<>},
+    arm_singletrans_i1_p0_u0_b0_w0_l0_rdpc0{generator<true>},
+    arm_singletrans_i0_p1_u0_b0_w0_l0_rdpc0{generator<false, true>};
 
-} // namespace neogba::singletrans
+} // namespace neogba::arm_singletrans
