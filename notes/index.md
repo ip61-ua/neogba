@@ -2960,4 +2960,6 @@ esta sintaxis hace que la verbosidad pueda ser usada a conveniencia.
 
 Sin embargo clangd sufre a estragos por las macros de google test. Fuera de esto, va genial. Procedamos a cambiar los parámetros de plantilla por esto de aquí.
 
+He tomado la decisión de mandar a tomar viento el experimento de rd_pc. mgba no lo hace y es el mejor. ya está bien!
 
+Como me he cargado las 300 funciones de fsr vamos a aprovechar para implementar los 12 bits de identificación para la tabla de operaciones del modo arm ya definitiva (TM). 
