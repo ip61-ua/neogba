@@ -2835,3 +2835,18 @@ Dicho esto:
 Hoy es tu día, https://www.eclipse.org/downloads/ hoy vas a renacer aunque no en forma de Java IDE.
 
 Vamos a empezar con los ISA constants
+
+# 13 de agosto
+
+Mierda de operator() no funciona. Pero bueno mejor, así tengo que mantener menos cosas. Y he simplificado bastante la sintaxis.
+Voy a añadir la máscara de fixed a cada tipo de instrucción.
+
+Otra cosa que considero necesaria ir comprobando es implementar al proyecto compilación progresiva por tema de ir reduciendo los tiempos de compilación. Y que solo se recompile las partes necesarias.
+
+Hubo una vez que cogí el proyecto de lineage os para compilarlo para un móvil no compatible, tardé un mes. Pero la cosa es que la compilación fallaba en mitad. Con lo que tenía que volver a arrancar el proceso. Sin embargo hacer esto, no hacía que fuera a empezar desde 0 sino que continuaba por donde se había quedado. Y a base de insistir conseguir compilar el proyecto.
+
+Hecho. Al principio tarda igual que si no fuera nada progresivo. 
+
+Pero en futuras ejecuciones de make, ahora tarda 0, o la mitad si se modifican las cabeceras.
+
+Aquí entramos en un dilema y es que para reducir tiempos de compilación debemos no engrasar tanto los headers. Pero ello es una cuestión imposible si contamos con templates y constantes. Claro está que podemos ahorrarnos la conveniencia de escribir en línea.

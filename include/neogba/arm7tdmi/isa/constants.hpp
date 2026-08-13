@@ -46,13 +46,14 @@ enum class opcode_enum : u8 {
   BIC = 0b1110,
   MVN = 0b1111,
 };
-constexpr u32 TEMPLATE{0x00000000u};
 using I = /*         */ field_bool<u32, 25>;
 using OPCODE = /*    */ field_delayed<u32, u8, 21, 0xfu, opcode_enum>;
 using S = /*         */ field_bool<u32, 20>;
 using RN = /*        */ field_delayed<u32, u8, 16>;
 using RD = /*        */ field_delayed<u32, u8, 12>;
 using OPERAND2 = /*  */ field<u32, u16, 0, ((1u << 12) - 1)>;
+constexpr u32 TEMPLATE{0x00000000u}, FIXED{0x0c000000u};
+constexpr u32 IGNORED{arm_cond::COND::H | RN::H | RD::H | OPERAND2::H};
 } // namespace arm_fsr
 
 namespace arm_operand2 {
@@ -74,18 +75,18 @@ using IMM = /*       */ field<u32, u8, 0, 0xffu>;
 
 /// Multiply
 namespace arm_multiply {
-constexpr u32 TEMPLATE{0x00000090u};
 using A = /*         */ field_bool<u32, 21>;
 using S = /*         */ arm_fsr::S;
 using RD = /*        */ arm_fsr::RN;
 using RN = /*        */ arm_fsr::RD;
 using RS = /*        */ field_delayed<u32, u8, 8>;
 using RM = /*        */ arm_operand2::RM;
+constexpr u32 TEMPLATE{0x00000090u}, FIXED{0x0fc000f0u};
+constexpr u32 IGNORED{arm_cond::COND::H | RD::H | RN::H | RS::H | RM::H};
 } // namespace arm_multiply
 
 /// Multiply long
 namespace arm_multiplylong {
-constexpr u32 TEMPLATE{0x00800090u};
 using U = /*         */ field_bool<u32, 22>;
 using A = /*         */ arm_multiply::A;
 using S = /*         */ arm_multiply::S;
@@ -93,26 +94,29 @@ using RDHI = /*      */ arm_multiply::RD;
 using RDLO = /*      */ arm_multiply::RN;
 using RN = /*        */ arm_multiply::RS;
 using RM = /*        */ arm_multiply::RM;
+constexpr u32 TEMPLATE{0x00800090u}, FIXED{0x0f8000f0u};
+constexpr u32 IGNORED{arm_cond::COND::H | RDHI::H | RDLO::H | RN::H | RM::H};
 } // namespace arm_multiplylong
 
 /// Single data swap
 namespace arm_singleswap {
-constexpr u32 TEMPLATE{0x01000090u};
 using B = /*         */ arm_multiplylong::U;
 using RN = /*        */ arm_fsr::RN;
 using RD = /*        */ arm_fsr::RD;
 using RM = /*        */ arm_multiply::RM;
+constexpr u32 TEMPLATE{0x01000090u}, FIXED{0x0fb00ff0u};
+constexpr u32 IGNORED{arm_cond::COND::H | RN::H | RD::H | RM::H};
 } // namespace arm_singleswap
 
 /// Branch and Exchange
 namespace arm_branchexchange {
-constexpr u32 TEMPLATE{0x012fff10u};
 using RN = /*        */ arm_multiply::RM;
+constexpr u32 TEMPLATE{0x012fff10u}, FIXED{0x0ffffff0u};
+constexpr u32 IGNORED{arm_cond::COND::H | RN::H};
 } // namespace arm_branchexchange
 
 /// Halfword data transfer, register offset
 namespace arm_halfreg {
-constexpr u32 TEMPLATE{0x00000090u};
 using P = /*         */ field_bool<u32, 24>;
 using U = /*         */ field_bool<u32, 23>;
 using W = /*         */ arm_multiply::A;
@@ -122,11 +126,12 @@ using RD = /*        */ arm_fsr::RD;
 using S = /*         */ field_bool<u32, 6>;
 using H = /*         */ field_bool<u32, 5>;
 using RM = /*        */ arm_multiply::RM;
+constexpr u32 TEMPLATE{0x00000090u}, FIXED{0x0e400f90u};
+constexpr u32 IGNORED{arm_cond::COND::H | RN::H | RD::H | RM::H};
 } // namespace arm_halfreg
 
 /// Halfword data transfer, immediate offset
 namespace arm_halfimm {
-constexpr u32 TEMPLATE{0x00400090u};
 using I = /*         */ arm_fsr::I;
 using P = /*         */ arm_halfreg::P;
 using U = /*         */ arm_halfreg::U;
@@ -138,6 +143,8 @@ using S = /*         */ arm_halfreg::S;
 using H = /*         */ arm_halfreg::H;
 using OFFSET =
     field_split<u32, u8, arm_multiply::RS::shift, arm_multiply::RS::mask, arm_multiply::RM::mask>;
+constexpr u32 TEMPLATE{0x00400090u}, FIXED{0x0e400090u};
+constexpr u32 IGNORED{arm_cond::COND::H | RN::H | RD::H | OFFSET::H};
 } // namespace arm_halfimm
 
 /// Single data transfer
