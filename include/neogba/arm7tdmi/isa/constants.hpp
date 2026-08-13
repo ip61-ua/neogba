@@ -53,7 +53,7 @@ using RN = /*        */ field_delayed<u32, u8, 16>;
 using RD = /*        */ field_delayed<u32, u8, 12>;
 using OPERAND2 = /*  */ field<u32, u16, 0, ((1u << 12) - 1)>;
 constexpr u32 TEMPLATE{0x00000000u}, FIXED{0x0c000000u};
-constexpr u32 IGNORED{arm_cond::COND::H | RN::H | RD::H | OPERAND2::H};
+constexpr u32 IGNORED{arm_cond::COND::H | I::H | RN::H | RD::H | OPERAND2::H};
 } // namespace arm_fsr
 
 namespace arm_operand2 {
