@@ -1,4 +1,5 @@
 #include "neogba/arm7tdmi/isa/arm_mode/operand2.hpp"
+#include "neogba/arm7tdmi/isa/constants.hpp"
 #include <gtest/gtest.h>
 #include <memory>
 
@@ -103,53 +104,62 @@ INSTANTIATE_TEST_SUITE_P(  //
     operand2_test_fixture, //
     ::testing::Values(
         // 0. i | r
-        operand2_test_param{i000, arm_fsr_operand2_i1_r1, 69, 1, 1}, //
+        operand2_test_param{i000, operand2<{.i = true, .rotate_zero = true}>, 69, 1, 1}, //
         // 1. i | -r
-        operand2_test_param{i001, arm_fsr_operand2_i1_r0, std::rotr(static_cast<u8>(255), 4), 0, 0},
+        operand2_test_param{i001, operand2<{.i = true}>, std::rotr(static_cast<u8>(255), 4), 0, 0},
 
         // 2. -i | -bit4 | z | LSL
-        operand2_test_param{i002, arm_fsr_operand2_i0_40_z1_LSL, 0xffffffff, 0, 0},
+        operand2_test_param{i002, operand2<{.shift_zero = true, .shift_type = shift_enum::LSL}>,
+                            0xffffffff, 0, 0},
         // 3. -i | -bit4 | z | LSR
-        operand2_test_param{i003, arm_fsr_operand2_i0_40_z1_LSR, 0, 1, 0},
+        operand2_test_param{i003, operand2<{.shift_zero = true, .shift_type = shift_enum::LSR}>, 0,
+                            1, 0},
         // 4. -i | -bit4 | z | ASR
-        operand2_test_param{i004, arm_fsr_operand2_i0_40_z1_ASR, 0xffffffff, 1, 0},
+        operand2_test_param{i004, operand2<{.shift_zero = true, .shift_type = shift_enum::ASR}>,
+                            0xffffffff, 1, 0},
         // 5. -i | -bit4 | z | ROR
-        operand2_test_param{i005, arm_fsr_operand2_i0_40_z1_ROR, 0x7fffffff, 1, 0},
+        operand2_test_param{i005, operand2<{.shift_zero = true, .shift_type = shift_enum::ROR}>,
+                            0x7fffffff, 1, 0},
 
         // 6. -i | bit4 | any | any | [rs] = 0
-        operand2_test_param{i006, arm_fsr_operand2_i0_41_z0_ROR, 0x22, 0, 0},
+        operand2_test_param{i006, operand2<{.bit4 = true, .shift_type = shift_enum::ROR}>, 0x22, 0,
+                            0},
 
         // 7. -i | -bit4 | -z | lsl.
-        operand2_test_param{i007, arm_fsr_operand2_i0_40_z0_LSL, 0x22 << 1, 0, 1},
+        operand2_test_param{i007, operand2<{}>, 0x22 << 1, 0, 1},
         // 8. -i | -bit4 | -z | lsr.
-        operand2_test_param{i008, arm_fsr_operand2_i0_40_z0_LSR, 0x22 >> 1, 0, 1},
+        operand2_test_param{i008, operand2<{.shift_type = shift_enum::LSR}>, 0x22 >> 1, 0, 1},
         // 9. -i | -bit4 | -z | asr.
-        operand2_test_param{i009, arm_fsr_operand2_i0_40_z0_ASR, 0xffffffff, 1, 0},
+        operand2_test_param{i009, operand2<{.shift_type = shift_enum::ASR}>, 0xffffffff, 1, 0},
         // 10. -i | -bit4 | -z | ror.
-        operand2_test_param{i010, arm_fsr_operand2_i0_40_z0_ROR,
+        operand2_test_param{i010, operand2<{.shift_type = shift_enum::ROR}>,
                             std::rotr(static_cast<u32>(0x22), 1), 0, 1},
 
         // 11. -i | bit4 | any | ror | [rs] != 0 | masked == 0
-        operand2_test_param{i011, arm_fsr_operand2_i0_41_z0_ROR, 0x22, 0, 0},
+        operand2_test_param{i011, operand2<{.bit4 = true, .shift_type = shift_enum::ROR}>, 0x22, 0,
+                            0},
         // 12. -i | bit4 | any | ror | [rs] != 0 | masked != 0
-        operand2_test_param{i012, arm_fsr_operand2_i0_41_z0_ROR,
+        operand2_test_param{i012, operand2<{.bit4 = true, .shift_type = shift_enum::ROR}>,
                             std::rotr(static_cast<u32>(0x22), 3), 0, 0},
 
         // 13. -i | bit4 | any | asr | [rs] != 0 | [rs] >= 32
-        operand2_test_param{i013, arm_fsr_operand2_i0_41_z0_ASR, 0xffffffff, 1, 0},
+        operand2_test_param{i013, operand2<{.bit4 = true, .shift_type = shift_enum::ASR}>,
+                            0xffffffff, 1, 0},
         // 14. -i | bit4 | any | asr | [rs] != 0 | [rs] < 32
-        operand2_test_param{i014, arm_fsr_operand2_i0_41_z0_ASR, 0xffffffff, 1, 0},
+        operand2_test_param{i014, operand2<{.bit4 = true, .shift_type = shift_enum::ASR}>,
+                            0xffffffff, 1, 0},
 
         // 15. -i | bit4 | any | lsr | [rs] != 0 | [rs] > 32
-        operand2_test_param{i015, arm_fsr_operand2_i0_41_z0_LSR, 0, 0, 0},
+        operand2_test_param{i015, operand2<{.bit4 = true, .shift_type = shift_enum::LSR}>, 0, 0, 0},
         // 16. -i | bit4 | any | lsr | [rs] != 0 | [rs] == 32
-        operand2_test_param{i016, arm_fsr_operand2_i0_41_z0_LSR, 0, 0, 0},
+        operand2_test_param{i016, operand2<{.bit4 = true, .shift_type = shift_enum::LSR}>, 0, 0, 0},
         // 17. -i | bit4 | any | lsr | [rs] != 0 | [rs] < 32
-        operand2_test_param{i017, arm_fsr_operand2_i0_41_z0_LSR, 0x22 >> 3, 0, 0},
+        operand2_test_param{i017, operand2<{.bit4 = true, .shift_type = shift_enum::LSR}>,
+                            0x22 >> 3, 0, 0},
 
         // 18. -i | bit4 | any | lsl | [rs] != 0 | [rs] > 32
-        operand2_test_param{i018, arm_fsr_operand2_i0_41_z0_LSL, 0, 0, 0},
+        operand2_test_param{i018, operand2<{.bit4 = true}>, 0, 0, 0},
         // 19. -i | bit4 | any | lsl | [rs] != 0 | [rs] == 32
-        operand2_test_param{i019, arm_fsr_operand2_i0_41_z0_LSL, 0, 0, 0},
+        operand2_test_param{i019, operand2<{.bit4 = true}>, 0, 0, 0},
         // 20. -i | bit4 | any | lsl | [rs] != 0 | [rs] < 32
-        operand2_test_param{i020, arm_fsr_operand2_i0_41_z0_LSL, 0x22 << 3, 0, 0}));
+        operand2_test_param{i020, operand2<{.bit4 = true}>, 0x22 << 3, 0, 0}));
