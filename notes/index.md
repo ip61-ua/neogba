@@ -2974,3 +2974,25 @@ Por último, debido a estos cambios vamos a hacer que la comprobación de si deb
 
 Mejor no implementar esto... No vamos a delegar esto. mgba no lo hace y será por algo. Pero es interesante tener en cuenta esto.
 
+https://en.cppreference.com/cpp/language/template_parameters parametros NNTP
+
+Mejor hago undefined otro día que es poca prioridad.
+
+Entonces 
+
+para mañana¹:
+- Retomamos singletrans. Mejorar y probarlo.
+- Buscar bibliotecas de logging o formas de hacerlo, o craftearme una casera.
+  - Pero ojo, como base de código moderna, usando std::print
+
+mañana²:
+- Otra de carga almacemiento.
+- Implementar undefined.
+
+mañana³:
+- Implementar testing para la otra de carga almacenamiento.
+
+mañana⁴:
+- Empezar con thumb para lógicas y aritméticas.
+- Crear la tabla lut.
+
