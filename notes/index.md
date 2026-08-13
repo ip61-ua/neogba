@@ -2854,3 +2854,110 @@ Aquí entramos en un dilema y es que para reducir tiempos de compilación debemo
 Vale un par de cositas.
 
 Ya veo la perrada de arm. Genera confusión el undefined con single data trans. Ahí claramente hay algo raro o alguna excepción de no usar. Otra cuestión que me gustaría tratar es que voy a retratarme de usar `template<u32>`. No voy a hacerlo. Porque eso implicaría generar el meta²generador. Nuestro problema era la legibilidad. Y cosa la cual la podríamos mejorar usando una sintaxis más explícita. Al más puro estilo de Java y Javascript con objetos. Y es que en lugar de usar `template<bool, bool, bool...>` vamos a usar structs que definan una semántica para argumentos. Pero claro c++ exige un orden. Esto es válido para C++20 y se conoce como NNTP.
+
+Vamos a hacer una prueba de concepto, modificando la que teníamos.
+
+``` c++
+// ANTES
+#include "neogba/structs/lut.hpp"
+#include <gtest/gtest.h>
+
+using namespace neogba;
+
+template <bool a = false, bool b = false, bool c = false, bool d = false>
+bool superplant(int codigo) {
+  return (a << 3 | b << 2 | c << 1 | d) == codigo;
+}
+using function_type = bool (*)(int);
+using lut_type = lut<function_type, 16>;
+
+template <std::size_t I> constexpr function_type expected_function() {
+  static_assert(I < 16);
+
+  return &superplant<(I & 0b1000) != 0, (I & 0b0100) != 0, (I & 0b0010) != 0, (I & 0b0001) != 0>;
+}
+
+template <std::size_t... I> constexpr lut_type make_lut(std::index_sequence<I...>) {
+  lut_type result;
+
+  (result.fill(I, 0, expected_function<I>()), ...);
+
+  return result;
+}
+
+TEST(proof_of_concept, template_functions_check_if_runs_match_adhoc) {
+  auto mylut{make_lut(std::make_index_sequence<16>())};
+
+  EXPECT_EQ(true, mylut.invoke(8, 8));
+  EXPECT_EQ(false, mylut.invoke(8, 9));
+  EXPECT_NE(mylut.get(11), mylut.get(10));
+  EXPECT_EQ(superplant<true>, mylut.get(8));
+  EXPECT_EQ(superplant<true>, superplant<true>);
+
+  //  std::println("s<true>: {:x}\nmylut@8: {:x}",
+  //  reinterpret_cast<std::uintptr_t>(&superplant<true>),
+  //  reinterpret_cast<std::uintptr_t>(mylut.get(8)));
+}
+
+
+// DESPUÉS
+
+#include "neogba/structs/lut.hpp"
+#include <gtest/gtest.h>
+
+using namespace neogba;
+
+struct supertemplate_flags {
+  bool a : 1 {false};
+  bool b : 1 {false};
+  bool c : 1 {false};
+  bool d : 1 {false};
+  bool experiment : 1 {false};
+};
+
+template <supertemplate_flags tflags> bool superplant(int codigo) {
+  if constexpr (tflags.experiment)
+    return false;
+  else
+    return (tflags.a << 3 | tflags.b << 2 | tflags.c << 1 | tflags.d) == codigo;
+}
+using function_type = bool (*)(int);
+using lut_type = lut<function_type, 16>;
+
+template <std::size_t I> constexpr function_type expected_function() {
+  static_assert(I < 16);
+
+  return &superplant<supertemplate_flags{.a = (I & 0b1000) != 0,
+                                         .b = (I & 0b0100) != 0,
+                                         .c = (I & 0b0010) != 0,
+                                         .d = (I & 0b0001) != 0}>;
+}
+
+template <std::size_t... I> constexpr lut_type make_lut(std::index_sequence<I...>) {
+  lut_type result;
+
+  (result.fill(I, 0, expected_function<I>()), ...);
+
+  return result;
+}
+
+TEST(proof_of_concept, template_functions_check_if_runs_match_adhoc) {
+  auto mylut{make_lut(std::make_index_sequence<16>())};
+
+  EXPECT_EQ(true, mylut.invoke(8, 8));
+  EXPECT_EQ(false, mylut.invoke(8, 9));
+  EXPECT_NE(mylut.get(11), mylut.get(10));
+  EXPECT_EQ(superplant<{true}>, mylut.get(8));
+  EXPECT_EQ(superplant<supertemplate_flags{.a = true}>, superplant<{.a = true}>);
+  EXPECT_EQ(superplant<supertemplate_flags{true}>, superplant<{.a = true}>);
+  EXPECT_EQ((superplant<{true}>), (superplant<{.a = true, .b = false}>));
+  EXPECT_EQ((superplant<{.a = true}>), (superplant<{.a = true, .b = false}>));
+}
+
+```
+
+esta sintaxis hace que la verbosidad pueda ser usada a conveniencia. 
+
+Sin embargo clangd sufre a estragos por las macros de google test. Fuera de esto, va genial. Procedamos a cambiar los parámetros de plantilla por esto de aquí.
+
+
