@@ -107,6 +107,14 @@ TEST(isa_test, should_build_ri_bits_from_raw_arm_halfimm_instruction_with_newer_
   ASSERT_EQ(KTEST_INS, ins);
 }
 
+TEST(isa_test, extractor_should_return_right_high_bits_with_newer_syntax) {
+  using namespace arm_halfimm;
+  using namespace arm_cond;
+
+  ASSERT_EQ(0xf0fu, OFFSET::H);
+  ASSERT_EQ(0x103u, OFFSET::h(0x13u));
+}
+
 TEST(isa_test, should_return_same_when_building_its_refered_to_the_same_range_of_bits) {
   using namespace arm_multiplylong;
 
