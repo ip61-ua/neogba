@@ -2850,3 +2850,7 @@ Hecho. Al principio tarda igual que si no fuera nada progresivo.
 Pero en futuras ejecuciones de make, ahora tarda 0, o la mitad si se modifican las cabeceras.
 
 Aquí entramos en un dilema y es que para reducir tiempos de compilación debemos no engrasar tanto los headers. Pero ello es una cuestión imposible si contamos con templates y constantes. Claro está que podemos ahorrarnos la conveniencia de escribir en línea.
+
+Vale un par de cositas.
+
+Ya veo la perrada de arm. Genera confusión el undefined con single data trans. Ahí claramente hay algo raro o alguna excepción de no usar. Otra cuestión que me gustaría tratar es que voy a retratarme de usar `template<u32>`. No voy a hacerlo. Porque eso implicaría generar el meta²generador. Nuestro problema era la legibilidad. Y cosa la cual la podríamos mejorar usando una sintaxis más explícita. Al más puro estilo de Java y Javascript con objetos. Y es que en lugar de usar `template<bool, bool, bool...>` vamos a usar structs que definan una semántica para argumentos. Pero claro c++ exige un orden. Esto es válido para C++20 y se conoce como NNTP.

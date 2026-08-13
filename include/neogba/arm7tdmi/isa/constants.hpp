@@ -149,7 +149,6 @@ constexpr u32 IGNORED{arm_cond::COND::H | RN::H | RD::H | OFFSET::H};
 
 /// Single data transfer
 namespace arm_singletrans {
-constexpr u32 TEMPLATE{0x06000000u};
 using I = /*         */ arm_halfimm::P;
 using P = /*         */ arm_halfimm::P;
 using U = /*         */ arm_halfimm::U;
@@ -159,16 +158,18 @@ using L = /*         */ arm_halfimm::L;
 using RN = /*        */ arm_halfimm::RN;
 using RD = /*        */ arm_halfimm::RD;
 using OFFSET = /*    */ arm_fsr::OPERAND2;
+constexpr u32 TEMPLATE{0x04000000u}, FIXED{0x0c000000u};
+constexpr u32 IGNORED{arm_cond::COND::H | RN::H | RD::H | OFFSET::H};
 } // namespace arm_singletrans
 
 /// Undefined
 namespace arm_undefined {
-constexpr u32 TEMPLATE{0x06000010u};
+constexpr u32 TEMPLATE{0x06000010u}, FIXED{0x0e000010u};
+constexpr u32 IGNORED{arm_cond::COND::H | 0x01ffffef};
 } // namespace arm_undefined
 
 /// Block data transfer
 namespace arm_blocktrans {
-constexpr u32 TEMPLATE{0x09000000u};
 using P = /*         */ arm_halfimm::P;
 using U = /*         */ arm_halfimm::U;
 using S = /*         */ arm_singleswap::B;
@@ -176,18 +177,20 @@ using W = /*         */ arm_halfimm::W;
 using L = /*         */ arm_halfimm::L;
 using RN = /*        */ arm_halfimm::RN;
 using REGLIST = /*   */ field<u32, u16, 0, 0xffffu>;
+constexpr u32 TEMPLATE{0x08000000u}, FIXED{0x0e000000u};
+constexpr u32 IGNORED{arm_cond::COND::H | RN::H | REGLIST::H};
 } // namespace arm_blocktrans
 
 /// Branch
 namespace arm_branch {
-constexpr u32 TEMPLATE{0x0a000000u};
 using L = /*         */ arm_halfimm::P;
 using OFFSET = /*    */ field<u32, u32, 0, 0xffffffu>;
+constexpr u32 TEMPLATE{0x0a000000u}, FIXED{0x0e000000u};
+constexpr u32 IGNORED{arm_cond::COND::H | OFFSET::H};
 } // namespace arm_branch
 
 /// Coprocessor data transfer
 namespace arm_coproctrans {
-constexpr u32 TEMPLATE{0x0b000000u};
 using P = /*         */ arm_halfimm::P;
 using U = /*         */ arm_halfimm::U;
 using N = /*         */ arm_singleswap::B;
@@ -197,22 +200,24 @@ using RN = /*        */ arm_halfimm::RN;
 using CRD = /*       */ arm_fsr::RD;
 using CPSHARP = /*   */ arm_multiply::RS;
 using OFFSET = /*    */ field<u32, u8, 0, 0xffu>;
+constexpr u32 TEMPLATE{0x0c000000u}, FIXED{0x0e000000u};
+constexpr u32 IGNORED{arm_cond::COND::H | RN::H | CRD::H | CPSHARP::H | OFFSET::H};
 } // namespace arm_coproctrans
 
 /// Coprocessor data operation
 namespace arm_coprocop {
-constexpr u32 TEMPLATE{0x0e000000u};
 using CPOPC = /*     */ field_delayed<u32, u8, 21>;
 using CRN = /*       */ arm_halfimm::RN;
 using CRD = /*       */ arm_fsr::RD;
 using CPSHARP = /*   */ arm_multiply::RS;
 using CP = /*        */ field_delayed<u32, u8, 5, 0x7u>;
 using CRM = /*       */ arm_multiply::RM;
+constexpr u32 TEMPLATE{0x0e000000u}, FIXED{0x0f000010u};
+constexpr u32 IGNORED{arm_cond::COND::H | CRN::H | CRD::H | CPSHARP::H | CP::H | CRM::H};
 } // namespace arm_coprocop
 
 /// Coprocessor register transfer
 namespace arm_coprocregtrans {
-constexpr u32 TEMPLATE{0x0e000010u};
 using CPOPC = /*     */ field_delayed<u32, u8, 21, 0x7u>;
 using L = /*         */ arm_singletrans::L;
 using CRN = /*       */ arm_coprocop::CRN;
@@ -220,12 +225,15 @@ using RD = /*        */ arm_coprocop::CRD;
 using CPSHARP = /*   */ arm_coprocop::CPSHARP;
 using CP = /*        */ arm_coprocop::CP;
 using CRM = /*       */ arm_coprocop::CRM;
+constexpr u32 TEMPLATE{0x0e000010u}, FIXED{arm_coproctrans::FIXED};
+constexpr u32 IGNORED{arm_cond::COND::H | CRN::H | RD::H | CPSHARP::H | CP::H | CRM::H};
 } // namespace arm_coprocregtrans
 
 /// Software interrupt
 namespace arm_swint {
-constexpr u32 TEMPLATE{0x0f000000u};
 using SWI = /*       */ field<u32, u32, 0, 0xffffffu>;
+constexpr u32 TEMPLATE{0x0f000000u}, FIXED{0x0f000000u};
+constexpr u32 IGNORED{arm_cond::COND::H | SWI::H};
 } // namespace arm_swint
 
 /// Format 01 - Move shifted register
