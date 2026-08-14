@@ -2996,3 +2996,32 @@ mañana⁴:
 - Empezar con thumb para lógicas y aritméticas.
 - Crear la tabla lut.
 
+# 14 de agosto
+
+para el logging igual merece la pena hacerlo casero. nba usa atom. la más popular es spdlog.
+
+no sé cómo podríamos integrarlo con los test.
+
+de momento sigamos, ya cuestionaré sobre esto al tutor.
+
+mi idea es usar algún tipo de logging. como se hace habitualmente en la industria. pero tener la libertad de alterarlo para modificar su comportamiento por ejemplo si al hacer el testing ocultarlo, mirar qué log ha dado para probar. O más interesante, poder filtrarlo.
+
+tengo pensado en darle un uso muy sencillo. info, warning y error y ya está. y poder categorizarlo. tipo activar todos los logs de instrucciones solo. Pues que cuando pase por fsr o decodifique algo pues qur lo diga. O ignorar esa parte porque ya no interesa.
+
+mira quizás ya lo esté visualizando algo más claro.
+
+necesitamos un gestor de configuración.
+
+y que desde este gestor podamos hacer comprobaciones de que preferencias aplicar. Así por ejemplo si en el testing no interesa mostrar ningún log, pues a tomar viento. O si tiene que escribir en un fichero o no. o si debe hacerlo en ambos. O redireccionar salida de error a la estándar.
+
+La verdad que de pensar todo esto me están dando ganas de usar uno ya hecho.
+
+otra de las bibliotecas para logging son quill, https://github.com/emilk/loguru , boost...
+
+bueno vamos a hacer una cosa. y es que en c++ sabes el coñazo que es cmake y más si es para instalarnos una biblioteca.
+
+de hecho, yo tengo instalado el google test por dnf directamente. Así no me rompo la cabeza ni tampoco en comprobar cada poco tiempo a mano si hay una nueva versión de la biblioteca en línea. Vamos a ir a lo práctico, vamos a recorrer los repositorios de fedora a ver que hay usamos eso. De hecho hay raylib en dnf directamente.
+
+Pues bingo, spdlog ya lo tenía instalado.
+
+Bueno lo dejo para otro día porque estoy cansado. lol.
