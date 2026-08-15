@@ -5,6 +5,29 @@
 #include <memory>
 
 using namespace neogba;
+
+namespace {
+
+template <typename T> class cpu_test_fixture : public ::testing::TestWithParam<T> {
+protected:
+  std::unique_ptr<arm7tdmi> cpu;
+
+  cpu_test_fixture() {}
+  virtual ~cpu_test_fixture() {}
+
+  void SetUp() override {
+    cpu = std::make_unique<arm7tdmi>();
+    cpu->empty_registers();
+    cpu->reset();
+    cpu->set_mode(arm7tdmi::MODE_USR);
+  }
+
+  void TearDown() override {}
+};
+
+} // namespace
+
+namespace {
 using namespace arm_fsr;
 
 struct fsr_test_param {
@@ -38,27 +61,9 @@ struct fsr_test_param {
   u32 initial_spsr{0};
 };
 
-namespace {
+using arm_fsr_fixture = cpu_test_fixture<fsr_test_param>;
 
-class fsr_test_fixture : public ::testing::TestWithParam<fsr_test_param> {
-protected:
-  std::unique_ptr<arm7tdmi> cpu;
-
-  fsr_test_fixture() {}
-  virtual ~fsr_test_fixture() {}
-
-  void SetUp() override {
-    cpu = std::make_unique<arm7tdmi>();
-    cpu->empty_registers();
-    cpu->set_mode(arm7tdmi::MODE_USR);
-  }
-
-  void TearDown() override {}
-};
-
-} // namespace
-
-TEST_P(fsr_test_fixture, arm_fsr_fsr) {
+TEST_P(arm_fsr_fixture, arm_fsr_fsr) {
   using namespace arm_operand2;
   const auto& params = GetParam();
 
@@ -122,7 +127,7 @@ TEST_P(fsr_test_fixture, arm_fsr_fsr) {
 
 INSTANTIATE_TEST_SUITE_P( //
     fsr_parametrized,     //
-    fsr_test_fixture,     //
+    arm_fsr_fixture,      //
     ::testing::Values(
         // Caso 0
         fsr_test_param{.mode = arm7tdmi::MODE_FIQ,
@@ -286,3 +291,4 @@ INSTANTIATE_TEST_SUITE_P( //
                        .expected_rd = 0x1234}
 
         ));
+} // namespace
