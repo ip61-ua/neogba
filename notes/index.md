@@ -3025,3 +3025,8 @@ de hecho, yo tengo instalado el google test por dnf directamente. Así no me rom
 Pues bingo, spdlog ya lo tenía instalado.
 
 Bueno lo dejo para otro día porque estoy cansado. lol.
+
+
+# 15 de agosto
+
+Vamos con el testing y mejoras de single trans. Sin embargo aquí todavía toca hacer el refactor de los tparam.
