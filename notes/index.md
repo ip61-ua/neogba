@@ -3030,3 +3030,7 @@ Bueno lo dejo para otro día porque estoy cansado. lol.
 # 15 de agosto
 
 Vamos con el testing y mejoras de single trans. Sin embargo aquí todavía toca hacer el refactor de los tparam.
+
+Vale he cambiado alguna cosita a la llamada del operand2 pero ya.
+
+Tengo hecho el cfg y me salen 4 casos.

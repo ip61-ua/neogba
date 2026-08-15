@@ -70,7 +70,7 @@ template <singletrans_tflags flags> void singletrans(arm7tdmi& cpu, u32 inst) {
   }
 
   // write
-  if constexpr (not flags.l) {
+  else {
     cpu.bus->write(n_bits, addr, store_data);
   }
 }
