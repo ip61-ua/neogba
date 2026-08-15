@@ -95,6 +95,8 @@ struct arm7tdmi {
 
   memory_bus* bus{nullptr};
 
+  inline void set_bus(memory_bus* busptr) { bus = busptr; }
+
   [[nodiscard]] inline u32 read_raw_register(u8 reg) const { return registers[reg]; }
   inline void write_raw_register(u8 reg, u32 value) { registers[reg] = value; }
 

@@ -8,17 +8,24 @@ inline constexpr std::size_t gba_bus_normalizer(std::size_t addr) { return addr 
 class memory_bus {
   using lut_type = lut<imemory*, 1 << 8, gba_bus_normalizer>;
   lut_type ms;
+  u32 last_write{static_cast<u32>(-1)};
+  u32 last_read{last_write};
 
 public:
   lut_type& data() { return ms; }
 
   inline bool is_null(u32 addr) const { return ms.get(addr) == 0; }
 
-  inline u32 read(u8 size, u32 addr) const {
+  inline u32 get_last_read() const { return last_read; }
+  inline u32 get_last_write() const { return last_write; }
+
+  inline u32 read(u8 size, u32 addr) {
+    last_read = addr;
     return is_null(addr) ? 0 : ms.get(addr)->read(size, addr);
   }
 
   inline bool write(u8 size, u32 addr, u32 contents) {
+    last_write = addr;
     return !is_null(addr) && ms.get(addr)->write(size, addr, contents);
   }
 
