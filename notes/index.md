@@ -3034,3 +3034,79 @@ Vamos con el testing y mejoras de single trans. Sin embargo aquí todavía toca 
 Vale he cambiado alguna cosita a la llamada del operand2 pero ya.
 
 Tengo hecho el cfg y me salen 4 casos.
+
+# 28 de agosto
+
+He estado avanzando en la documentación este tato aunque me he tomado algunos descansos.
+
+Hoy voy a centrarme solo en una cosa. Vamos a implementar block data transfer.
+
+Dado que parece muy similar a la otra de single trans no debería tardar mucho.
+
+en la lista. Los registros se representan sumando 1. 0 no es r0 si no que es no hacer nada. no debería estar vacía pero nada físicamente lo impide.
+
+Vale ya lo entiendo, caben 16 registros, un bit por registro y no 3 cómo máximo como una codificación. Es realmente muy interesante e ingenioso como está hecho esto. Veo ya las cosas más claras.
+
+Pues su similaridad a singletrans, vamos a empezar por una copia de este.
+
+Vale tengo una idea y es que podemos aprovecharnos de la metainformación del normalización para por registros de enmedio. Pero sinceramente lo dudo, porque parece que la implementación puede ser iterativa.
+
+Como siempre, pero al partir de una versión algo hecha, vamos a considerarla como una aproximación naive que luego vamos a ir perfeccionando. Lo primero es tener algo funcando, cambiamos todo lo antiguo por lo nuevo y incluimos cabeceras restantes. Partiremos en la naive por una versión simple considerando bots p-l
+
+El bit S cambia su significado si está presente pc en la lista.
+
+- LDM, PC, S  === SPSR_current -> CPSR.
+- STM, PC, S  === Trabajar con el banco de USER no del actual. W no puede estar activo. 
+- any, -PC, S === Trabajar con el banco de USER no del actual. W no puede estar activo.
+
+No deberías usar R15 como base.
+
+Esto de aquí es IA para entender 4.11.6
+
+Este párrafo describe un **conflicto de tiempos en el hardware** que ocurre cuando usas un registro para apuntar a la memoria (el registro base), le pides al procesador que actualice su dirección automáticamente (con el sufijo `!`), y al mismo tiempo lo metes dentro de las llaves `{}` para transferirlo.
+
+Como el procesador ejecuta las transferencias en ciclos de reloj muy precisos, ocurren las siguientes rarezas:
+
+**En instrucciones STM (Guardar en memoria)**
+El procesador empieza a enviar registros a la memoria al *inicio* del segundo ciclo de la instrucción, pero actualiza la suma en el registro base al *final* de ese mismo ciclo. Esto genera dos escenarios dependiendo del orden:
+
+* **Si el base es el primero a transferir (el de número más bajo):** El procesador lo saca hacia la memoria inmediatamente, antes de que el hardware tenga tiempo de calcular y guardar la nueva dirección. **Resultado:** Se guarda la dirección original.
+* *Ejemplo:* En `STMIA R1!, {R1, R2}`, R1 es el más bajo. Se guarda el valor "viejo" de R1 en la memoria.
+
+
+* **Si el base es el segundo o posterior:** Mientras el procesador está ocupado guardando el primer registro (ej. R0), el hardware termina de actualizar el registro base (R1). Cuando por fin le toca el turno de guardarse, ya tiene el dato nuevo. **Resultado:** Se guarda la dirección modificada.
+* *Ejemplo:* En `STMIA R1!, {R0, R1}`, el R0 da tiempo a que R1 se actualice. Se guarda el valor "nuevo" de R1 en la memoria.
+
+
+
+**En instrucciones LDM (Cargar desde memoria)**
+Aquí el comportamiento es menos caótico pero igual de destructivo. Si usas el write-back (`!`) pero también cargas un dato de la memoria hacia ese mismo registro, ocurren las dos cosas casi a la vez.
+
+* **Resultado:** El dato que viene de la memoria **siempre gana**. El procesador actualiza la dirección en el registro, pero una fracción de segundo después, el valor leído de la memoria aterriza en ese mismo registro y sobrescribe (borra) la dirección actualizada. El efecto del sufijo `!` se pierde.
+
+> **Regla de oro:** Precisamente por este comportamiento tan dependiente de los tiempos del procesador, la regla no escrita en ensamblador ARM es **nunca incluir el registro base en la lista** si estás utilizando el modificador de write-back (`!`). La propia documentación de ARM marca estas combinaciones como "impredecibles" en arquitecturas más modernas.
+
+Vale, creo que tampoco debemos considerar los abortos en la gba. el arm en la gba no hay ""permisos"".
+
+Esto cuadra mucho con una experiencia desagradable que he tenido al experimentar hw de gba. Por cuestiones meramente investigativas, adquirí un hw similar al gba pero más moderno y retrocompatible como es la n3ds xl el cual como ya bien conocemos de la introducción está compuesto por 3 cpus arm7, arm9 y arm11 bajo la excusa de preservar la compatibilidad. Lo cierto es que es un beneficio en tanto que podemos simular experiencias con bastante precesión a las originales con sus excepciones de casos en los que se precisen dispositivos externos que no tienen forma de conexión físicamente. Por lo que solo puede preservarse a través de un proceso de liberación de la prisión de la consola para poder ejecutar código arbitrario. Esto que puede ser una ventaja, a la larga fue más un dolor de cabeza para todo antes que una solición viable.
+
+Uno de los problemas de incluir todas las CPUs es el impacto negativo en la batería. Y es que hay que recordar que la 3ds en modo 3ds utiliza ambas a la vez, la 3ds en modo ds utiliza 2 solo, y en modo gba no emulada solo utiliza 1. Esto es que una batería de litio tiene que retroalimentar 3 chips el 3d de la consola, el wifi, el nfc y dos pantalla. Por ese motivo los primeros modelos de la 3ds en modo ds duraban incluso menos que en una ds original. Menos batería. Conforme a ido haciendose a más grande las consolas 3ds se podía permitir introducir una batería más grande.
+
+Otro problema es para crear un emulador debes implementar 3 procesador con sus modificaciones específicas como en la gba con el tema de aborto de forma recursiva para cada generación. Lo cual resultaba costoso seguir una retrocompatibilidad para futuras consolas virtuales.
+
+Hay como al menos 5 formas de jugar en la 3ds software de gba: (1) open agb firm, (2) inyección a agb firm, (3) programa embasador de 3ds a través de agb firm, (4) através del modo ds ejecutando gbarunner2 o ejecutando directamente desde modo ds en 3ds un programa gba, (5) A través de un emulador como mgba para 3ds en modo 3ds. 
+
+Al caso es que en esta experiencia en una consola antigua suele ir bien general pero su antiguedad deja en evidencia el decay y es más sucecctible a errores de bit rot. Siendo que hay errores silenciosos un poco sujetos a la aleatoriedad. Por ejemplo, una partida de un juego rpg al guardar dio que estaba bien siendo que estaba haciendo en (1), pero al cargar la partida había desaparecido por que era inválida. Y no era borrarla, porque el juego no deja hacerlo mientras estás jugando solo en la pantalla de título.
+
+Y creo que ese mensaje de satisfacción es un farsa precisamente porque no hay abt ni nada que console el estado de excepción.
+
+OJO. El comportamiento de todo ceros en rlist sí está definido en gba!!
+
+según gbatek:
+
+Strange Effects on Invalid Rlist’s
+
+Empty Rlist: R15 loaded/stored (ARMv4 only), and Rb=Rb+/-40h (ARMv4-v5).
+
+Writeback with Rb included in Rlist: Store OLD base if Rb is FIRST entry in Rlist, otherwise store NEW base (STM/ARMv4), always store OLD base (STM/ARMv5), no writeback (LDM/ARMv4), writeback if Rb is “the ONLY register, or NOT the LAST register” in Rlist (LDM/ARMv5).
+

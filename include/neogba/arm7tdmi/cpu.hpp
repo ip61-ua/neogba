@@ -110,6 +110,16 @@ struct arm7tdmi {
       registers[active_registers[reg]] = value;
   }
 
+  [[nodiscard]] inline u32 read_relative_register(u8 reg, u8 bank_preset) const {
+    return reg == pc ? read_pc() : registers[REGISTERS_PRESET[bank_preset][reg]];
+  }
+  inline void write_relative_register(u8 reg, u32 value, u8 bank_preset) {
+    if (reg == pc)
+      write_pc(value);
+    else
+      registers[REGISTERS_PRESET[bank_preset][reg]] = value;
+  }
+
   [[nodiscard]] inline u32 read_pc() const {
     return registers[pc] + (instruction_incrementator << 1);
   }
@@ -120,14 +130,21 @@ struct arm7tdmi {
   [[nodiscard]] inline bool is_cpsr(u32 mask, u32 bits) const {
     return (registers[cpsr] & mask) == bits;
   }
-
   inline void clear_cpsr(u32 mask) { registers[cpsr] &= ~mask; }
   inline void set_cpsr(u32 mask, u32 bits) { registers[cpsr] = (registers[cpsr] & ~mask) | bits; }
+
   [[nodiscard]] inline u32 read_spsr() const { return read_active_register(spsr); }
   inline void write_spsr(u32 new_spsr) { write_active_register(spsr, new_spsr); }
 
   [[nodiscard]] inline bool is_mode(u8 mode) const { return (registers[cpsr] & M) == mode; }
   void set_mode(u8 mode, bool update_cpsr = true);
+
+  inline void ensure_mode() { set_mode(read_cpsr(), false); }
+
+  inline void restore_cpsr() {
+    write_cpsr(read_spsr());
+    ensure_mode();
+  }
 
   [[nodiscard]] inline static u8 get_idx_registers_preset_by_mode(u8 mode) {
     return ((mode & 0b11) + ((mode & 0b1100) >> 2)) % 6;
