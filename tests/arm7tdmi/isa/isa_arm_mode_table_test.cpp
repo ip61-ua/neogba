@@ -354,6 +354,11 @@ public:
   }
 };
 
+constexpr singletrans_tflags c0{.i = 1, .p = 0, .u = 1, .b = 0, .w = 0, .l = 0},
+    c1{.i = 1, .p = 1, .u = 1, .b = 0, .w = 0, .l = 0},
+    c2{.i = 0, .p = 1, .u = 0, .b = 0, .w = 0, .l = 1},
+    c3{.i = 0, .p = 1, .u = 0, .b = 1, .w = 1, .l = 1};
+
 TEST_P(arm_singletrans_fixture, arm_singletrans_test) {
   // Arrange
   const auto& params = GetParam();
@@ -362,6 +367,7 @@ TEST_P(arm_singletrans_fixture, arm_singletrans_test) {
            arm_singletrans::I::h(params.flags.i) | //
            P::h(params.flags.p) |                  //
            U::h(params.flags.u) |                  //
+           B::h(params.flags.b) |                  //
            W::h(params.flags.w) |                  //
            L::h(params.flags.l) |                  //
            RN::h(params.rn) |                      //
@@ -381,13 +387,10 @@ TEST_P(arm_singletrans_fixture, arm_singletrans_test) {
   const auto addr_to_check{params.flags.l ? params.expected_last_read : params.expected_last_write};
   ASSERT_EQ(params.expected_ram_addr_contents, bus->read(32, addr_to_check));
 
-  //  ASSERT_EQ(params.caller, arm_mode_lut.get(inst));
-}
+  arm_mode_lut.invoke(inst, *cpu.get(), inst);
 
-constexpr singletrans_tflags c0{.i = 1, .p = 0, .u = 1, .b = 0, .w = 0, .l = 0},
-    c1{.i = 1, .p = 1, .u = 1, .b = 0, .w = 0, .l = 0},
-    c2{.i = 0, .p = 1, .u = 0, .b = 0, .w = 0, .l = 1},
-    c3{.i = 0, .p = 1, .u = 0, .b = 1, .w = 1, .l = 1};
+  ASSERT_EQ(params.caller, arm_mode_lut.get(inst));
+}
 
 INSTANTIATE_TEST_SUITE_P(     //
     singletrans_parametrized, //
