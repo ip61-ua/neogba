@@ -13,7 +13,7 @@ struct blocktrans_tflags {
   bool zeros_4_to_7 : 1 {false};
 };
 
-template <blocktrans_tflags flags> void blocktrans(arm7tdmi& cpu, u32 inst) {
+template <blocktrans_tflags flags> auto blocktrans(arm7tdmi& cpu, u32 inst) -> void {
   const auto rn{RN::get(inst)};
   auto base{cpu.read_active_register(rn)};
 

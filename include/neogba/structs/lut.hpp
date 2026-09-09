@@ -27,11 +27,11 @@ namespace neogba {
  * @tparam normalizer Compile-time function used to normalize lookup indices.
  */
 template <typename store_t, std::size_t max_length,
-          std::size_t (*normalizer)(std::size_t idx) =
+          auto (*normalizer)(std::size_t idx)->std::size_t =
               +[](std::size_t idx) -> std::size_t { return idx; }>
 class lut {
 protected:
-  // inline constexpr std::size_t compute_max_mask(std::size_t n) {
+  // inline constexpr auto compute_max_mask(std::size_t n) -> std::size_t {
   //   static_assert(max_length > 1, "You should not use LUT to store less than 2 elements!");
   //   // static_assert(max_length < sizeof(std::size_t), "Too many items");
 
@@ -60,8 +60,9 @@ protected:
 
   const std::size_t MAX_MASK{std::bit_ceil(max_length) - 1};
   std::array<store_t, max_length> storage{};
-  constexpr std::size_t fill_recursive(std::size_t base, std::size_t mask, store_t what, bool high,
-                                       std::size_t bit = 0) {
+
+  constexpr auto fill_recursive(std::size_t base, std::size_t mask, store_t what, bool high,
+                                std::size_t bit = 0) -> std::size_t {
     // caso base
     std::size_t shifted{mask >> bit};
     if (shifted == 0)
@@ -96,28 +97,32 @@ public:
   using const_iterator = typename std::array<store_t, max_length>::const_iterator;
   constexpr std::size_t norm_idx(std::size_t idx) const { return normalizer(idx) & MAX_MASK; }
 
-  constexpr iterator begin() noexcept { return storage.begin(); }
-  constexpr iterator end() noexcept { return storage.end(); }
+  // iterator
 
-  constexpr const_iterator begin() const noexcept { return storage.begin(); }
-  constexpr const_iterator end() const noexcept { return storage.end(); }
+  constexpr auto begin() noexcept { return storage.begin(); }
+  constexpr auto end() noexcept { return storage.end(); }
 
-  constexpr const_iterator cbegin() const noexcept { return storage.cbegin(); }
-  constexpr const_iterator cend() const noexcept { return storage.cend(); }
+  // const_iterator
 
-  constexpr std::array<store_t, max_length>& data() { return storage; }
-  constexpr store_t get(std::size_t idx) const { return storage[norm_idx(idx)]; }
+  constexpr auto begin() const noexcept { return storage.begin(); }
+  constexpr auto end() const noexcept { return storage.end(); }
+
+  constexpr auto cbegin() const noexcept { return storage.cbegin(); }
+  constexpr auto cend() const noexcept { return storage.cend(); }
+
+  constexpr auto data() -> std::array<store_t, max_length>& { return storage; }
+  constexpr auto get(std::size_t idx) const -> store_t { return storage[norm_idx(idx)]; }
 
   template <typename... Args>
     requires std::invocable<store_t, Args...>
-  constexpr decltype(auto) invoke(std::size_t idx, Args&&... params) const {
+  constexpr auto invoke(std::size_t idx, Args&&... params) const -> decltype(auto) {
     return std::invoke(get(idx), std::forward<Args>(params)...);
   }
 
-  constexpr void put_raw(std::size_t raw_idx, store_t what) { storage[raw_idx] = what; }
+  constexpr auto put_raw(std::size_t raw_idx, store_t what) { storage[raw_idx] = what; }
 
-  constexpr void fill(store_t what) { storage.fill(what); }
-  constexpr void fill(std::size_t idx, store_t what) { storage[norm_idx(idx)] = what; }
+  constexpr auto fill(store_t what) { storage.fill(what); }
+  constexpr auto fill(std::size_t idx, store_t what) { storage[norm_idx(idx)] = what; }
 
   /**
    * @brief Fills every combination selected by a bit mask.
@@ -129,7 +134,7 @@ public:
    *
    * @return Number of table entries written.
    */
-  constexpr std::size_t fill(std::size_t idx_base, std::size_t mask, store_t what) {
+  constexpr auto fill(std::size_t idx_base, std::size_t mask, store_t what) -> std::size_t {
     std::size_t b{norm_idx(idx_base)}, m{norm_idx(mask)};
     put_raw(b, what);
     return 1 + fill_recursive(b, m, what, true) + fill_recursive(b, m, what, false);
@@ -140,7 +145,7 @@ public:
    *
    * @return Number of table entries written.
    */
-  constexpr std::size_t fill_except(std::size_t idx_base, std::size_t mask, store_t what) {
+  constexpr auto fill_except(std::size_t idx_base, std::size_t mask, store_t what) -> std::size_t {
     std::size_t b{norm_idx(idx_base)}, m{norm_idx(mask)};
     return fill_recursive(b, m, what, true) + fill_recursive(b, m, what, false);
   }
@@ -152,7 +157,7 @@ public:
    *
    * @return Number of entries written.
    */
-  constexpr std::size_t fill_range(std::size_t from, std::size_t to, store_t what) {
+  constexpr auto fill_range(std::size_t from, std::size_t to, store_t what) -> std::size_t {
     if (from >= to)
       return 0;
 
@@ -169,7 +174,7 @@ public:
    *
    * @return Number of entries written.
    */
-  constexpr std::size_t fill_missing(store_t what) {
+  constexpr auto fill_missing(store_t what) -> std::size_t {
     std::size_t n{};
     for (std::size_t i{0}; i < max_length; ++i) {
       if (storage[i] == store_t{}) {
@@ -180,8 +185,10 @@ public:
     return n;
   }
 
-  constexpr std::size_t length() const { return max_length; };
-  constexpr std::size_t count_stored(store_t what) const { return std::ranges::count(*this, what); }
+  constexpr auto length() const -> std::size_t { return max_length; };
+  constexpr auto count_stored(store_t what) const -> std::size_t {
+    return std::ranges::count(*this, what);
+  }
 };
 
 } // namespace neogba

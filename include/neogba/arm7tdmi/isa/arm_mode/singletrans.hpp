@@ -10,9 +10,13 @@ struct singletrans_tflags {
   bool b : 1 {false};
   bool w : 1 {false};
   bool l : 1 {false};
+
+  constexpr auto operator==(const singletrans_tflags o) const -> bool {
+    return i == o.i && p == o.p && u == o.u && b == o.b && w == o.w && l == o.l;
+  };
 };
 
-template <singletrans_tflags flags> void singletrans(arm7tdmi& cpu, u32 inst) {
+template <singletrans_tflags flags> auto singletrans(arm7tdmi& cpu, u32 inst) -> void {
   const auto r_base{RN::get(inst)}, src_dst{RD::get(inst)};
 
   u32 offset;

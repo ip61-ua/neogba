@@ -32,7 +32,7 @@ struct field {
    * @param instruction Raw 32-bit ARM instruction.
    * @return Retrieved value from instruction.
    */
-  [[nodiscard]] static inline constexpr ret_t get(ins_t instruction) {
+  [[nodiscard]] static inline constexpr auto get(ins_t instruction) -> ret_t {
     return static_cast<ret_t>(((instruction) & (mask)) >> shift);
   }
 
@@ -43,11 +43,11 @@ struct field {
    * @param value Raw value to set in the field.
    * @return Copy of the instruction and replaced field.
    */
-  [[nodiscard]] static inline constexpr ins_t set(ins_t instruction, ret_t value) {
+  [[nodiscard]] static inline constexpr auto set(ins_t instruction, ret_t value) -> ins_t {
     return ((instruction) & (~mask)) | ((value << shift) & mask);
   }
 
-  [[nodiscard]] static inline constexpr ins_t set(ins_t instruction, alt_ret_t value)
+  [[nodiscard]] static inline constexpr auto set(ins_t instruction, alt_ret_t value) -> ins_t
     requires(not std::same_as<alt_ret_t, ret_t>)
   {
     if constexpr (std::is_enum_v<alt_ret_t>) {
@@ -57,7 +57,7 @@ struct field {
     }
   }
 
-  [[nodiscard]] static inline constexpr ins_t set_high() { return H; }
+  [[nodiscard]] static inline constexpr auto set_high() -> ins_t { return H; }
 
   /**
    * @brief Adds binary ones the field value within an instruction.
@@ -65,11 +65,11 @@ struct field {
    * @param value Raw value to set of the field.
    * @return That original value shifted and masked.
    */
-  [[nodiscard]] static inline constexpr ins_t set_high(ret_t value) {
+  [[nodiscard]] static inline constexpr auto set_high(ret_t value) -> ins_t {
     return (value << shift) & mask;
   }
 
-  [[nodiscard]] static inline constexpr ins_t set_high(alt_ret_t value)
+  [[nodiscard]] static inline constexpr auto set_high(alt_ret_t value) -> ins_t
     requires(not std::same_as<alt_ret_t, ret_t>)
   {
     if constexpr (std::is_enum_v<alt_ret_t>) {
@@ -79,8 +79,8 @@ struct field {
     }
   }
 
-  [[nodiscard]] static inline constexpr ins_t h(ret_t value) { return set_high(value); }
-  [[nodiscard]] static inline constexpr ins_t h(alt_ret_t value)
+  [[nodiscard]] static inline constexpr auto h(ret_t value) -> ins_t { return set_high(value); }
+  [[nodiscard]] static inline constexpr auto h(alt_ret_t value) -> ins_t
     requires(not std::same_as<alt_ret_t, ret_t>)
   {
     return set_high(value);
@@ -126,7 +126,7 @@ struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
    * @param instruction Raw 32-bit ARM instruction.
    * @return Retrieved boolean from instruction.
    */
-  [[nodiscard]] static constexpr bool get(ins_t instruction) {
+  [[nodiscard]] static constexpr auto get(ins_t instruction) -> bool {
     return ((instruction)&field_bool::mask) != 0;
   }
 
@@ -136,7 +136,7 @@ struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
    * @param instruction Raw 32-bit ARM instruction.
    * @return Retrieved bit as 8 bit unsigned from instruction, but masked and shifted.
    */
-  [[nodiscard]] static constexpr u8 get_raw(ins_t instruction) {
+  [[nodiscard]] static constexpr auto get_raw(ins_t instruction) -> u8 {
     return ((instruction)&field_bool::mask) >> n_shift;
   }
 
@@ -147,7 +147,7 @@ struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
    * @param value Sets if `true`, clears if `false`.
    * @return Copy of the instruction with the bit changed.
    */
-  [[nodiscard]] static constexpr ins_t set(ins_t instruction, bool value) {
+  [[nodiscard]] static constexpr auto set(ins_t instruction, bool value) -> ins_t {
     return ((instruction) & (~field_bool::mask)) | (value ? field_bool::mask : 0);
   }
 
@@ -157,7 +157,7 @@ struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
    * @param instruction Raw 32-bit ARM instruction.
    * @return Copy of the instruction with bit cleared.
    */
-  [[nodiscard]] static constexpr ins_t set0(ins_t instruction) {
+  [[nodiscard]] static constexpr auto set0(ins_t instruction) -> ins_t {
     return instruction & ~field_bool::mask;
   }
 
@@ -167,7 +167,7 @@ struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
    * @param instruction Raw 32-bit ARM instruction.
    * @return Copy of the instruction with bit set.
    */
-  [[nodiscard]] static constexpr ins_t set1(ins_t instruction) {
+  [[nodiscard]] static constexpr auto set1(ins_t instruction) -> ins_t {
     return instruction | field_bool::mask;
   }
 
@@ -179,7 +179,7 @@ struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
    * @param instruction Raw 32-bit ARM instruction.
    * @return Copy of the instruction with bit toggled.
    */
-  [[nodiscard]] static constexpr ins_t toggle(ins_t instruction) {
+  [[nodiscard]] static constexpr auto toggle(ins_t instruction) -> ins_t {
     return instruction ^ field_bool::mask;
   }
 };
@@ -217,7 +217,7 @@ struct field_split : field<instruction_t, return_t, n_shift, bit_mask> {
    * @param instruction Raw 32-bit ARM instruction.
    * @return Retrieved combined value from instruction.
    */
-  [[nodiscard]] static inline constexpr ret_t get(ins_t instruction) {
+  [[nodiscard]] static inline constexpr auto get(ins_t instruction) -> ret_t {
     return static_cast<ret_t>(((instruction & field_split::mask) >> join) | (instruction & mask2));
   }
 
@@ -228,7 +228,7 @@ struct field_split : field<instruction_t, return_t, n_shift, bit_mask> {
    * @param value Combined raw value to set in split fields.
    * @return Copy of the instruction and replaced field.
    */
-  [[nodiscard]] static inline constexpr ins_t set(ins_t instruction, ret_t value) {
+  [[nodiscard]] static inline constexpr auto set(ins_t instruction, ret_t value) -> ins_t {
     auto val = static_cast<ins_t>(value);
     return (instruction & ~(field_split::mask | mask2)) | ((val) & (mask2)) |
            ((val << join) & field_split::mask);
@@ -240,14 +240,14 @@ struct field_split : field<instruction_t, return_t, n_shift, bit_mask> {
    * @param value Raw value to set of the field.
    * @return That original value shifted and masked.
    */
-  [[nodiscard]] static inline constexpr ins_t set_high(ret_t value) {
+  [[nodiscard]] static inline constexpr auto set_high(ret_t value) -> ins_t {
     return ((value) & (mask2)) | ((value << join) & field_split::mask);
   }
-  [[nodiscard]] static inline constexpr ins_t h(ret_t value) {
+  [[nodiscard]] static inline constexpr auto h(ret_t value) -> ins_t {
     return field_split::set_high(value);
   }
 
   // only mask
-  [[nodiscard]] static inline constexpr ins_t set_high() { return field_split::H; }
+  [[nodiscard]] static inline constexpr auto set_high() -> ins_t { return field_split::H; }
 };
 } // namespace neogba

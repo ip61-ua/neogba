@@ -95,70 +95,70 @@ struct arm7tdmi {
 
   memory_bus* bus{nullptr};
 
-  inline void set_bus(memory_bus* busptr) { bus = busptr; }
+  inline auto set_bus(memory_bus* busptr) { bus = busptr; }
 
-  [[nodiscard]] inline u32 read_raw_register(u8 reg) const { return registers[reg]; }
-  inline void write_raw_register(u8 reg, u32 value) { registers[reg] = value; }
+  [[nodiscard]] inline auto read_raw_register(u8 reg) const -> u32 { return registers[reg]; }
+  inline auto write_raw_register(u8 reg, u32 value) { registers[reg] = value; }
 
-  [[nodiscard]] inline u32 read_active_register(u8 reg) const {
+  [[nodiscard]] inline auto read_pc() const -> u32 {
+    return registers[pc] + (instruction_incrementator << 1);
+  }
+  inline auto write_pc(u32 new_pc) { registers[pc] = new_pc & ~(instruction_incrementator - 1); }
+
+  [[nodiscard]] inline auto read_active_register(u8 reg) const -> u32 {
     return reg == pc ? read_pc() : registers[active_registers[reg]];
   }
-  inline void write_active_register(u8 reg, u32 value) {
+  inline auto write_active_register(u8 reg, u32 value) {
     if (reg == pc)
       write_pc(value);
     else
       registers[active_registers[reg]] = value;
   }
 
-  [[nodiscard]] inline u32 read_relative_register(u8 reg, u8 bank_preset) const {
+  [[nodiscard]] inline auto read_relative_register(u8 reg, u8 bank_preset) const -> u32 {
     return reg == pc ? read_pc() : registers[REGISTERS_PRESET[bank_preset][reg]];
   }
-  inline void write_relative_register(u8 reg, u32 value, u8 bank_preset) {
+  inline auto write_relative_register(u8 reg, u32 value, u8 bank_preset) {
     if (reg == pc)
       write_pc(value);
     else
       registers[REGISTERS_PRESET[bank_preset][reg]] = value;
   }
 
-  [[nodiscard]] inline u32 read_pc() const {
-    return registers[pc] + (instruction_incrementator << 1);
-  }
-  inline void write_pc(u32 new_pc) { registers[pc] = new_pc & ~(instruction_incrementator - 1); }
-
-  [[nodiscard]] inline u32 read_cpsr() const { return registers[cpsr]; }
-  inline void write_cpsr(u32 new_cpsr) { registers[cpsr] = new_cpsr; }
-  [[nodiscard]] inline bool is_cpsr(u32 mask, u32 bits) const {
+  [[nodiscard]] inline auto read_cpsr() const { return registers[cpsr]; }
+  inline auto write_cpsr(u32 new_cpsr) { registers[cpsr] = new_cpsr; }
+  [[nodiscard]] inline auto is_cpsr(u32 mask, u32 bits) const {
     return (registers[cpsr] & mask) == bits;
   }
-  inline void clear_cpsr(u32 mask) { registers[cpsr] &= ~mask; }
-  inline void set_cpsr(u32 mask, u32 bits) { registers[cpsr] = (registers[cpsr] & ~mask) | bits; }
+  inline auto clear_cpsr(u32 mask) { registers[cpsr] &= ~mask; }
+  inline auto set_cpsr(u32 mask, u32 bits) { registers[cpsr] = (registers[cpsr] & ~mask) | bits; }
 
-  [[nodiscard]] inline u32 read_spsr() const { return read_active_register(spsr); }
-  inline void write_spsr(u32 new_spsr) { write_active_register(spsr, new_spsr); }
+  [[nodiscard]] inline auto read_spsr() const { return read_active_register(spsr); }
+  inline auto write_spsr(u32 new_spsr) { write_active_register(spsr, new_spsr); }
 
-  [[nodiscard]] inline bool is_mode(u8 mode) const { return (registers[cpsr] & M) == mode; }
-  void set_mode(u8 mode, bool update_cpsr = true);
+  [[nodiscard]] inline auto is_mode(u8 mode) const { return (registers[cpsr] & M) == mode; }
+  auto set_mode(u8 mode, bool update_cpsr = true) -> void;
 
-  inline void ensure_mode() { set_mode(read_cpsr(), false); }
+  inline auto ensure_mode() { set_mode(read_cpsr(), false); }
 
-  inline void restore_cpsr() {
+  inline auto restore_cpsr() {
     write_cpsr(read_spsr());
     ensure_mode();
   }
 
-  [[nodiscard]] inline static u8 get_idx_registers_preset_by_mode(u8 mode) {
+  [[nodiscard]] inline static auto get_idx_registers_preset_by_mode(u8 mode) -> u8 {
     return ((mode & 0b11) + ((mode & 0b1100) >> 2)) % 6;
   }
 
-  [[nodiscard]] bool ckeck_arm_condition(u32 instruction) const;
+  [[nodiscard]] auto ckeck_arm_condition(u32 instruction) const -> bool;
 
-  void empty_registers();
+  auto empty_registers() -> void;
 
-  void reset();
+  auto reset() -> void;
 
-  void set_arm_mode();
-  void set_thumb_mode();
-  void step();
+  auto set_arm_mode() -> void;
+  auto set_thumb_mode() -> void;
+  auto step() -> void;
 };
 
 } // namespace neogba
