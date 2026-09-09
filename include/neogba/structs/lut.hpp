@@ -31,33 +31,6 @@ template <typename store_t, std::size_t max_length,
               +[](std::size_t idx) -> std::size_t { return idx; }>
 class lut {
 protected:
-  // inline constexpr auto compute_max_mask(std::size_t n) -> std::size_t {
-  //   static_assert(max_length > 1, "You should not use LUT to store less than 2 elements!");
-  //   // static_assert(max_length < sizeof(std::size_t), "Too many items");
-
-  //   std::size_t mask{0x0};
-  //   auto is_not_powered_2{false};
-
-  //   for (std::size_t i{0}; i < sizeof(std::size_t); ++i) {
-  //     n <<= 1;
-  //     auto is_one_bit{n & 0x1};
-  //     auto is_more_than_one{(n << 1) != 0};
-
-  //     if (is_more_than_one || is_not_powered_2) {
-  //       mask |= 1 << i;
-  //       if (is_one_bit) {
-  //         is_not_powered_2 = true;
-  //       }
-  //       continue;
-  //     }
-
-  //     if (is_one_bit)
-  //       break;
-  //
-
-  //   return mask;
-  // };
-
   const std::size_t MAX_MASK{std::bit_ceil(max_length) - 1};
   std::array<store_t, max_length> storage{};
 

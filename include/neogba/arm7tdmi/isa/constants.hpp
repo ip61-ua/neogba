@@ -170,15 +170,18 @@ constexpr u32 IGNORED{arm_cond::COND::H | 0x01ffffef};
 
 /// Block data transfer
 namespace arm_blocktrans {
-using P = /*         */ arm_halfimm::P;
-using U = /*         */ arm_halfimm::U;
-using S = /*         */ arm_singleswap::B;
-using W = /*         */ arm_halfimm::W;
-using L = /*         */ arm_halfimm::L;
-using RN = /*        */ arm_halfimm::RN;
-using REGLIST = /*   */ field<u32, u16, 0, 0xffffu>;
+using P = /*              */ arm_halfimm::P;
+using U = /*              */ arm_halfimm::U;
+using S = /*              */ arm_singleswap::B;
+using W = /*              */ arm_halfimm::W;
+using L = /*              */ arm_halfimm::L;
+using RN = /*             */ arm_halfimm::RN;
+using REGLIST = /*        */ field<u32, u16, 0, 0xffffu>;
+using REGLIST_15_8 = /*   */ field_delayed<u32, u8, 8, 0xffu>;
+using REGLIST_7_4 = /*    */ field_delayed<u32, u8, 7, 0xfu>;
+using REGLIST_3_0 = /*    */ field<u32, u8, 0, 0xfu>;
 constexpr u32 TEMPLATE{0x08000000u}, FIXED{0x0e000000u};
-constexpr u32 IGNORED{arm_cond::COND::H | RN::H | REGLIST::H};
+constexpr u32 IGNORED{arm_cond::COND::H | RN::H | REGLIST_15_8::H | REGLIST_3_0::H};
 } // namespace arm_blocktrans
 
 /// Branch
