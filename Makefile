@@ -1,5 +1,5 @@
-CXX = clang++
-CXXFLAGS = -std=c++26 -Iinclude -Isrc -Wall -Wextra -Wpedantic -Wshadow -Wold-style-cast -march=native -fsanitize=address -fsanitize=undefined -MMD -MP -lspdlog
+CXX = g++
+CXXFLAGS = -g -std=c++26 -Iinclude -Isrc -Wall -Wextra -Wpedantic -Wshadow -Wold-style-cast -march=native -fsanitize=address -fsanitize=undefined -MMD -MP -lspdlog
 TEST_LDFLAGS = -lgtest -lgtest_main -pthread -lgmock
 
 TARGET = build/neogba
@@ -26,7 +26,7 @@ $(TARGET): $(OBJS)
 
 $(TEST_TARGET): $(TEST_OBJS) $(OBJS_NO_MAIN)
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(TEST_LDFLAGS) -g
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(TEST_LDFLAGS) 
 
 build/obj/%.o: %.cpp
 	@mkdir -p $(dir $@)
