@@ -149,7 +149,7 @@ constexpr u32 IGNORED{arm_cond::COND::H | RN::H | RD::H | OFFSET::H};
 
 /// Single data transfer
 namespace arm_singletrans {
-using I = /*         */ arm_halfimm::P;
+using I = /*         */ arm_halfimm::I;
 using P = /*         */ arm_halfimm::P;
 using U = /*         */ arm_halfimm::U;
 using B = /*         */ arm_singleswap::B;
