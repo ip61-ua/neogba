@@ -387,8 +387,6 @@ TEST_P(arm_singletrans_fixture, arm_singletrans_test) {
   const auto addr_to_check{params.flags.l ? params.expected_last_read : params.expected_last_write};
   ASSERT_EQ(params.expected_ram_addr_contents, bus->read(32, addr_to_check));
 
-  arm_mode_lut.invoke(inst, *cpu.get(), inst);
-
   ASSERT_EQ(params.caller, arm_mode_lut.get(inst));
 }
 
