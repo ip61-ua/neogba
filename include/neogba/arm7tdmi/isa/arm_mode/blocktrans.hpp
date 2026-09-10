@@ -33,8 +33,8 @@ template <blocktrans_tflags flags> auto blocktrans(arm7tdmi& cpu, u32 inst) -> v
     }
   }
 
-  const auto total_size{num_regs * 4}, wb_addr{flags.u ? (base + total_size) : (base - total_size)},
-      first_reg{static_cast<u32>(std::countr_zero(registerlist))};
+  const auto total_size{num_regs * 4}, wb_addr{flags.u ? (base + total_size) : (base - total_size)};
+  const auto first_reg{static_cast<u8>(std::countr_zero(registerlist))};
   auto start_addr{base};
 
   if constexpr (flags.u) {
