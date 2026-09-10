@@ -90,6 +90,7 @@ inline constexpr auto arm_mode_lut = []() consteval {
        ...);
     }(std::make_index_sequence<2>{});
   }
+
   return table;
 }();
 } // namespace neogba
