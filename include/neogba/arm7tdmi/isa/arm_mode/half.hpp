@@ -27,6 +27,8 @@ struct half_tflags {
 };
 
 template <half_tflags flags, bool immediate> auto half(arm7tdmi& cpu, u32 inst) -> void {
+  static_assert(flags.is_valid(), "Invalid Template Flags");
+
   using namespace neogba::arm_halfreg;
 
   const auto r_base{RN::get(inst)}, src_dst{RD::get(inst)};

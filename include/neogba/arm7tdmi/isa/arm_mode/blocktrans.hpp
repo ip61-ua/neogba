@@ -16,6 +16,8 @@ struct blocktrans_tflags {
 };
 
 template <blocktrans_tflags flags> auto blocktrans(arm7tdmi& cpu, u32 inst) -> void {
+  static_assert(flags.is_valid(), "Invalid Template Flags");
+
   const auto rn{RN::get(inst)};
   auto base{cpu.read_active_register(rn)};
 

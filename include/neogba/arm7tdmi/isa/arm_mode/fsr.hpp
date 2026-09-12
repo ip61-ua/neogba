@@ -20,6 +20,8 @@ struct fsr_tflags {
 };
 
 template <fsr_tflags flags> void fsr(arm7tdmi& cpu, u32 inst) {
+  static_assert(flags.is_valid(), "Invalid Template Flags");
+
   // Meta template variables
   constexpr auto is_logical{flags.opcode == opcode_enum::AND or flags.opcode == opcode_enum::EOR or
                             flags.opcode == opcode_enum::TST or flags.opcode == opcode_enum::TEQ or

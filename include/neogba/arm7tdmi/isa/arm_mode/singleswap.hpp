@@ -11,6 +11,8 @@ struct singleswap_tflags {
 };
 
 template <singleswap_tflags flags> auto singleswap(arm7tdmi& cpu, u32 inst) -> void {
+  static_assert(flags.is_valid(), "Invalid Template Flags");
+
   const auto rd{RD::get(inst)}, //
       rn{RN::get(inst)},        //
       rm{RM::get(inst)};

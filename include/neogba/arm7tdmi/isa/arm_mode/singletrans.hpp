@@ -20,6 +20,8 @@ struct singletrans_tflags {
 };
 
 template <singletrans_tflags flags> auto singletrans(arm7tdmi& cpu, u32 inst) -> void {
+  static_assert(flags.is_valid(), "Invalid Template Flags");
+
   const auto r_base{RN::get(inst)}, src_dst{RD::get(inst)};
 
   u32 offset;
