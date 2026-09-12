@@ -1,33 +1,52 @@
 #pragma once
 #include "neogba/arm7tdmi/cpu.hpp"
 #include "neogba/arm7tdmi/isa/constants.hpp"
-#include <bit>
 
-namespace neogba::arm_halfreg {
+namespace neogba::arm_half {
 
-struct halfreg_tflags {
+struct half_tflags {
   bool p : 1 {false};
   bool u : 1 {false};
   bool w : 1 {false};
   bool l : 1 {false};
   bool s : 1 {false};
   bool h : 1 {false};
+
+  constexpr bool valid() const {
+    if (!s && !h)
+      return false;
+
+    if (s && !l)
+      return false;
+
+    if (!p && w)
+      return false;
+
+    return true;
+  }
 };
 
-template <halfreg_tflags flags> auto halfreg(arm7tdmi& cpu, u32 inst) -> void {
+template <half_tflags flags, bool immediate> auto half(arm7tdmi& cpu, u32 inst) -> void {
+  using namespace neogba::arm_halfreg;
+
   const auto r_base{RN::get(inst)}, src_dst{RD::get(inst)};
-  const u32 rm{RM::get(inst)}, rm_contents{cpu.read_active_register(rm)};
+
+  u32 offset;
+  if constexpr (immediate)
+    offset = arm_halfimm::OFFSET::get(inst);
+  else
+    offset = cpu.read_active_register(RM::get(inst));
 
   const u32 base{cpu.read_active_register(r_base)};
   u32 offsetted_base{base};
   if constexpr (flags.u) {
-    offsetted_base += rm_contents;
+    offsetted_base += offset;
   } else {
-    offsetted_base -= rm_contents;
+    offsetted_base -= offset;
   }
 
   u32 addr;
-  if (flags.p) {
+  if constexpr (flags.p) {
     addr = offsetted_base;
   } else {
     addr = base;
@@ -42,8 +61,7 @@ template <halfreg_tflags flags> auto halfreg(arm7tdmi& cpu, u32 inst) -> void {
 
     // Unsigned Halfword
     if constexpr (not flags.s and flags.h) {
-      const u32 raw{cpu.bus->read(16, addr)};
-      data = (addr & 1u) ? std::rotr(raw, 8) : raw;
+      data = cpu.bus->read(16, addr);
     }
 
     // Signed Byte
@@ -79,4 +97,18 @@ template <halfreg_tflags flags> auto halfreg(arm7tdmi& cpu, u32 inst) -> void {
   }
 }
 
-} // namespace neogba::arm_halfreg
+}; // namespace neogba::arm_half
+
+namespace neogba::arm_halfreg {
+typedef arm_half::half_tflags halfreg_tflags;
+template <halfreg_tflags flags> auto halfreg(arm7tdmi& cpu, u32 inst) -> void {
+  arm_half::half<flags, false>(cpu, inst);
+}
+}; // namespace neogba::arm_halfreg
+
+namespace neogba::arm_halfimm {
+typedef arm_half::half_tflags halfimm_tflags;
+template <halfimm_tflags flags> auto halfimm(arm7tdmi& cpu, u32 inst) -> void {
+  arm_half::half<flags, true>(cpu, inst);
+}
+}; // namespace neogba::arm_halfimm

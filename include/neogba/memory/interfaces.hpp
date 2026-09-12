@@ -96,7 +96,7 @@ protected:
     }
   }
 
-  template <u8 size_requested> bool int_write(u32 addr, u32 contents) {
+  template <u8 size_requested, bool align_addr = true> bool int_write(u32 addr, u32 contents) {
     if constexpr (check_bounds)
       if (is_offset_exceeded(addr))
         return false;
@@ -109,6 +109,9 @@ protected:
         if (is_offset_exceeded(addr + 1))
           return false;
 
+      if constexpr (align_addr)
+        addr &= ~1;
+
       bytes.fill(addr, contents);
       bytes.fill(addr + 1, contents >> 8);
 
@@ -116,6 +119,9 @@ protected:
       if constexpr (check_bounds)
         if (is_offset_exceeded(addr + 3))
           return false;
+
+      if constexpr (align_addr)
+        addr &= ~3;
 
       bytes.fill(addr, contents);
       bytes.fill(addr + 1, contents >> 8);
