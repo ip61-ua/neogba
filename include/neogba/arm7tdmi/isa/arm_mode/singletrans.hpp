@@ -10,6 +10,13 @@ struct singletrans_tflags {
   bool b : 1 {false};
   bool w : 1 {false};
   bool l : 1 {false};
+
+  constexpr auto is_valid() const {
+    if (!p && w)
+      return false;
+
+    return true;
+  }
 };
 
 template <singletrans_tflags flags> auto singletrans(arm7tdmi& cpu, u32 inst) -> void {

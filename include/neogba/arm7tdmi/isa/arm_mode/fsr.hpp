@@ -7,6 +7,16 @@ namespace neogba::arm_fsr {
 struct fsr_tflags {
   opcode_enum opcode : 4 {0};
   bool s : 1 {false};
+
+  constexpr auto is_valid() const {
+    const bool is_test{opcode == opcode_enum::TST || opcode == opcode_enum::TEQ ||
+                       opcode == opcode_enum::CMP || opcode == opcode_enum::CMN};
+
+    if (is_test && !s)
+      return false;
+
+    return true;
+  }
 };
 
 template <fsr_tflags flags> void fsr(arm7tdmi& cpu, u32 inst) {

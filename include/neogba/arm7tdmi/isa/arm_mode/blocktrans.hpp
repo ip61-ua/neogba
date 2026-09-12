@@ -11,6 +11,8 @@ struct blocktrans_tflags {
   bool w : 1 {false};
   bool l : 1 {false};
   bool zeros_4_to_7 : 1 {false};
+
+  constexpr auto is_valid() const { return true; }
 };
 
 template <blocktrans_tflags flags> auto blocktrans(arm7tdmi& cpu, u32 inst) -> void {
