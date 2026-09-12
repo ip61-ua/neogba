@@ -1,10 +1,12 @@
 #pragma once
 #include "neogba/arm7tdmi/isa/arm_mode/blocktrans.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/fsr.hpp"
+#include "neogba/arm7tdmi/isa/arm_mode/half.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/singleswap.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/singletrans.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/undefined.hpp"
 #include "neogba/arm7tdmi/isa/constants.hpp"
+#include <type_traits>
 
 namespace neogba {
 
@@ -89,6 +91,36 @@ inline constexpr auto arm_mode_lut = []() consteval {
        }()),
        ...);
     }(std::make_index_sequence<1 << 1>{});
+  }
+
+  {
+    [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+      (([&]() {
+         using namespace arm_halfreg;
+
+         constexpr auto is_immediate{(Is & (0x1u << 6)) != 0};
+
+         using t_flags =
+             std::conditional_t<is_immediate, arm_halfimm::halfimm_tflags, halfreg_tflags>;
+
+         constexpr auto p{(Is & (0x1u << 5)) != 0}, //
+             u{(Is & (0x1u << 4)) != 0},            //
+             w{(Is & (0x1u << 3)) != 0},            //
+             l{(Is & (0x1u << 2)) != 0},            //
+             s{(Is & (0x1u << 1)) != 0},            //
+             h{(Is & 0x1u) != 0};                   //
+         constexpr auto tflags{t_flags{p, u, l, w, s, h}};
+
+         if constexpr (tflags.is_valid())
+           table.fill(is_immediate
+                          ? arm_halfimm::TEMPLATE
+                          : TEMPLATE //
+                                | P::h(p) | U::h(u) | L::h(l) | W::h(w) | S::h(s) | H::h(h),
+                      is_immediate ? arm_halfimm::IGNORED : IGNORED,
+                      is_immediate ? &arm_halfimm::halfimm<tflags> : &halfreg<tflags>);
+       }()),
+       ...);
+    }(std::make_index_sequence<1 << 7>{});
   }
 
   return table;
