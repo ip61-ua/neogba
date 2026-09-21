@@ -11,7 +11,7 @@
 namespace neogba {
 
 inline constexpr auto arm_mode_lut = []() consteval {
-  using fn_ptr = void (*)(arm7tdmi&, u32);
+  using fn_ptr = auto (*)(arm7tdmi&, u32)->void;
 
   lut<fn_ptr, 1 << 12,
       [](std::size_t idx) -> std::size_t {
