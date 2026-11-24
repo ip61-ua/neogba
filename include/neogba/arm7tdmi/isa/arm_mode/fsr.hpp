@@ -79,7 +79,7 @@ template <fsr_tflags flags> void fsr(arm7tdmi& cpu, u32 inst) {
 
   // Side effects
   if constexpr (flags.s) {
-    if (rd_idx == pc and can_write_rd) {
+    if (rd_idx == pc and can_write_rd) { // TODO: Revisar PC cuando esté ya aproximándose
       cpu.write_cpsr(cpu.read_spsr());
     } else {
       // common

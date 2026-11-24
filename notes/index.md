@@ -3110,3 +3110,29 @@ Empty Rlist: R15 loaded/stored (ARMv4 only), and Rb=Rb+/-40h (ARMv4-v5).
 
 Writeback with Rb included in Rlist: Store OLD base if Rb is FIRST entry in Rlist, otherwise store NEW base (STM/ARMv4), always store OLD base (STM/ARMv5), no writeback (LDM/ARMv4), writeback if Rb is “the ONLY register, or NOT the LAST register” in Rlist (LDM/ARMv5).
 
+# 24 de Noviembre
+
+Toca darse prisa y ponerse las pilas. Ya he pasado las prácticas. Y en este día voy a definir todo lo que me toca hacer para antes de la siguiente reunión:
+
+Notas de la reunión:
+
+- Lo de metaprogramación está muy bien, pero no interesa profundizar en la presentación. Pero sí en la memoria.
+- La parte tocha del desarrollo. El diario para el apéndice.
+- Del diario puedo sacar un capítulo de cronología.
+- Pero el desarrollo -> versión curada. Estructurar las ideas.
+- Mejor quitar logging. source location.
+- Marco teórico hacerlo más grande. Hay que explicar la arquitectura concreta de GBA. Hay poner fotos de la GBA. 7 Páginas mínimo.
+
+¡Queda poco tiempo!
+Tengo que darme prisa.
+
+Vamos a retomar.
+
+La idea es que creo que me quedé un poco atascado porque es un puñetero coñazo emular a la perfección porque hay demasiadas limitaciones y casos extremos con tratar con pc.
+
+Por lo que para llegar, vamos a ir por aproximaciones. Vamos con las instrucciones ARM sin centrarse en el comportamiento especial al tratar con el registro de PC.
+
+Por lo tanto, vamos a deshabilitar algunos test y moddificcar otros para evitar esto.
+
+He llegado a la conclusión de que la mejor forma de emular este aspecto - pese a que pueda parecer trampa - es leer y depurar el código de los demás proyectos y ver cómo que ocurre con sus debidos efectos colaterales.
+

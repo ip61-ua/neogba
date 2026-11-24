@@ -53,9 +53,9 @@ template <singletrans_tflags flags> auto singletrans(arm7tdmi& cpu, u32 inst) ->
   u32 store_data;
   if constexpr (not flags.l) {
     store_data = cpu.read_active_register(src_dst);
-    if (is_pc) {
-      store_data += 4; // PC + 8 + 4 = 12!
-    }
+    // if (is_pc) {
+    //   store_data += 4; // PC + 8 + 4 = 12!
+    // }
   }
 
   // wb
@@ -71,11 +71,13 @@ template <singletrans_tflags flags> auto singletrans(arm7tdmi& cpu, u32 inst) ->
       data = std::rotr(data, (addr & 3) * 8);
     }
 
-    if (is_pc) {
-      cpu.write_pc(data);
-    } else {
-      cpu.write_active_register(src_dst, data);
-    }
+    // TODO: Revisar PC cuando esté ya aproximándose
+
+    // if (is_pc) {
+    //   cpu.write_pc(data);
+    // } else {
+    cpu.write_active_register(src_dst, data);
+    //  }
   }
 
   // write

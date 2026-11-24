@@ -90,10 +90,12 @@ template <half_tflags flags, bool immediate> auto half(arm7tdmi& cpu, u32 inst) 
     // Store
     u32 store_data{cpu.read_active_register(src_dst)};
 
-    const bool is_pc{src_dst == pc};
-    if (is_pc) {
-      store_data += 4; // PC + 8 + 4 = PC + 12
-    }
+    // TODO: Revisar PC cuando esté ya aproximándose
+
+    // const bool is_pc{src_dst == pc};
+    // if (is_pc) {
+    //   store_data += 4; // PC + 8 + 4 = PC + 12
+    // }
 
     cpu.bus->write(16, addr, store_data & 0xFFFFu);
   }

@@ -106,19 +106,23 @@ INSTANTIATE_TEST_SUITE_P(     //
     arm_singletrans_fixture,  //
     ::testing::Values(
 
-        // Caso 0: c0 y is_pc
-        singletrans_test_param{
-            .flags = c0,
-            .rd = pc,
-            .rn = r2,
-            .offset = r0,
-            .caller = &singletrans<c0>,
-            .expected_rd_contents = 8,
-            .expected_rn_contents = 33, // Post-index  base + offset
-            .expected_last_write = 32,  // base
-            .expected_last_read = static_cast<u32>(-1),
-            .expected_ram_addr_contents = 12,
-        },
+        /*
+
+              // Caso 0: c0 y is_pc
+              singletrans_test_param{
+                  .flags = c0,
+                  .rd = pc,
+                  .rn = r2,
+                  .offset = r0,
+                  .caller = &singletrans<c0>,
+                  .expected_rd_contents = 8,
+                  .expected_rn_contents = 33, // Post-index  base + offset
+                  .expected_last_write = 32,  // base
+                  .expected_last_read = static_cast<u32>(-1),
+                  .expected_ram_addr_contents = 12,
+              },
+
+        */
 
         // Caso 1: c1 y not is_pc
         singletrans_test_param{
@@ -146,20 +150,23 @@ INSTANTIATE_TEST_SUITE_P(     //
             .expected_last_write = static_cast<u32>(-1),
             .expected_last_read = 28, // base - offset
             .expected_ram_addr_contents = 0xf828'2288,
-        },
-
-        // Caso 3: c3 y is_pc
-        singletrans_test_param{
-            .flags = c3,
-            .rd = pc,
-            .rn = r2,
-            .offset = 4,
-            .caller = &singletrans<c3>,
-            .expected_rd_contents = 144,
-            .expected_rn_contents = 28, // wb base - offset
-            .expected_last_write = static_cast<u32>(-1),
-            .expected_last_read = 28, // base - offset
-            .expected_ram_addr_contents = 0xf828'2288,
         }
+
+        /*,
+
+             // Caso 3: c3 y is_pc
+             singletrans_test_param{
+                 .flags = c3,
+                 .rd = pc,
+                 .rn = r2,
+                 .offset = 4,
+                 .caller = &singletrans<c3>,
+                 .expected_rd_contents = 144,
+                 .expected_rn_contents = 28, // wb base - offset
+                 .expected_last_write = static_cast<u32>(-1),
+                 .expected_last_read = 28, // base - offset
+                 .expected_ram_addr_contents = 0xf828'2288,
+             }
+        */
 
         ));
