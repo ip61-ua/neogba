@@ -42,7 +42,7 @@ docs:
 	doxygen Doxyfile
 
 serve: docs
-	python -m http.server 8000 -d docs/html
+	python -m http.server 8000 -d doxygen/html
 
 clean:
 	rm -rf build
