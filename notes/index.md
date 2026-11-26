@@ -3136,3 +3136,18 @@ Por lo tanto, vamos a deshabilitar algunos test y moddificcar otros para evitar 
 
 He llegado a la conclusión de que la mejor forma de emular este aspecto - pese a que pueda parecer trampa - es leer y depurar el código de los demás proyectos y ver cómo que ocurre con sus debidos efectos colaterales.
 
+# 26 de Noviembre
+
+Bien, he metido algunos documentos para tenerlos a mano en la documentación.
+
+He implementado SWI. Muy fácil.
+
+Cuando estaba leyendo sobre las instrucciones de coprocesador, vi que era una explicación muy abierta que debe ser implementada por hw concreto. Entonces consulté otros proyectos de emulación y vi que no hacía falta.
+
+La GBA no tiene coprocesador. Bueno, técnicamente sí tiene, pero solo es usado por separado y por razones de compatibilidad con la generación anterior de GB. Siendo que no exista una comunicación constante colaborativa.
+
+Es por este tipo de cuestiones que al cómpilar código fuente para un objetivo pudiéramos aprovechar servicios concretos (SWI) o su hardware adicional (Coprocesador).
+
+Según he mirado NanoBoyAdvance omite estas instrucciones considerándolas como indefinidas (Undefined).
+
+Qué contento estoy por escribir menos código siendo que hay menos cosas que testar.
