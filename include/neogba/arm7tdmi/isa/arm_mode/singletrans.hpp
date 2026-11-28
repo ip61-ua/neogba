@@ -11,7 +11,7 @@ struct singletrans_tflags {
   bool w : 1 {false};
   bool l : 1 {false};
 
-  constexpr auto is_valid() const {
+  inline constexpr auto is_valid() const {
     if (!p && w)
       return false;
 

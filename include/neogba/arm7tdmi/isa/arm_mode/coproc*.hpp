@@ -11,7 +11,7 @@ namespace neogba::arm_coproctrans {
 //   constexpr auto is_valid() const { return true; }
 // };
 // template <coproctrans_tflags flags>
-inline auto coproctrans{arm_undefined::undefined};
+inline constexpr auto coproctrans{&arm_undefined::undefined};
 } // namespace neogba::arm_coproctrans
 
 namespace neogba::arm_coprocop {
@@ -20,7 +20,7 @@ namespace neogba::arm_coprocop {
 //   constexpr auto is_valid() const { return true; }
 // };
 // template <coprocop_tflags flags>
-inline auto coprocop{arm_undefined::undefined};
+inline constexpr auto coprocop{&arm_undefined::undefined};
 } // namespace neogba::arm_coprocop
 
 namespace neogba::arm_coprocregtrans {
@@ -29,5 +29,5 @@ namespace neogba::arm_coprocregtrans {
 //   constexpr auto is_valid() const { return true; }
 // };
 // template <coprocregtrans_tflags flags>
-inline auto coprocregtrans{arm_undefined::undefined};
+inline constexpr auto coprocregtrans{&arm_undefined::undefined};
 } // namespace neogba::arm_coprocregtrans

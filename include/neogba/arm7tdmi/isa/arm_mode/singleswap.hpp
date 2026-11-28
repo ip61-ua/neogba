@@ -7,7 +7,7 @@ namespace neogba::arm_singleswap {
 struct singleswap_tflags {
   bool b : 1 {false};
 
-  constexpr auto is_valid() const { return true; }
+  inline constexpr auto is_valid() const { return true; }
 };
 
 template <singleswap_tflags flags> auto singleswap(arm7tdmi& cpu, u32 inst) -> void {
