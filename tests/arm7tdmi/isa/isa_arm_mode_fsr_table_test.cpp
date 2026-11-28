@@ -68,16 +68,16 @@ TEST_P(arm_fsr_fixture, arm_fsr_fsr) {
 
   if (!params.check_full_cpsr) {
     if (params.initial_c)
-      cpu->set_cpsr(arm7tdmi::C, arm7tdmi::C);
+      cpu->set_cpsr(arm7tdmi::C::mask, arm7tdmi::C::H);
 
     if (params.initial_z)
-      cpu->set_cpsr(arm7tdmi::Z, arm7tdmi::Z);
+      cpu->set_cpsr(arm7tdmi::Z::mask, arm7tdmi::Z::H);
 
     if (params.initial_v)
-      cpu->set_cpsr(arm7tdmi::V, arm7tdmi::V);
+      cpu->set_cpsr(arm7tdmi::V::mask, arm7tdmi::V::H);
 
     if (params.initial_n)
-      cpu->set_cpsr(arm7tdmi::N, arm7tdmi::N);
+      cpu->set_cpsr(arm7tdmi::N::mask, arm7tdmi::N::H);
   } else {
     cpu->write_spsr(params.initial_spsr);
   }
@@ -88,10 +88,10 @@ TEST_P(arm_fsr_fixture, arm_fsr_fsr) {
   // Ver cambios
 
   if (!params.check_full_cpsr) {
-    ASSERT_EQ(params.expected_c, cpu->is_cpsr(arm7tdmi::C, arm7tdmi::C));
-    ASSERT_EQ(params.expected_n, cpu->is_cpsr(arm7tdmi::N, arm7tdmi::N));
-    ASSERT_EQ(params.expected_z, cpu->is_cpsr(arm7tdmi::Z, arm7tdmi::Z));
-    ASSERT_EQ(params.expected_v, cpu->is_cpsr(arm7tdmi::V, arm7tdmi::V));
+    ASSERT_EQ(params.expected_c, cpu->is_cpsr(arm7tdmi::C::mask, arm7tdmi::C::H));
+    ASSERT_EQ(params.expected_n, cpu->is_cpsr(arm7tdmi::N::mask, arm7tdmi::N::H));
+    ASSERT_EQ(params.expected_z, cpu->is_cpsr(arm7tdmi::Z::mask, arm7tdmi::Z::H));
+    ASSERT_EQ(params.expected_v, cpu->is_cpsr(arm7tdmi::V::mask, arm7tdmi::V::H));
   } else {
     ASSERT_EQ(params.expected_cpsr, cpu->read_cpsr());
   }

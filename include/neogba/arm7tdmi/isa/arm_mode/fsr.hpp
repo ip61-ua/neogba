@@ -83,15 +83,15 @@ template <fsr_tflags flags> void fsr(arm7tdmi& cpu, u32 inst) {
       cpu.write_cpsr(cpu.read_spsr());
     } else {
       // common
-      auto z{static_cast<u32>(res32 == 0) << arm7tdmi::Z_SHIFT}; // (res32 == 0) -> true -> 0x0...01
+      auto z{arm7tdmi::Z::h(res32 == 0)};
       u32 n{res32 & 0x80000000}; // N ya está en el bit 31 -> 0 movimientos
 
       if constexpr (is_logical) {
-        auto c{static_cast<u32>(op2.carry_out << arm7tdmi::C_SHIFT)}; // op2.carry_out es 0 o 1.
+        auto c{arm7tdmi::C::h(op2.carry_out)}; // op2.carry_out es 0 o 1.
 
         // meter V aquí = !necesario -> no está afectado.
         // set_cpsr(mask, values) sobrescribe solo estos `mask`
-        cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C, z | n | c);
+        cpu.set_cpsr(arm7tdmi::Z::mask | arm7tdmi::N::mask | arm7tdmi::C::mask, z | n | c);
       } else {
         auto c{static_cast<u32>(res >> 32)}; // (res >> 32) & 1 es 1 o 0.
         auto v{~(op1 ^ op2.result)};
@@ -101,11 +101,12 @@ template <fsr_tflags flags> void fsr(arm7tdmi& cpu, u32 inst) {
           v = ~v;
         }
 
-        c = (c & 1) << arm7tdmi::C_SHIFT; // Mover lo necesario!
+        c = arm7tdmi::C::h(c); // Mover lo necesario!
         v = (v & (op1 ^ res32) & 0x80000000) >>
-            (31 - arm7tdmi::V_SHIFT); // Mover lo justo al bit V.
+            (31 - arm7tdmi::V::shift); // Mover lo justo al bit V.
 
-        cpu.set_cpsr(arm7tdmi::Z | arm7tdmi::N | arm7tdmi::C | arm7tdmi::V, z | n | c | v);
+        cpu.set_cpsr(arm7tdmi::Z::mask | arm7tdmi::N::mask | arm7tdmi::C::mask | arm7tdmi::V::mask,
+                     z | n | c | v);
       }
     }
   }

@@ -1,46 +1,84 @@
 #pragma once
+#include "neogba/fields.hpp"
 #include "neogba/memory/bus.hpp"
 #include <array>
 
 namespace neogba {
 
 enum arm7tdmi_register : u8 {
-
   // clang-format off
-  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr, //
-  r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, spsr_fiq,//
-  r13_svc, r14_svc, spsr_svc, //
-  r13_abt, r14_abt, spsr_abt, //
-  r13_irq, r14_irq, spsr_irq, //
-  r13_und, r14_und, spsr_und  //
+    r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr, //
+    r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, spsr_fiq,//
+    r13_svc, r14_svc, spsr_svc, //
+    r13_abt, r14_abt, spsr_abt, //
+    r13_irq, r14_irq, spsr_irq, //
+    r13_und, r14_und, spsr_und  //
   // clang-format on
-
 };
 
 struct arm7tdmi {
   /** @brief Negative (N) */
-  static constexpr u32 N_SHIFT{31}, N{1u << N_SHIFT};
+  using N = field_bin<31>;
+  // static constexpr u32 N_SHIFT{31}, N{1u << N_SHIFT};
 
   /** @brief Zero (Z) */
-  static constexpr u32 Z_SHIFT{30}, Z{1u << Z_SHIFT};
+  using Z = field_bin<30>;
+  // static constexpr u32 Z_SHIFT{30}, Z{1u << Z_SHIFT};
 
   /** @brief Carry (C) */
-  static constexpr u32 C_SHIFT{29}, C{1u << C_SHIFT};
+  using C = field_bin<29>;
+  // static constexpr u32 C_SHIFT{29}, C{1u << C_SHIFT};
 
   /** @brief Overflow (V) */
-  static constexpr u32 V_SHIFT{28}, V{1u << V_SHIFT};
+  using V = field_bin<28>;
+  // static constexpr u32 V_SHIFT{28}, V{1u << V_SHIFT};
 
   /** @brief IRQ Disable (I) */
-  static constexpr u32 I_SHIFT{7}, I{1u << I_SHIFT};
+  using I = field_bin<7>;
+  // static constexpr u32 I_SHIFT{7}, I{1u << I_SHIFT};
 
   /** @brief FIQ Disable (F) */
-  static constexpr u32 F_SHIFT{6}, F{1u << F_SHIFT};
+  using F = field_bin<6>;
+  // static constexpr u32 F_SHIFT{6}, F{1u << F_SHIFT};
 
   /** @brief Thumb State (T) */
-  static constexpr u32 T_SHIFT{5}, T{1u << T_SHIFT};
+  using T = field_bin<5>;
+  // static constexpr u32 T_SHIFT{5}, T{1u << T_SHIFT};
 
   /** @brief Mode Bits (M) */
-  static constexpr u32 M{0x1fu};
+  using M = field<u32, u8, 0, 0x1fu>;
+  // static constexpr u32 M{0x1fu};
+
+  enum class exceptions : u32 {
+    reset = /*     */ 0x00000000,
+    undefins = /*  */ 0x00000004,
+    swint = /*     */ 0x00000008,
+    prefetabt = /* */ 0x0000000c,
+    dataabt = /*   */ 0x00000010,
+    reserved = /*  */ 0x00000014,
+    irq = /*       */ 0x00000018,
+    fiq = /*       */ 0x0000001c
+  };
+
+  enum class modes : u8 {
+    usr = 0b10000,
+    fiq = 0b10001,
+    irq = 0b10010,
+    svc = 0b10011,
+    abt = 0b10111,
+    und = 0b11011,
+    sys = 0b11111
+  };
+
+  enum class registers_preset : u8 {
+    usr = 0,
+    fiq = 1,
+    irq = 2,
+    svc = 3,
+    abt = 4,
+    und = 5,
+    sys = 0
+  };
 
   static constexpr u32 EXCEPTION_RESET /*   */ {0x00000000}, EXCEPTION_UNDEFINS /*  */ {0x00000004},
       EXCEPTION_SWINT /*   */ {0x00000008}, EXCEPTION_PREFETABT /* */ {0x0000000c},
@@ -128,7 +166,7 @@ struct arm7tdmi {
   [[nodiscard]] inline auto read_spsr() const { return read_active_register(spsr); }
   inline auto write_spsr(u32 new_spsr) { write_active_register(spsr, new_spsr); }
 
-  [[nodiscard]] inline auto is_mode(u8 mode) const { return (registers[cpsr] & M) == mode; }
+  [[nodiscard]] inline auto is_mode(u8 mode) const { return M::h(registers[cpsr]) == mode; }
   auto set_mode(u8 mode, bool update_cpsr = true) -> void;
 
   inline auto ensure_mode() { set_mode(read_cpsr(), false); }

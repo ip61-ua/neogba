@@ -13,42 +13,44 @@ void arm7tdmi::set_mode(u8 mode, bool update_cpsr) {
   if (!update_cpsr)
     return;
 
-  this->set_cpsr(M, mode);
+  this->set_cpsr(M::mask, mode);
 }
 
 bool arm7tdmi::ckeck_arm_condition(u32 instruction) const {
   using namespace arm_cond;
-  auto cond = static_cast<cond_enum>(COND::get(instruction)); // lol
+  auto cond = static_cast<cond_enum>(COND::get(instruction));
 
   switch (cond) {
   case cond_enum::EQ:
-    return this->is_cpsr(Z, Z);
+    return this->is_cpsr(Z::mask, Z::H);
   case cond_enum::NE:
-    return this->is_cpsr(Z, 0);
+    return this->is_cpsr(Z::mask, 0);
   case cond_enum::HSCS:
-    return this->is_cpsr(C, C);
+    return this->is_cpsr(C::mask, C::H);
   case cond_enum::LOCC:
-    return this->is_cpsr(C, 0);
+    return this->is_cpsr(C::mask, 0);
   case cond_enum::MI:
-    return this->is_cpsr(N, N);
+    return this->is_cpsr(N::mask, N::H);
   case cond_enum::PL:
-    return this->is_cpsr(N, 0);
+    return this->is_cpsr(N::mask, 0);
   case cond_enum::VS:
-    return this->is_cpsr(V, V);
+    return this->is_cpsr(V::mask, V::H);
   case cond_enum::VC:
-    return this->is_cpsr(V, 0);
+    return this->is_cpsr(V::mask, 0);
   case cond_enum::HI:
-    return this->is_cpsr(C | Z, C);
+    return this->is_cpsr(C::mask | Z::mask, C::H);
   case cond_enum::LS:
-    return this->is_cpsr(C, 0) || this->is_cpsr(Z, Z);
+    return this->is_cpsr(C::mask, 0) || this->is_cpsr(Z::mask, Z::H);
   case cond_enum::GE:
-    return this->is_cpsr(N, N) == this->is_cpsr(V, V);
+    return this->is_cpsr(N::mask, N::H) == this->is_cpsr(V::mask, V::H);
   case cond_enum::LT:
-    return this->is_cpsr(N, N) != this->is_cpsr(V, V);
+    return this->is_cpsr(N::mask, N::H) != this->is_cpsr(V::mask, V::H);
   case cond_enum::GT:
-    return this->is_cpsr(Z, 0) && (this->is_cpsr(N, N) == this->is_cpsr(V, V));
+    return this->is_cpsr(Z::mask, 0) &&
+           (this->is_cpsr(N::mask, N::H) == this->is_cpsr(V::mask, V::H));
   case cond_enum::LE:
-    return this->is_cpsr(Z, Z) || (this->is_cpsr(N, N) != this->is_cpsr(V, V));
+    return this->is_cpsr(Z::mask, Z::H) ||
+           (this->is_cpsr(N::mask, N::H) != this->is_cpsr(V::mask, V::H));
   case cond_enum::AL:
     return true;
   case cond_enum::NV:
@@ -61,7 +63,7 @@ void arm7tdmi::empty_registers() { this->registers.fill(0); }
 
 void arm7tdmi::reset() {
   this->empty_registers();
-  this->write_cpsr(I | F);
+  this->write_cpsr(I::H | F::H);
   this->set_mode(MODE_SVC);
   this->set_arm_mode();
   this->write_raw_register(pc, EXCEPTION_RESET);
@@ -71,14 +73,14 @@ void arm7tdmi::set_arm_mode() {
   this->instruction_size = 32;
   this->instruction_incrementator = 4;
   this->execute = execute_arm;
-  this->clear_cpsr(T);
+  this->clear_cpsr(T::H);
 }
 
 void arm7tdmi::set_thumb_mode() {
   this->instruction_size = 16;
   this->instruction_incrementator = 2;
   this->execute = execute_thumb;
-  this->set_cpsr(T, T);
+  this->set_cpsr(T::mask, T::H);
 }
 
 void arm7tdmi::step() {

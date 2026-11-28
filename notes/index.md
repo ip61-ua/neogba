@@ -3151,3 +3151,75 @@ Es por este tipo de cuestiones que al cómpilar código fuente para un objetivo 
 Según he mirado NanoBoyAdvance omite estas instrucciones considerándolas como indefinidas (Undefined).
 
 Qué contento estoy por escribir menos código siendo que hay menos cosas que testar.
+
+# 27 de Noviembre
+
+Continuamos. Hoy he actualizado el fedora de mi mac donde hago el desarrollo del emulador. Y en consecuencia he aprovechado para actualizar mi entorno y el resto de aplicaciones. No es que me haya dado problemas el emacs pero al actualizarlo auto colorea de otra forma el código por actualizar el eglot (el quivalente de intellisense). He aprovechado para descansar y reorientar.
+
+Lo cierto es que me queda muy poco! Solo restan las instrucciones de salto y multiplicación!
+
+Por lo que vamos bien si no me distraigo con algún gameplay del gta.
+
+La multiplicación tiene dos tipo de instrucciones: una para valores largos y otra para no largos.
+
+Voy a implementar primero la de los no largos por ser algo más ligeramente simple (tampoco mucho). La idea es que luego podamos extender a largos.
+
+Pienso que cuando vaya a tocar la instrucción de saltos serán mucho más fáciles que tratar con los registros pc, por ser necesariamente escrituras con destino al pc de valores que no toca alterar de sobremanera.
+
+Por ahora, voy a incluir en la tabla lut wl swi y las de coprocesador y comprobar que funcionen
+
+He aprovechado para refactorizar algo de código mientras rellenaba la tabla lut con las cosas.
+
+La multiplicación está implementada con el algoritmo de booth, dicho algoritmo lo vi en la asignatura EC. Hace tiempo de entonces... Es un algoritmo para multiplicar números enteros de forma iterativa.
+
+En teoría esto es muy simple de implmentar. Con una multiplicación basta. Quitando el uso de PC aquí, entra en juego la alteración de las banderas CPSR.
+
+Resulta que cuando esté permitido la modificación de dichas banderas por medio de la bandera S proporcionada de la propia instrucción solo actualiza con certeza Z y N. Pero no actualiza V ni C.
+
+La multiplicación que hace el ARM7TDMI va por partes y no la hace en un ciclo como cabría esperar. Itera de 8 en 8 bits para efectuar la operación iterativamente hasta cumplir con los 32. Iterativamente con cada multiplicación parcial, reutiliza el acarreo previo del campo C directamente. Al utilizar esta versión modificada del algoritmo en la hay hay una terminación temprada (porque el resto de números a la izquierda son 0 del contenido de rs) queda con valor residual.
+
+Si bien es cierto que esto es un valor completamente basura, lo cierto que en esta jerga de emuladores significa que "mira, esto es muy jodido de explicar porque es un caso muy raro pero esto no quiere decir que sea aleatorio sino que es deterministicamente complicado de comprender".
+
+Hay que tomar una decisión, y esto relata a la precisión del emulador. Pese a que sea basura aleatoria, puede ser computada y no ser tan aleatoria. NanoBoyAdvance lo demuestra con código su funcionamiento. 
+
+- Cuando gasta todos los ciclos, entonces C será igual que si es bit 31=1 y bit 30=0.
+- Cuando no, toca hacer booth manualmente y averiguar de qué multiplicación parcial sale esto.
+
+Honestamente, creo que no merece la pena recrear booth. Además, hay destacar que por este tipo de imprecisiones sí penalizará en los test de precisión - cosa que este emulador NanoboyAdvance apunta a ser -.
+
+Yo pienso que sería hilar muy fino si pretendemos emular algo tal que así, creo que en su época el compilador de Nintendo no sería tan complicado en ceñirse a esto, omitiéndolo.
+
+Por otro lado, creo que hay bastante deuda técnica con usar esta parte del código de la cpu 
+
+``` cpp
+struct arm7tdmi {
+  /** @brief Negative (N) */
+  static constexpr u32 N_SHIFT{31}, N{1u << N_SHIFT};
+
+  /** @brief Zero (Z) */
+  static constexpr u32 Z_SHIFT{30}, Z{1u << Z_SHIFT};
+
+  /** @brief Carry (C) */
+  static constexpr u32 C_SHIFT{29}, C{1u << C_SHIFT};
+
+  /** @brief Overflow (V) */
+  static constexpr u32 V_SHIFT{28}, V{1u << V_SHIFT};
+
+  /** @brief IRQ Disable (I) */
+  static constexpr u32 I_SHIFT{7}, I{1u << I_SHIFT};
+
+  /** @brief FIQ Disable (F) */
+  static constexpr u32 F_SHIFT{6}, F{1u << F_SHIFT};
+
+  /** @brief Thumb State (T) */
+  static constexpr u32 T_SHIFT{5}, T{1u << T_SHIFT};
+
+  /** @brief Mode Bits (M) */
+  static constexpr u32 M{0x1fu};
+
+}
+```
+
+Ya que no se siente igual utilizarla que con los field, demostrando una experiencia inconsistente y algo frustante al verse obligado a cambiarse de modo de uso.
+
+Vale ya, lo tengo, ahora considero que esto es una sintaxis mucho más unificada.

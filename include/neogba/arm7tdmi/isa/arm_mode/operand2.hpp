@@ -37,7 +37,7 @@ struct operand2_tflags {
 };
 
 template <operand2_tflags flags> [[nodiscard]] operand2_output operand2(arm7tdmi& cpu, u32 inst) {
-  auto carry_out{static_cast<u8>((cpu.read_cpsr() & arm7tdmi::C) >> arm7tdmi::C_SHIFT)};
+  auto carry_out{arm7tdmi::C::get(cpu.read_cpsr())};
   auto carry_in{carry_out};
   u32 result;
 

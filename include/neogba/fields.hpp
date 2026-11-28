@@ -184,6 +184,8 @@ struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
   }
 };
 
+template <u8 n_shift> struct field_bin : field_bool<u32, n_shift> {};
+
 /**
  * @brief Describes an instruction field split across two bit ranges.
  *
@@ -250,4 +252,5 @@ struct field_split : field<instruction_t, return_t, n_shift, bit_mask> {
   // only mask
   [[nodiscard]] static inline constexpr auto set_high() -> ins_t { return field_split::H; }
 };
+
 } // namespace neogba

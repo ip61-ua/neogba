@@ -43,61 +43,46 @@ protected:
 TEST_P(operand2_test_fixture, arm_fsr_operand2) {
   const auto& params = GetParam();
   if (params.initial_carry)
-    cpu->set_cpsr(arm7tdmi::C, arm7tdmi::C);
+    cpu->set_cpsr(arm7tdmi::C::mask, arm7tdmi::C::H);
 
   auto op2 = params.caller(*cpu.get(), params.inst);
 
   ASSERT_EQ(params.expected_result, op2.result);
   ASSERT_EQ(params.expected_carry_out, op2.carry_out);
-  ASSERT_EQ(cpu->is_cpsr(arm7tdmi::C, arm7tdmi::C), static_cast<bool>(op2.carry_in));
+  ASSERT_EQ(cpu->is_cpsr(arm7tdmi::C::mask, arm7tdmi::C::H), static_cast<bool>(op2.carry_in));
   ASSERT_EQ(params.caller, operand2_table.get(params.inst));
 }
 
 constexpr static u32 //
 
-    i000{TEMPLATE | I::set_high() | IMM::set_high(69)},
-    i001{TEMPLATE | I::set_high() | IMM::set_high(255) | ROTATE::set_high(2)},
+    i000{TEMPLATE | I::H | IMM::h(69)},
+    i001{TEMPLATE | I::H | IMM::h(255) | ROTATE::h(2)},
 
-    i002{TEMPLATE | RM::set_high(r9) | SHIFT_TYPE::set_high(shift_enum::LSL)},
-    i003{TEMPLATE | RM::set_high(r9) | SHIFT_TYPE::set_high(shift_enum::LSR)},
-    i004{TEMPLATE | RM::set_high(r9) | SHIFT_TYPE::set_high(shift_enum::ASR)},
-    i005{TEMPLATE | RM::set_high(r9) | SHIFT_TYPE::set_high(shift_enum::ROR)},
+    i002{TEMPLATE | RM::h(r9) | SHIFT_TYPE::h(shift_enum::LSL)},
+    i003{TEMPLATE | RM::h(r9) | SHIFT_TYPE::h(shift_enum::LSR)},
+    i004{TEMPLATE | RM::h(r9) | SHIFT_TYPE::h(shift_enum::ASR)},
+    i005{TEMPLATE | RM::h(r9) | SHIFT_TYPE::h(shift_enum::ROR)},
 
-    i006{TEMPLATE | B4::set_high() | RS::set_high(r8) | RM::set_high(r7) |
-         SHIFT_TYPE::set_high(shift_enum::ROR)},
+    i006{TEMPLATE | B4::H | RS::h(r8) | RM::h(r7) | SHIFT_TYPE::h(shift_enum::ROR)},
 
-    i007{TEMPLATE | RM::set_high(r7) | SHIFT_AMOU::set_high(1) |
-         SHIFT_TYPE::set_high(shift_enum::LSL)},
-    i008{TEMPLATE | RM::set_high(r7) | SHIFT_AMOU::set_high(1) |
-         SHIFT_TYPE::set_high(shift_enum::LSR)},
-    i009{TEMPLATE | RM::set_high(r9) | SHIFT_AMOU::set_high(3) |
-         SHIFT_TYPE::set_high(shift_enum::ASR)},
-    i010{TEMPLATE | RM::set_high(r7) | SHIFT_AMOU::set_high(1) |
-         SHIFT_TYPE::set_high(shift_enum::ROR)},
+    i007{TEMPLATE | RM::h(r7) | SHIFT_AMOU::h(1) | SHIFT_TYPE::h(shift_enum::LSL)},
+    i008{TEMPLATE | RM::h(r7) | SHIFT_AMOU::h(1) | SHIFT_TYPE::h(shift_enum::LSR)},
+    i009{TEMPLATE | RM::h(r9) | SHIFT_AMOU::h(3) | SHIFT_TYPE::h(shift_enum::ASR)},
+    i010{TEMPLATE | RM::h(r7) | SHIFT_AMOU::h(1) | SHIFT_TYPE::h(shift_enum::ROR)},
 
-    i011{TEMPLATE | B4::set_high() | RS::set_high(r2) | RM::set_high(r7) |
-         SHIFT_TYPE::set_high(shift_enum::ROR)},
-    i012{TEMPLATE | B4::set_high() | RS::set_high(r1) | RM::set_high(r7) |
-         SHIFT_TYPE::set_high(shift_enum::ROR)},
+    i011{TEMPLATE | B4::H | RS::h(r2) | RM::h(r7) | SHIFT_TYPE::h(shift_enum::ROR)},
+    i012{TEMPLATE | B4::H | RS::h(r1) | RM::h(r7) | SHIFT_TYPE::h(shift_enum::ROR)},
 
-    i013{TEMPLATE | B4::set_high() | RS::set_high(r3) | RM::set_high(r9) |
-         SHIFT_TYPE::set_high(shift_enum::ASR)},
-    i014{TEMPLATE | B4::set_high() | RS::set_high(r1) | RM::set_high(r9) |
-         SHIFT_TYPE::set_high(shift_enum::ASR)},
+    i013{TEMPLATE | B4::H | RS::h(r3) | RM::h(r9) | SHIFT_TYPE::h(shift_enum::ASR)},
+    i014{TEMPLATE | B4::H | RS::h(r1) | RM::h(r9) | SHIFT_TYPE::h(shift_enum::ASR)},
 
-    i015{TEMPLATE | B4::set_high() | RS::set_high(r3) | RM::set_high(r7) |
-         SHIFT_TYPE::set_high(shift_enum::LSR)},
-    i016{TEMPLATE | B4::set_high() | RS::set_high(r2) | RM::set_high(r7) |
-         SHIFT_TYPE::set_high(shift_enum::LSR)},
-    i017{TEMPLATE | B4::set_high() | RS::set_high(r1) | RM::set_high(r7) |
-         SHIFT_TYPE::set_high(shift_enum::LSR)},
+    i015{TEMPLATE | B4::H | RS::h(r3) | RM::h(r7) | SHIFT_TYPE::h(shift_enum::LSR)},
+    i016{TEMPLATE | B4::H | RS::h(r2) | RM::h(r7) | SHIFT_TYPE::h(shift_enum::LSR)},
+    i017{TEMPLATE | B4::H | RS::h(r1) | RM::h(r7) | SHIFT_TYPE::h(shift_enum::LSR)},
 
-    i018{TEMPLATE | B4::set_high() | RS::set_high(r3) | RM::set_high(r7) |
-         SHIFT_TYPE::set_high(shift_enum::LSL)},
-    i019{TEMPLATE | B4::set_high() | RS::set_high(r2) | RM::set_high(r7) |
-         SHIFT_TYPE::set_high(shift_enum::LSL)},
-    i020{TEMPLATE | B4::set_high() | RS::set_high(r1) | RM::set_high(r7) |
-         SHIFT_TYPE::set_high(shift_enum::LSL)};
+    i018{TEMPLATE | B4::H | RS::h(r3) | RM::h(r7) | SHIFT_TYPE::h(shift_enum::LSL)},
+    i019{TEMPLATE | B4::H | RS::h(r2) | RM::h(r7) | SHIFT_TYPE::h(shift_enum::LSL)},
+    i020{TEMPLATE | B4::H | RS::h(r1) | RM::h(r7) | SHIFT_TYPE::h(shift_enum::LSL)};
 
 INSTANTIATE_TEST_SUITE_P(  //
     operand2_parametrized, //
