@@ -204,7 +204,8 @@ using CRD = /*       */ arm_fsr::RD;
 using CPSHARP = /*   */ arm_multiply::RS;
 using OFFSET = /*    */ field<u32, u8, 0, 0xffu>;
 constexpr u32 TEMPLATE{0x0c000000u}, FIXED{0x0e000000u};
-constexpr u32 IGNORED{arm_cond::COND::H | RN::H | CRD::H | CPSHARP::H | OFFSET::H};
+constexpr u32 IGNORED{arm_cond::COND::H | RN::H | CRD::H | CPSHARP::H | OFFSET::H //
+                      | P::H | U::H | N::H | W::H | L::H};
 } // namespace arm_coproctrans
 
 /// Coprocessor data operation
@@ -216,7 +217,8 @@ using CPSHARP = /*   */ arm_multiply::RS;
 using CP = /*        */ field_delayed<u32, u8, 5, 0x7u>;
 using CRM = /*       */ arm_multiply::RM;
 constexpr u32 TEMPLATE{0x0e000000u}, FIXED{0x0f000010u};
-constexpr u32 IGNORED{arm_cond::COND::H | CRN::H | CRD::H | CPSHARP::H | CP::H | CRM::H};
+constexpr u32 IGNORED{arm_cond::COND::H | CRN::H | CRD::H | CPSHARP::H | CP::H | CRM::H //
+                      | CPOPC::H};
 } // namespace arm_coprocop
 
 /// Coprocessor register transfer
@@ -229,7 +231,8 @@ using CPSHARP = /*   */ arm_coprocop::CPSHARP;
 using CP = /*        */ arm_coprocop::CP;
 using CRM = /*       */ arm_coprocop::CRM;
 constexpr u32 TEMPLATE{0x0e000010u}, FIXED{arm_coproctrans::FIXED};
-constexpr u32 IGNORED{arm_cond::COND::H | CRN::H | RD::H | CPSHARP::H | CP::H | CRM::H};
+constexpr u32 IGNORED{arm_cond::COND::H | CRN::H | RD::H | CPSHARP::H | CP::H | CRM::H //
+                      | CPOPC::H | L::H};
 } // namespace arm_coprocregtrans
 
 /// Software interrupt
