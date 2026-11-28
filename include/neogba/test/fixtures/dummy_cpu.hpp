@@ -14,7 +14,7 @@ protected:
     cpu = std::make_unique<arm7tdmi>();
     cpu->empty_registers();
     cpu->reset();
-    cpu->set_mode(arm7tdmi::MODE_USR);
+    cpu->set_mode(arm7tdmi::modes::usr);
   }
 
   void TearDown() override {}

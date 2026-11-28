@@ -52,7 +52,7 @@ public:
     cpu->set_bus(bus.get());
     cpu->empty_registers();
     cpu->reset();
-    cpu->set_mode(arm7tdmi::MODE_USR);
+    cpu->set_mode(arm7tdmi::modes::usr);
 
     cpu->write_raw_register(r0, 1);
     cpu->write_raw_register(r1, 0xcafecafe);

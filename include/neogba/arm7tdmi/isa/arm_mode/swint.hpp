@@ -6,10 +6,10 @@ namespace neogba::arm_swint {
 inline auto swint(arm7tdmi& cpu, u32) {
   auto prev_cpsr{cpu.read_cpsr()};
   auto prev_pc{cpu.read_pc()};
-  cpu.set_mode(arm7tdmi::MODE_SVC);
-  cpu.write_raw_register(arm7tdmi_register::pc, 0x08);
-  cpu.write_raw_register(arm7tdmi_register::spsr_svc, prev_cpsr);
-  cpu.write_raw_register(arm7tdmi_register::r14_svc, prev_pc);
+  cpu.set_mode(arm7tdmi::modes::svc);
+  cpu.write_raw_register(pc, arm7tdmi::exceptions::swint);
+  cpu.write_raw_register(spsr_svc, prev_cpsr);
+  cpu.write_raw_register(r14_svc, prev_pc);
 };
 
 } // namespace neogba::arm_swint

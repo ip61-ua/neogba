@@ -2,18 +2,19 @@
 #include "neogba/arm7tdmi/isa/constants.hpp"
 #include "neogba/arm7tdmi/isa/include.hpp"
 #include <functional>
+#include <utility>
 
 using namespace neogba;
 
 void arm7tdmi::set_mode(u8 mode, bool update_cpsr) {
-  u8 idx_lut = this->get_idx_registers_preset_by_mode(mode);
+  u8 idx_lut = get_idx_registers_preset_by_mode(mode);
 
-  this->active_registers = this->REGISTERS_PRESET[idx_lut];
+  active_registers = REGISTERS_PRESET[idx_lut];
 
   if (!update_cpsr)
     return;
 
-  this->set_cpsr(M::mask, mode);
+  set_cpsr(M::mask, mode);
 }
 
 bool arm7tdmi::ckeck_arm_condition(u32 instruction) const {
@@ -22,35 +23,33 @@ bool arm7tdmi::ckeck_arm_condition(u32 instruction) const {
 
   switch (cond) {
   case cond_enum::EQ:
-    return this->is_cpsr(Z::mask, Z::H);
+    return is_cpsr(Z::mask, Z::H);
   case cond_enum::NE:
-    return this->is_cpsr(Z::mask, 0);
+    return is_cpsr(Z::mask, 0);
   case cond_enum::HSCS:
-    return this->is_cpsr(C::mask, C::H);
+    return is_cpsr(C::mask, C::H);
   case cond_enum::LOCC:
-    return this->is_cpsr(C::mask, 0);
+    return is_cpsr(C::mask, 0);
   case cond_enum::MI:
-    return this->is_cpsr(N::mask, N::H);
+    return is_cpsr(N::mask, N::H);
   case cond_enum::PL:
-    return this->is_cpsr(N::mask, 0);
+    return is_cpsr(N::mask, 0);
   case cond_enum::VS:
-    return this->is_cpsr(V::mask, V::H);
+    return is_cpsr(V::mask, V::H);
   case cond_enum::VC:
-    return this->is_cpsr(V::mask, 0);
+    return is_cpsr(V::mask, 0);
   case cond_enum::HI:
-    return this->is_cpsr(C::mask | Z::mask, C::H);
+    return is_cpsr(C::mask | Z::mask, C::H);
   case cond_enum::LS:
-    return this->is_cpsr(C::mask, 0) || this->is_cpsr(Z::mask, Z::H);
+    return is_cpsr(C::mask, 0) || is_cpsr(Z::mask, Z::H);
   case cond_enum::GE:
-    return this->is_cpsr(N::mask, N::H) == this->is_cpsr(V::mask, V::H);
+    return is_cpsr(N::mask, N::H) == is_cpsr(V::mask, V::H);
   case cond_enum::LT:
-    return this->is_cpsr(N::mask, N::H) != this->is_cpsr(V::mask, V::H);
+    return is_cpsr(N::mask, N::H) != is_cpsr(V::mask, V::H);
   case cond_enum::GT:
-    return this->is_cpsr(Z::mask, 0) &&
-           (this->is_cpsr(N::mask, N::H) == this->is_cpsr(V::mask, V::H));
+    return is_cpsr(Z::mask, 0) && (is_cpsr(N::mask, N::H) == is_cpsr(V::mask, V::H));
   case cond_enum::LE:
-    return this->is_cpsr(Z::mask, Z::H) ||
-           (this->is_cpsr(N::mask, N::H) != this->is_cpsr(V::mask, V::H));
+    return is_cpsr(Z::mask, Z::H) || (is_cpsr(N::mask, N::H) != is_cpsr(V::mask, V::H));
   case cond_enum::AL:
     return true;
   case cond_enum::NV:
@@ -59,35 +58,35 @@ bool arm7tdmi::ckeck_arm_condition(u32 instruction) const {
   };
 };
 
-void arm7tdmi::empty_registers() { this->registers.fill(0); }
+void arm7tdmi::empty_registers() { registers.fill(0); }
 
 void arm7tdmi::reset() {
-  this->empty_registers();
-  this->write_cpsr(I::H | F::H);
-  this->set_mode(MODE_SVC);
-  this->set_arm_mode();
-  this->write_raw_register(pc, EXCEPTION_RESET);
+  empty_registers();
+  write_cpsr(I::H | F::H);
+  set_mode(modes::svc);
+  set_arm_mode();
+  write_raw_register(pc, exceptions::reset);
 }
 
 void arm7tdmi::set_arm_mode() {
-  this->instruction_size = 32;
-  this->instruction_incrementator = 4;
-  this->execute = execute_arm;
-  this->clear_cpsr(T::H);
+  instruction_size = 32;
+  instruction_incrementator = 4;
+  execute = execute_arm;
+  clear_cpsr(T::H);
 }
 
 void arm7tdmi::set_thumb_mode() {
-  this->instruction_size = 16;
-  this->instruction_incrementator = 2;
-  this->execute = execute_thumb;
-  this->set_cpsr(T::mask, T::H);
+  instruction_size = 16;
+  instruction_incrementator = 2;
+  execute = execute_thumb;
+  set_cpsr(T::mask, T::H);
 }
 
 void arm7tdmi::step() {
-  auto current_pc{this->read_raw_register(pc)};
+  auto current_pc{read_raw_register(pc)};
 
-  auto inst{this->bus->read(this->instruction_size, current_pc)};
-  this->write_pc(current_pc + this->instruction_incrementator);
+  auto inst{bus->read(instruction_size, current_pc)};
+  write_pc(current_pc + instruction_incrementator);
 
-  std::invoke(this->execute, *this, inst);
+  std::invoke(execute, *this, inst);
 }

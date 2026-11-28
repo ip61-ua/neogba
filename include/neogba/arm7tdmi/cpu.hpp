@@ -49,48 +49,54 @@ struct arm7tdmi {
   using M = field<u32, u8, 0, 0x1fu>;
   // static constexpr u32 M{0x1fu};
 
-  enum class exceptions : u32 {
-    reset = /*     */ 0x00000000,
-    undefins = /*  */ 0x00000004,
-    swint = /*     */ 0x00000008,
-    prefetabt = /* */ 0x0000000c,
-    dataabt = /*   */ 0x00000010,
-    reserved = /*  */ 0x00000014,
-    irq = /*       */ 0x00000018,
-    fiq = /*       */ 0x0000001c
+  struct exceptions {
+    inline static constexpr u32 reset /*     */ {0x00000000u};
+    inline static constexpr u32 undefins /*  */ {0x00000004u};
+    inline static constexpr u32 swint /*     */ {0x00000008u};
+    inline static constexpr u32 prefetabt /* */ {0x0000000cu};
+    inline static constexpr u32 dataabt /*   */ {0x00000010u};
+    inline static constexpr u32 reserved /*  */ {0x00000014u};
+    inline static constexpr u32 irq /*       */ {0x00000018u};
+    inline static constexpr u32 fiq /*       */ {0x0000001cu};
+
+  private:
+    exceptions(const exceptions&) = delete;
+    exceptions(exceptions&&) = delete;
+    exceptions& operator=(const exceptions&) = delete;
+    exceptions& operator=(exceptions&&) = delete;
   };
 
-  enum class modes : u8 {
-    usr = 0b10000,
-    fiq = 0b10001,
-    irq = 0b10010,
-    svc = 0b10011,
-    abt = 0b10111,
-    und = 0b11011,
-    sys = 0b11111
+  struct modes {
+    inline static constexpr u8 usr{0b10000u};
+    inline static constexpr u8 fiq{0b10001u};
+    inline static constexpr u8 irq{0b10010u};
+    inline static constexpr u8 svc{0b10011u};
+    inline static constexpr u8 abt{0b10111u};
+    inline static constexpr u8 und{0b11011u};
+    inline static constexpr u8 sys{0b11111u};
+
+  private:
+    modes(const modes&) = delete;
+    modes(modes&&) = delete;
+    modes& operator=(const modes&) = delete;
+    modes& operator=(modes&&) = delete;
   };
 
-  enum class registers_preset : u8 {
-    usr = 0,
-    fiq = 1,
-    irq = 2,
-    svc = 3,
-    abt = 4,
-    und = 5,
-    sys = 0
+  struct registers_preset {
+    inline static constexpr u8 usr{0};
+    inline static constexpr u8 fiq{1};
+    inline static constexpr u8 irq{2};
+    inline static constexpr u8 svc{3};
+    inline static constexpr u8 abt{4};
+    inline static constexpr u8 und{5};
+    inline static constexpr u8 sys{0};
+
+  private:
+    registers_preset(const registers_preset&) = delete;
+    registers_preset(registers_preset&&) = delete;
+    registers_preset& operator=(const registers_preset&) = delete;
+    registers_preset& operator=(registers_preset&&) = delete;
   };
-
-  static constexpr u32 EXCEPTION_RESET /*   */ {0x00000000}, EXCEPTION_UNDEFINS /*  */ {0x00000004},
-      EXCEPTION_SWINT /*   */ {0x00000008}, EXCEPTION_PREFETABT /* */ {0x0000000c},
-      EXCEPTION_DATAABT /* */ {0x00000010}, EXCEPTION_RESERVED /*  */ {0x00000014},
-      EXCEPTION_IRQ /*     */ {0x00000018}, EXCEPTION_FIQ /*       */ {0x0000001c};
-
-  static constexpr u8 MODE_USR{0b10000}, MODE_FIQ{0b10001}, MODE_IRQ{0b10010}, MODE_SVC{0b10011},
-      MODE_ABT{0b10111}, MODE_UND{0b11011}, MODE_SYS{0b11111};
-
-  static constexpr u8 REGISTERS_PRESET_USR{0}, REGISTERS_PRESET_FIQ{1}, REGISTERS_PRESET_IRQ{2},
-      REGISTERS_PRESET_SVC{3}, REGISTERS_PRESET_ABT{4}, REGISTERS_PRESET_UND{5},
-      REGISTERS_PRESET_SYS{0};
 
   static constexpr u8 N_ACTIVE_REGISTERS{18}, N_REGISTERS{37};
   static constexpr u8 spsr{17};

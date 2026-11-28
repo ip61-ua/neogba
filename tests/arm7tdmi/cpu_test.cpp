@@ -25,31 +25,32 @@ protected:
 
 TEST_F(cpu_test, get_idx_registers_preset_by_mode_should_say_right_when_providing_modes) {
 
-  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_USR,
-            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_USR));
+  ASSERT_EQ(arm7tdmi::registers_preset::usr,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::usr));
 
-  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_FIQ,
-            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_FIQ));
+  ASSERT_EQ(arm7tdmi::registers_preset::fiq,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::fiq));
 
-  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_IRQ,
-            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_IRQ));
+  ASSERT_EQ(arm7tdmi::registers_preset::irq,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::irq));
 
-  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_SVC,
-            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_SVC));
+  ASSERT_EQ(arm7tdmi::registers_preset::svc,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::svc));
 
-  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_ABT,
-            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_ABT));
+  ASSERT_EQ(arm7tdmi::registers_preset::abt,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::abt));
 
-  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_UND,
-            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_UND));
+  ASSERT_EQ(arm7tdmi::registers_preset::und,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::und));
 
-  ASSERT_EQ(arm7tdmi::REGISTERS_PRESET_SYS,
-            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::MODE_SYS));
+  ASSERT_EQ(arm7tdmi::registers_preset::sys,
+            arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::sys));
 }
 
 TEST_F(cpu_test, set_mode_should_update_cpsr_and_report_correct_mode) {
-  for (auto mode : {arm7tdmi::MODE_USR, arm7tdmi::MODE_FIQ, arm7tdmi::MODE_IRQ, arm7tdmi::MODE_SVC,
-                    arm7tdmi::MODE_ABT, arm7tdmi::MODE_UND, arm7tdmi::MODE_SYS}) {
+  for (auto mode :
+       {arm7tdmi::modes::usr, arm7tdmi::modes::fiq, arm7tdmi::modes::irq, arm7tdmi::modes::svc,
+        arm7tdmi::modes::abt, arm7tdmi::modes::und, arm7tdmi::modes::sys}) {
 
     cpu->set_mode(mode, true);
     ASSERT_TRUE(cpu->is_mode(mode));
@@ -57,39 +58,39 @@ TEST_F(cpu_test, set_mode_should_update_cpsr_and_report_correct_mode) {
 }
 
 TEST_F(cpu_test, banked_registers_should_be_isolated_between_modes) {
-  cpu->set_mode(arm7tdmi::MODE_SYS, false);
+  cpu->set_mode(arm7tdmi::modes::sys, false);
   cpu->write_active_register(r8, 100);
   cpu->write_active_register(r13, 200);
 
-  cpu->set_mode(arm7tdmi::MODE_FIQ, false);
+  cpu->set_mode(arm7tdmi::modes::fiq, false);
   cpu->write_active_register(r8, 888);
   cpu->write_active_register(r13, 999);
 
   ASSERT_EQ(888, cpu->read_active_register(r8));
   ASSERT_EQ(888, cpu->registers[r8_fiq]);
 
-  cpu->set_mode(arm7tdmi::MODE_SYS, false);
+  cpu->set_mode(arm7tdmi::modes::sys, false);
   ASSERT_EQ(100, cpu->read_active_register(r8));
   ASSERT_EQ(200, cpu->read_active_register(r13));
 }
 
 TEST_F(cpu_test, spsr_should_be_isolated_between_privileged_modes) {
-  cpu->set_mode(arm7tdmi::MODE_FIQ, false);
+  cpu->set_mode(arm7tdmi::modes::fiq, false);
   cpu->write_spsr(0xAAAA);
 
-  cpu->set_mode(arm7tdmi::MODE_SVC, false);
+  cpu->set_mode(arm7tdmi::modes::svc, false);
   cpu->write_spsr(0xBBBB);
 
   ASSERT_EQ(0xBBBB, cpu->read_spsr());
   ASSERT_EQ(0xBBBB, cpu->registers[spsr_svc]);
 
-  cpu->set_mode(arm7tdmi::MODE_FIQ, false);
+  cpu->set_mode(arm7tdmi::modes::fiq, false);
   ASSERT_EQ(0xAAAA, cpu->read_spsr());
   ASSERT_EQ(0xAAAA, cpu->registers[spsr_fiq]);
 }
 
 TEST_F(cpu_test, cpsr_read_write_should_modify_correct_physical_register) {
-  cpu->set_mode(arm7tdmi::MODE_SVC, true);
+  cpu->set_mode(arm7tdmi::modes::svc, true);
   cpu->write_cpsr(777);
   ASSERT_EQ(777, cpu->read_active_register(cpsr));
   ASSERT_EQ(777, cpu->registers[cpsr]);

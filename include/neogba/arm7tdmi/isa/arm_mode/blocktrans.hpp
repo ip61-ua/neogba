@@ -66,7 +66,7 @@ template <blocktrans_tflags flags> auto blocktrans(arm7tdmi& cpu, u32 inst) -> v
       const u32 data{cpu.bus->read(32, current_addr)};
 
       if (is_user_bank)
-        cpu.write_relative_register(reg, data, arm7tdmi::REGISTERS_PRESET_USR);
+        cpu.write_relative_register(reg, data, arm7tdmi::registers_preset::usr);
 
       // TODO: Revisar PC cuando esté ya aproximándose
 
@@ -81,7 +81,7 @@ template <blocktrans_tflags flags> auto blocktrans(arm7tdmi& cpu, u32 inst) -> v
       // STORE (STM)
       u32 data;
       if (is_user_bank)
-        data = cpu.read_relative_register(reg, arm7tdmi::REGISTERS_PRESET_USR);
+        data = cpu.read_relative_register(reg, arm7tdmi::registers_preset::usr);
 
       // TODO: Revisar PC cuando esté ya aproximándose
 

@@ -109,7 +109,7 @@ INSTANTIATE_TEST_SUITE_P( //
     arm_fsr_fixture,      //
     ::testing::Values(
         // Caso 0
-        fsr_test_param{.mode = arm7tdmi::MODE_FIQ,
+        fsr_test_param{.mode = arm7tdmi::modes::fiq,
                        .s = true,
                        .opcode = opcode_enum::MOV,
                        .caller = &fsr<fsr_tflags{.opcode = opcode_enum::MOV, .s = true}>,
@@ -134,7 +134,7 @@ INSTANTIATE_TEST_SUITE_P( //
 
         // Caso 1
 
-        // fsr_test_param{.mode = arm7tdmi::MODE_FIQ,
+        // fsr_test_param{.mode = arm7tdmi::modes::fiq,
         //                .s = false,
         //                .opcode = opcode_enum::RSB,
         //                .caller = &fsr<fsr_tflags{.opcode = opcode_enum::RSB}>,
@@ -160,7 +160,7 @@ INSTANTIATE_TEST_SUITE_P( //
 
         // Caso 2
         // rd_pc=false, !is_not_move=false, is_inverted=false, can_write_rd=false, s=true
-        fsr_test_param{.mode = arm7tdmi::MODE_USR,
+        fsr_test_param{.mode = arm7tdmi::modes::usr,
                        .s = true,
                        .opcode = opcode_enum::CMP,
                        .caller = &fsr<fsr_tflags{.opcode = opcode_enum::CMP, .s = true}>,
@@ -186,7 +186,7 @@ INSTANTIATE_TEST_SUITE_P( //
         // Caso 3
         // rd_pc=false, !is_not_move=false, is_inverted=false, can_write_rd=true, s=true,
         // !is_sum=true is_logical=false
-        fsr_test_param{.mode = arm7tdmi::MODE_SYS,
+        fsr_test_param{.mode = arm7tdmi::modes::sys,
                        .s = true,
                        .opcode = opcode_enum::ADD,
                        .caller = &fsr<fsr_tflags{.opcode = opcode_enum::ADD, .s = true}>,
@@ -212,7 +212,7 @@ INSTANTIATE_TEST_SUITE_P( //
 
         // Caso 4
         // s = true, rd_pc = true, can_write_rd = true -> CPSR = SPSR
-        // fsr_test_param{.mode = arm7tdmi::MODE_FIQ,
+        // fsr_test_param{.mode = arm7tdmi::modes::fiq,
         //                .s = true,
         //                .opcode = opcode_enum::MOV,
         //                .caller = &fsr<fsr_tflags{.opcode = opcode_enum::MOV, .s = true}>,
@@ -231,7 +231,7 @@ INSTANTIATE_TEST_SUITE_P( //
 
         // Caso 5
         // not is_sum = true, s = true, can_write_rd = true
-        fsr_test_param{.mode = arm7tdmi::MODE_USR,
+        fsr_test_param{.mode = arm7tdmi::modes::usr,
                        .s = true,
                        .opcode = opcode_enum::SUB,
                        .caller = &fsr<fsr_tflags{.opcode = opcode_enum::SUB, .s = true}>,
@@ -251,7 +251,7 @@ INSTANTIATE_TEST_SUITE_P( //
 
         // Caso 6
         // is_logical = true, can_write_rd = false, s = true
-        fsr_test_param{.mode = arm7tdmi::MODE_USR,
+        fsr_test_param{.mode = arm7tdmi::modes::usr,
                        .s = true,
                        .opcode = opcode_enum::TST,
 

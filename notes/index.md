@@ -3223,3 +3223,5 @@ struct arm7tdmi {
 Ya que no se siente igual utilizarla que con los field, demostrando una experiencia inconsistente y algo frustante al verse obligado a cambiarse de modo de uso.
 
 Vale ya, lo tengo, ahora considero que esto es una sintaxis mucho más unificada.
+
+Ahora ya que he empezado quiero seguir refactorizando valores enumerados. 

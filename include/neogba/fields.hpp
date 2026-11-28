@@ -184,6 +184,10 @@ struct field_bool : field<instruction_t, bool, n_shift, (1u << n_shift)> {
   }
 };
 
+/**
+ * @brief Shorthand for `field_bool`
+ * @see field_bool
+ */
 template <u8 n_shift> struct field_bin : field_bool<u32, n_shift> {};
 
 /**

@@ -26,7 +26,7 @@ protected:
   void SetUp() override {
     cpu = std::make_unique<arm7tdmi>();
     cpu->empty_registers();
-    cpu->set_mode(arm7tdmi::MODE_USR);
+    cpu->set_mode(arm7tdmi::modes::usr);
 
     cpu->write_active_register(r9, 0xffffffff);
     cpu->write_active_register(r7, 0x00000022);
