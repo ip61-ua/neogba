@@ -12,7 +12,7 @@ struct half_tflags {
   bool s : 1 {false};
   bool h : 1 {false};
 
-  constexpr auto is_valid() const {
+  inline constexpr auto is_valid() const {
     if (!s && !h)
       return false;
 

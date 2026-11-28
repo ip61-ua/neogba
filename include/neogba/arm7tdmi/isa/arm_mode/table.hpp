@@ -1,9 +1,11 @@
 #pragma once
 #include "neogba/arm7tdmi/isa/arm_mode/blocktrans.hpp"
+#include "neogba/arm7tdmi/isa/arm_mode/coproc*.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/fsr.hpp"
-#include "neogba/arm7tdmi/isa/arm_mode/half.hpp"
+#include "neogba/arm7tdmi/isa/arm_mode/half*.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/singleswap.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/singletrans.hpp"
+#include "neogba/arm7tdmi/isa/arm_mode/swint.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/undefined.hpp"
 #include "neogba/arm7tdmi/isa/constants.hpp"
 #include <type_traits>
@@ -22,6 +24,7 @@ inline constexpr auto arm_mode_lut = []() consteval {
   table.fill(arm_undefined::undefined);
 
   {
+    // fsr
     [&]<std::size_t... Is>(std::index_sequence<Is...>) {
       (([&]() {
          using namespace arm_fsr;
@@ -37,6 +40,7 @@ inline constexpr auto arm_mode_lut = []() consteval {
   }
 
   {
+    // singletrans
     [&]<std::size_t... Is>(std::index_sequence<Is...>) {
       (([&]() {
          using namespace arm_singletrans;
@@ -57,6 +61,7 @@ inline constexpr auto arm_mode_lut = []() consteval {
   }
 
   {
+    // blocktrans
     [&]<std::size_t... Is>(std::index_sequence<Is...>) {
       (([&]() {
          // Primero se llena con bits[7..4] con any number
@@ -79,6 +84,7 @@ inline constexpr auto arm_mode_lut = []() consteval {
   }
 
   {
+    // singleswap
     [&]<std::size_t... Is>(std::index_sequence<Is...>) {
       (([&]() {
          using namespace arm_singleswap;
@@ -94,6 +100,7 @@ inline constexpr auto arm_mode_lut = []() consteval {
   }
 
   {
+    // hafl*
     [&]<std::size_t... Is>(std::index_sequence<Is...>) {
       (([&]() {
          using namespace arm_halfreg;
@@ -121,6 +128,22 @@ inline constexpr auto arm_mode_lut = []() consteval {
        }()),
        ...);
     }(std::make_index_sequence<1 << 7>{});
+  }
+
+  {
+    // swint
+    using namespace arm_swint;
+    table.fill(TEMPLATE, IGNORED, &swint);
+  }
+
+  {
+    // coproc*
+    namespace op = arm_coprocop;
+    namespace regtrans = arm_coprocregtrans;
+    namespace trans = arm_coproctrans;
+    table.fill(op::TEMPLATE, op::IGNORED, op::coprocop);
+    table.fill(regtrans::TEMPLATE, regtrans::IGNORED, regtrans::coprocregtrans);
+    table.fill(trans::TEMPLATE, trans::IGNORED, trans::coproctrans);
   }
 
   return table;
