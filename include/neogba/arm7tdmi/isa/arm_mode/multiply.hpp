@@ -34,11 +34,11 @@ template <multiply_tflags flags> auto multiply(arm7tdmi& cpu, u32 inst) -> void 
   cpu.write_active_register(rd, rd_content);
 
   if constexpr (flags.s) {
-    auto n{static_cast<bool>((rd_content >> 31) & 0x1u)};
-    auto z{rd_content == 0};
-    auto c{(rd_content >> 30) == 2};
+    auto n{arm7tdmi::N::h(static_cast<bool>((rd_content >> 31) & 0x1u))};
+    auto z{arm7tdmi::Z::h(rd_content == 0)};
+    auto c{arm7tdmi::C::h((rd_content >> 30) == 2)};
 
-    // cpu.set_cpsr(arm7tdmi::N | arm7tdmi::Z | arm7tdmi::C);
+    cpu.set_cpsr(arm7tdmi::N::mask | arm7tdmi::Z::mask | arm7tdmi::C::mask, n | z | c);
   }
 }
 

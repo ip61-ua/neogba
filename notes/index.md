@@ -3224,4 +3224,6 @@ Ya que no se siente igual utilizarla que con los field, demostrando una experien
 
 Vale ya, lo tengo, ahora considero que esto es una sintaxis mucho más unificada.
 
-Ahora ya que he empezado quiero seguir refactorizando valores enumerados. 
+Ahora ya que he empezado quiero seguir refactorizando valores enumerados.
+
+He decidido quitar lo del logging puesto que no que ahora no lo veo necesario. debo centrar las fuerzas en la documentación y en acabar el sprint.

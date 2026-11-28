@@ -3,6 +3,7 @@
 #include "neogba/arm7tdmi/isa/arm_mode/coproc*.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/fsr.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/half*.hpp"
+#include "neogba/arm7tdmi/isa/arm_mode/multiply.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/singleswap.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/singletrans.hpp"
 #include "neogba/arm7tdmi/isa/arm_mode/swint.hpp"
@@ -139,12 +140,30 @@ inline constexpr auto arm_mode_lut = []() consteval {
   {
     // coproc*
     namespace op = arm_coprocop;
-    namespace regtrans = arm_coprocregtrans;
-    namespace trans = arm_coproctrans;
+    namespace rt = arm_coprocregtrans;
+    namespace tr = arm_coproctrans;
     table.fill(op::TEMPLATE, op::IGNORED, op::coprocop);
-    table.fill(regtrans::TEMPLATE, regtrans::IGNORED, regtrans::coprocregtrans);
-    table.fill(trans::TEMPLATE, trans::IGNORED, trans::coproctrans);
+    table.fill(rt::TEMPLATE, rt::IGNORED, rt::coprocregtrans);
+    table.fill(tr::TEMPLATE, tr::IGNORED, tr::coproctrans);
   }
+
+  {
+    // multiply
+    [&]<std::size_t... Is>(std::index_sequence<Is...>) {
+      (([&]() {
+         using namespace arm_multiply;
+
+         constexpr auto a{(Is & 0b1u) != 0}, s{(Is & 0b10u) != 0};
+         constexpr auto tflags{multiply_tflags{a, s}};
+
+         if constexpr (tflags.is_valid())
+           table.fill(TEMPLATE | A::h(a) | S::h(s), IGNORED, &multiply<tflags>);
+       }()),
+       ...);
+    }(std::make_index_sequence<1 << 2>{});
+  }
+
+  arm_multiply::multiply_tflags kk{};
 
   return table;
 }();

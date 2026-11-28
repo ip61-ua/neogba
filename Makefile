@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -g -std=c++26 -Iinclude -Isrc -Wno-unused-variable -Wall -Wextra -Wpedantic -Wshadow -Wold-style-cast -march=native -fsanitize=address -fsanitize=undefined -MMD -MP -lspdlog
+CXXFLAGS = -g -std=c++26 -Iinclude -Isrc -Wno-unused-variable -Wall -Wextra -Wpedantic -Wshadow -Wold-style-cast -march=native -fsanitize=address -fsanitize=undefined -MMD -MP
 TEST_LDFLAGS = -lgtest -lgtest_main -pthread -lgmock
 
 TARGET = build/neogba

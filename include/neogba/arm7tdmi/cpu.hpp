@@ -19,35 +19,27 @@ enum arm7tdmi_register : u8 {
 struct arm7tdmi {
   /** @brief Negative (N) */
   using N = field_bin<31>;
-  // static constexpr u32 N_SHIFT{31}, N{1u << N_SHIFT};
 
   /** @brief Zero (Z) */
   using Z = field_bin<30>;
-  // static constexpr u32 Z_SHIFT{30}, Z{1u << Z_SHIFT};
 
   /** @brief Carry (C) */
   using C = field_bin<29>;
-  // static constexpr u32 C_SHIFT{29}, C{1u << C_SHIFT};
 
   /** @brief Overflow (V) */
   using V = field_bin<28>;
-  // static constexpr u32 V_SHIFT{28}, V{1u << V_SHIFT};
 
   /** @brief IRQ Disable (I) */
   using I = field_bin<7>;
-  // static constexpr u32 I_SHIFT{7}, I{1u << I_SHIFT};
 
   /** @brief FIQ Disable (F) */
   using F = field_bin<6>;
-  // static constexpr u32 F_SHIFT{6}, F{1u << F_SHIFT};
 
   /** @brief Thumb State (T) */
   using T = field_bin<5>;
-  // static constexpr u32 T_SHIFT{5}, T{1u << T_SHIFT};
 
   /** @brief Mode Bits (M) */
   using M = field<u32, u8, 0, 0x1fu>;
-  // static constexpr u32 M{0x1fu};
 
   struct exceptions {
     inline static constexpr u32 reset /*     */ {0x00000000u};
