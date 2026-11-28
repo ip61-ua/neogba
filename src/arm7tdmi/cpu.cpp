@@ -2,7 +2,6 @@
 #include "neogba/arm7tdmi/isa/constants.hpp"
 #include "neogba/arm7tdmi/isa/include.hpp"
 #include <functional>
-#include <utility>
 
 using namespace neogba;
 

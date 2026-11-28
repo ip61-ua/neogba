@@ -82,7 +82,7 @@ struct arm7tdmi {
     modes& operator=(modes&&) = delete;
   };
 
-  struct registers_preset {
+  struct register_preset_indexes {
     inline static constexpr u8 usr{0};
     inline static constexpr u8 fiq{1};
     inline static constexpr u8 irq{2};
@@ -92,10 +92,10 @@ struct arm7tdmi {
     inline static constexpr u8 sys{0};
 
   private:
-    registers_preset(const registers_preset&) = delete;
-    registers_preset(registers_preset&&) = delete;
-    registers_preset& operator=(const registers_preset&) = delete;
-    registers_preset& operator=(registers_preset&&) = delete;
+    register_preset_indexes(const register_preset_indexes&) = delete;
+    register_preset_indexes(register_preset_indexes&&) = delete;
+    register_preset_indexes& operator=(const register_preset_indexes&) = delete;
+    register_preset_indexes& operator=(register_preset_indexes&&) = delete;
   };
 
   static constexpr u8 N_ACTIVE_REGISTERS{18}, N_REGISTERS{37};
