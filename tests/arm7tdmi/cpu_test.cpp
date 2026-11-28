@@ -25,25 +25,25 @@ protected:
 
 TEST_F(cpu_test, get_idx_registers_preset_by_mode_should_say_right_when_providing_modes) {
 
-  ASSERT_EQ(arm7tdmi::register_preset_indexes::usr,
+  ASSERT_EQ(arm7tdmi::register_presets::usr,
             arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::usr));
 
-  ASSERT_EQ(arm7tdmi::register_preset_indexes::fiq,
+  ASSERT_EQ(arm7tdmi::register_presets::fiq,
             arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::fiq));
 
-  ASSERT_EQ(arm7tdmi::register_preset_indexes::irq,
+  ASSERT_EQ(arm7tdmi::register_presets::irq,
             arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::irq));
 
-  ASSERT_EQ(arm7tdmi::register_preset_indexes::svc,
+  ASSERT_EQ(arm7tdmi::register_presets::svc,
             arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::svc));
 
-  ASSERT_EQ(arm7tdmi::register_preset_indexes::abt,
+  ASSERT_EQ(arm7tdmi::register_presets::abt,
             arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::abt));
 
-  ASSERT_EQ(arm7tdmi::register_preset_indexes::und,
+  ASSERT_EQ(arm7tdmi::register_presets::und,
             arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::und));
 
-  ASSERT_EQ(arm7tdmi::register_preset_indexes::sys,
+  ASSERT_EQ(arm7tdmi::register_presets::sys,
             arm7tdmi::get_idx_registers_preset_by_mode(arm7tdmi::modes::sys));
 }
 

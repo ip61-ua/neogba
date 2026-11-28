@@ -82,7 +82,9 @@ struct arm7tdmi {
     modes& operator=(modes&&) = delete;
   };
 
-  struct register_preset_indexes {
+  static constexpr u8 N_ACTIVE_REGISTERS{18}, N_REGISTERS{37};
+
+  struct register_presets {
     inline static constexpr u8 usr{0};
     inline static constexpr u8 fiq{1};
     inline static constexpr u8 irq{2};
@@ -91,36 +93,24 @@ struct arm7tdmi {
     inline static constexpr u8 und{5};
     inline static constexpr u8 sys{0};
 
+    static constexpr std::array<std::array<u8, N_ACTIVE_REGISTERS>, 6> all
+        // clang-format off
+      {{{ {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr} }, //
+	{ {r0, r1, r2, r3, r4, r5, r6, r7, r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, pc, cpsr, spsr_fiq} }, //
+	{ {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_irq, r14_irq, pc, cpsr, spsr_irq} }, //
+	{ {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_svc, r14_svc, pc, cpsr, spsr_svc} }, //
+	{ {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_abt, pc, cpsr, spsr_abt} }, //
+	{ {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_und, r14_und, pc, cpsr, spsr_und} }}};
+    // clang-format on
+
   private:
-    register_preset_indexes(const register_preset_indexes&) = delete;
-    register_preset_indexes(register_preset_indexes&&) = delete;
-    register_preset_indexes& operator=(const register_preset_indexes&) = delete;
-    register_preset_indexes& operator=(register_preset_indexes&&) = delete;
+    register_presets(const register_presets&) = delete;
+    register_presets(register_presets&&) = delete;
+    register_presets& operator=(const register_presets&) = delete;
+    register_presets& operator=(register_presets&&) = delete;
   };
 
-  static constexpr u8 N_ACTIVE_REGISTERS{18}, N_REGISTERS{37};
   static constexpr u8 spsr{17};
-
-  static constexpr std::array<u8, N_ACTIVE_REGISTERS> REGISTERS_USR{
-      {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr}},
-      REGISTERS_FIQ{{r0, r1, r2, r3, r4, r5, r6, r7, r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq,
-                     r13_fiq, r14_fiq, pc, cpsr, spsr_fiq}},
-      REGISTERS_IRQ{{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_irq, r14_irq, pc,
-                     cpsr, spsr_irq}},
-      REGISTERS_SVC{{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_svc, r14_svc, pc,
-                     cpsr, spsr_svc}},
-      REGISTERS_ABT{{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_abt, r14_abt, pc,
-                     cpsr, spsr_abt}},
-      REGISTERS_UND{{r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13_und, r14_und, pc,
-                     cpsr, spsr_und}};
-
-  static constexpr std::array<std::array<u8, N_ACTIVE_REGISTERS>, 6> REGISTERS_PRESET{
-      {{REGISTERS_USR},
-       {REGISTERS_FIQ},
-       {REGISTERS_IRQ},
-       {REGISTERS_SVC},
-       {REGISTERS_ABT},
-       {REGISTERS_UND}}};
 
   std::array<u32, N_REGISTERS> registers;
   std::array<u8, N_ACTIVE_REGISTERS> active_registers;
@@ -152,13 +142,13 @@ struct arm7tdmi {
   }
 
   [[nodiscard]] inline auto read_relative_register(u8 reg, u8 bank_preset) const -> u32 {
-    return reg == pc ? read_pc() : registers[REGISTERS_PRESET[bank_preset][reg]];
+    return reg == pc ? read_pc() : registers[register_presets::all[bank_preset][reg]];
   }
   inline auto write_relative_register(u8 reg, u32 value, u8 bank_preset) {
     if (reg == pc)
       write_pc(value);
     else
-      registers[REGISTERS_PRESET[bank_preset][reg]] = value;
+      registers[register_presets::all[bank_preset][reg]] = value;
   }
 
   [[nodiscard]] inline auto read_cpsr() const { return registers[cpsr]; }

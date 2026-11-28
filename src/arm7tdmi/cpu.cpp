@@ -8,7 +8,7 @@ using namespace neogba;
 void arm7tdmi::set_mode(u8 mode, bool update_cpsr) {
   u8 idx_lut = get_idx_registers_preset_by_mode(mode);
 
-  active_registers = REGISTERS_PRESET[idx_lut];
+  active_registers = register_presets::all[idx_lut];
 
   if (!update_cpsr)
     return;
