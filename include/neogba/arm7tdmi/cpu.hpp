@@ -7,48 +7,40 @@ namespace neogba {
 enum arm7tdmi_register : u8 {
 
   // clang-format off
-    r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr,
-    /**/
-    r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, spsr_fiq,
-    /**/
-    r13_svc, r14_svc, spsr_svc,
-    /**/ 
-    r13_abt, r14_abt, spsr_abt,
-    /**/ 
-    r13_irq, r14_irq, spsr_irq,
-    /**/ 
-    r13_und, r14_und, spsr_und
+  r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr, //
+  r8_fiq, r9_fiq, r10_fiq, r11_fiq, r12_fiq, r13_fiq, r14_fiq, spsr_fiq,//
+  r13_svc, r14_svc, spsr_svc, //
+  r13_abt, r14_abt, spsr_abt, //
+  r13_irq, r14_irq, spsr_irq, //
+  r13_und, r14_und, spsr_und  //
   // clang-format on
 
 };
 
 struct arm7tdmi {
-  static constexpr u32
+  /** @brief Negative (N) */
+  static constexpr u32 N_SHIFT{31}, N{1u << N_SHIFT};
 
-      /** @brief Negative (N) */
-      N_SHIFT{31},
-      N{1u << N_SHIFT},
+  /** @brief Zero (Z) */
+  static constexpr u32 Z_SHIFT{30}, Z{1u << Z_SHIFT};
 
-      /** @brief Zero (Z) */
-      Z_SHIFT{30}, Z{1u << Z_SHIFT},
+  /** @brief Carry (C) */
+  static constexpr u32 C_SHIFT{29}, C{1u << C_SHIFT};
 
-      /** @brief Carry (C) */
-      C_SHIFT{29}, C{1u << C_SHIFT},
+  /** @brief Overflow (V) */
+  static constexpr u32 V_SHIFT{28}, V{1u << V_SHIFT};
 
-      /** @brief Overflow (V) */
-      V_SHIFT{28}, V{1u << V_SHIFT},
+  /** @brief IRQ Disable (I) */
+  static constexpr u32 I_SHIFT{7}, I{1u << I_SHIFT};
 
-      /** @brief IRQ Disable (I) */
-      I_SHIFT{7}, I{1u << I_SHIFT},
+  /** @brief FIQ Disable (F) */
+  static constexpr u32 F_SHIFT{6}, F{1u << F_SHIFT};
 
-      /** @brief FIQ Disable (F) */
-      F_SHIFT{6}, F{1u << F_SHIFT},
+  /** @brief Thumb State (T) */
+  static constexpr u32 T_SHIFT{5}, T{1u << T_SHIFT};
 
-      /** @brief Thumb State (T) */
-      T_SHIFT{5}, T{1u << T_SHIFT},
-
-      /** @brief Mode Bits (M) */
-      M{0x1fu};
+  /** @brief Mode Bits (M) */
+  static constexpr u32 M{0x1fu};
 
   static constexpr u32 EXCEPTION_RESET /*   */ {0x00000000}, EXCEPTION_UNDEFINS /*  */ {0x00000004},
       EXCEPTION_SWINT /*   */ {0x00000008}, EXCEPTION_PREFETABT /* */ {0x0000000c},
@@ -62,8 +54,8 @@ struct arm7tdmi {
       REGISTERS_PRESET_SVC{3}, REGISTERS_PRESET_ABT{4}, REGISTERS_PRESET_UND{5},
       REGISTERS_PRESET_SYS{0};
 
-  static constexpr u8 N_ACTIVE_REGISTERS = 18, N_REGISTERS = 37;
-  static constexpr u8 spsr = 17;
+  static constexpr u8 N_ACTIVE_REGISTERS{18}, N_REGISTERS{37};
+  static constexpr u8 spsr{17};
 
   static constexpr std::array<u8, N_ACTIVE_REGISTERS> REGISTERS_USR{
       {r0, r1, r2, r3, r4, r5, r6, r7, r8, r9, r10, r11, r12, r13, r14, pc, cpsr}},
